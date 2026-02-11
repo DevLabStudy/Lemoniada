@@ -1,28 +1,29 @@
+/* GŁÓWNE TŁO I RESET */
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    /* Przywrócone żółte tło z obrazka image_c359a3.png */
+    font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #f1c40f 0%, #f39c12 100%);
     margin: 0;
     display: flex;
     justify-content: center;
-    padding: 20px;
+    align-items: center;
     min-height: 100vh;
 }
 
+/* KONTENER STRONY */
 .app-container {
-    max-width: 450px;
-    width: 100%;
-    background: white; /* Biały kontener na środku */
-    padding: 30px;
-    border-radius: 25px;
+    max-width: 400px;
+    width: 90%;
+    background: white;
+    padding: 25px;
+    border-radius: 30px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.2);
     text-align: center;
-    align-self: center;
 }
 
-h1 { color: #2d3436; margin-bottom: 25px; font-size: 28px; }
+h1 { color: #2d3436; margin-bottom: 20px; }
 h1 span { color: #f1c40f; }
 
+/* SIATKA PRODUKTÓW */
 .menu-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;
@@ -30,53 +31,47 @@ h1 span { color: #f1c40f; }
     margin-bottom: 20px;
 }
 
+/* KARTY PRODUKTÓW */
 .card {
     background: #fff;
-    padding: 20px;
-    border-radius: 15px;
+    padding: 15px;
+    border-radius: 20px;
     border: 1px solid #eee;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     align-items: center;
-    min-height: 220px;
-    transition: transform 0.2s;
+    min-height: 210px;
 }
 
-.card:active { transform: scale(0.95); }
+.card span { font-size: 45px; }
+.card h3 { margin: 10px 0 5px 0; font-size: 16px; color: #333; }
+.card p { margin: 0 0 15px 0; font-weight: bold; color: #2ecc71; }
 
-.card span { font-size: 50px; }
-.card h3 { margin: 10px 0; font-size: 18px; color: #333; }
-.card p { margin: 0 0 15px 0; font-weight: bold; color: #2ecc71; font-size: 16px; }
-
-/* Styl przycisku Dodaj */
-.add-btn {
+/* PRZYCISKI DODAJ - NAPRAWIONE */
+.card button {
     background: #2ecc71;
     color: white;
     border: none;
     padding: 12px;
-    border-radius: 10px;
+    border-radius: 12px;
+    font-weight: bold;
     cursor: pointer;
     width: 100%;
-    font-weight: bold;
-    font-size: 14px;
+    transition: 0.2s;
 }
 
-/* Kółeczko Admina - Ciemniejsze */
-.admin-trigger {
-    position: fixed;
-    bottom: 15px;
-    right: 15px;
-    width: 35px;
-    height: 35px;
-    background: rgba(0, 0, 0, 0.4); /* Ciemniejszy szary zgodnie z prośbą */
-    border-radius: 50%;
-    z-index: 9999;
-    cursor: pointer;
-    border: 2px solid rgba(255,255,255,0.2);
+.card button:active { transform: scale(0.9); }
+
+/* KOSZYK I MODAL */
+.cart-area {
+    background: #fdfdfd;
+    padding: 15px;
+    border-radius: 20px;
+    border: 2px dashed #f1c40f;
+    margin-top: 15px;
 }
 
-/* Modal i przyciski płatności */
 .modal {
     display: none;
     position: fixed;
@@ -88,8 +83,7 @@ h1 span { color: #f1c40f; }
     border-radius: 20px;
     box-shadow: 0 0 40px rgba(0,0,0,0.4);
     z-index: 1000;
-    width: 85%;
-    max-width: 350px;
+    width: 80%;
 }
 
 .pay-btn {
@@ -99,6 +93,19 @@ h1 span { color: #f1c40f; }
     border: none;
     border-radius: 12px;
     font-weight: bold;
+    font-size: 14px;
     cursor: pointer;
-    font-size: 15px;
+}
+
+/* KÓŁKO ADMINA - PRAWIE NIEWIDOCZNE */
+.admin-trigger {
+    position: fixed;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    background: rgba(0,0,0,0.02); /* Ledwo zauważalne */
+    border-radius: 50%;
+    z-index: 9999;
+    cursor: pointer;
 }

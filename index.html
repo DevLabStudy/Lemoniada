@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada Bar</title>
+    <title>Lemonade System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,7 +17,6 @@
             <p>5.00 zł</p>
             <button onclick="add('Klasyczna', 5)">Dodaj</button>
         </div>
-
         <div class="card">
             <span>🍊</span>
             <h3>Pomarańcz</h3>
@@ -28,9 +27,9 @@
 
     <div id="cart" class="cart-area" style="display:none;">
         <h4>🛒 Twój Koszyk</h4>
-        <div id="items" style="text-align: left; margin-bottom: 10px;"></div>
+        <div id="items" style="font-size: 14px; margin-bottom: 10px;"></div>
         <p>Suma: <b id="total">0.00</b> zł</p>
-        <button id="order-btn" onclick="openPay()">PRZEJDŹ DO ZAMÓWIENIA</button>
+        <button id="order-btn" class="pay-btn" style="background:#2ecc71; color:white;" onclick="openPay()">ZAMÓW</button>
     </div>
 
     <div id="status-view"></div>
@@ -38,28 +37,27 @@
 
 <div id="pay-modal" class="modal">
     <h3 style="margin-top:0;">Płatność:</h3>
-    <button onclick="send('Gotówka')" style="margin-bottom:10px;">💵 Gotówka (na miejscu)</button>
-    <button onclick="copyAndSend('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:10px;">📱 BLIK 668 078 310</button>
-    <button onclick="copyAndSend('537282634', 'BLIK (537)')" style="background:#eb4d4b; margin-bottom:10px;">📱 BLIK 537 282 634</button>
-    <button onclick="closePay()" style="background:gray;">Anuluj</button>
+    <button class="pay-btn" style="background:#2ecc71; color:white;" onclick="send('Gotówka')">💵 Gotówka</button>
+    <button class="pay-btn" style="background:#eb4d4b; color:white;" onclick="copyAndSend('668078310', 'BLIK (668)')">📱 668 078 310</button>
+    <button class="pay-btn" style="background:#eb4d4b; color:white;" onclick="copyAndSend('537282634', 'BLIK (537)')">📱 537 282 634</button>
+    <button class="pay-btn" style="background:#eee; color:#333;" onclick="closePay()">Anuluj</button>
 </div>
 
-<div onclick="aTrig()" style="position:fixed; bottom:15px; right:15px; width:30px; height:30px; background:rgba(0,0,0,0.1); border-radius:50%; z-index:9999; cursor:pointer;"></div>
+<div class="admin-trigger" onclick="aTrig()"></div>
 
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
     let cart = [];
-    let clickCount = 0;
+    let clicks = 0;
 
-    // Ukryty admin (5 kliknięć w 5 sekund)
     function aTrig() {
-        clickCount++;
-        if(clickCount >= 5) {
+        clicks++;
+        if(clicks >= 5) {
             let p = prompt("PIN:");
             if(p === "1337") window.location.href = "admin-tajne.html";
-            else clickCount = 0;
+            else clicks = 0;
         }
-        setTimeout(() => clickCount = 0, 5000);
+        setTimeout(() => clicks = 0, 5000);
     }
 
     function add(name, price) {
@@ -74,57 +72,50 @@
 
     function copyAndSend(nr, metoda) {
         navigator.clipboard.writeText(nr);
-        alert("Numer BLIK skopiowany!");
+        alert("Numer skopiowany!");
         send(metoda);
     }
 
     function send(platnosc) {
         const suma = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
         const produkty = cart.map(i => i.name).join(", ");
-
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ produkty, suma, platnosc })
-        })
-            .then(r => r.json())
-            .then(data => {
-                closePay();
-                document.getElementById('cart').style.display = 'none';
-                cart = [];
-                track(data.id);
-            });
+        }).then(r => r.json()).then(data => {
+            closePay();
+            document.getElementById('cart').style.display = 'none';
+            cart = [];
+            track(data.id);
+        });
     }
 
     function track(id) {
         const v = document.getElementById('status-view');
-        v.innerHTML = `<div class="status-box">Zamówienie #${id} przyjęte!</div>`;
         setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
                 const z = data.find(o => o.id === id);
-                if(z) v.innerHTML = `<div class="status-box" style="border-left: 8px solid #f1c40f;"><b>Zamówienie #${id}: ${z.status}</b></div>`;
+                if(z) v.innerHTML = `<div style="background:white; padding:15px; border-radius:15px; margin-top:15px; border-left: 5px solid #f1c40f;"><b>Status #${id}: ${z.status}</b></div>`;
             });
-        }, 4000);
+        }, 5000);
     }
 
-    function checkMagazyn() {
+    function check() {
         fetch(`${API}/stan-magazynu`).then(r => r.json()).then(stan => {
             const btn = document.getElementById('order-btn');
-            if(stan.kubki <= 0) {
+            if(stan.kubki <= 0 || stan.przerwa) {
                 btn.disabled = true;
-                btn.innerText = "WYPRZEDANE";
-            } else if(stan.przerwa) {
-                btn.disabled = true;
-                btn.innerText = "PRZERWA (DOSTAWA)";
+                btn.innerText = stan.przerwa ? "PRZERWA" : "WYPRZEDANE";
+                btn.style.background = "#bdc3c7";
             } else {
                 btn.disabled = false;
-                btn.innerText = "PRZEJDŹ DO ZAMÓWIENIA";
+                btn.innerText = "ZAMÓW";
+                btn.style.background = "#2ecc71";
             }
-        }).catch(() => console.log("Brak połączenia z PC"));
+        });
     }
-
-    setInterval(checkMagazyn, 5000);
-    checkMagazyn();
+    setInterval(check, 5000);
 </script>
 </body>
 </html>
