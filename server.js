@@ -8,29 +8,28 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./lemoniada.db');
 
-// Inicjalizacja bazy
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    produkty TEXT,
-    suma TEXT,
-    platnosc TEXT,
-    godzina TEXT,
-    status TEXT DEFAULT 'PRZYJĘTE'
-)`);
+                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                  produkty TEXT,
+                                                  suma TEXT,
+                                                  platnosc TEXT,
+                                                  godzina TEXT,
+                                                  status TEXT DEFAULT 'PRZYJĘTE'
+        )`);
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina) VALUES (?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina], function(err) {
-            if (err) return res.status(500).send(err.message);
+            if (err) return res.status(500).json({error: err.message});
             res.json({ id: this.lastID });
         });
 });
 
 app.get('/list-zamowienia', (req, res) => {
     db.all(`SELECT * FROM zamowienia ORDER BY id DESC`, [], (err, rows) => {
-        if (err) return res.status(500).send(err.message);
+        if (err) return res.status(500).json({error: err.message});
         res.json(rows);
     });
 });
@@ -38,13 +37,8 @@ app.get('/list-zamowienia', (req, res) => {
 app.post('/update-status', (req, res) => {
     const { id, nowyStatus } = req.body;
     db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [nowyStatus, id], (err) => {
-        if (err) res.status(500).send(err.message);
-        else res.json({ success: true });
+        res.json({ success: !err });
     });
 });
 
-app.post('/clear-all', (req, res) => {
-    db.run(`DELETE FROM zamowienia`, () => res.json({ success: true }));
-});
-
-app.listen(3000, '0.0.0.0', () => console.log('Serwer POS działa na porcie 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('SERWER DZIAŁA NA PORCIE 3000'));

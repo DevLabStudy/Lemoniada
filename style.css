@@ -1,39 +1,20 @@
 body {
-    margin: 0;
-    font-family: 'Segoe UI', sans-serif;
+    margin: 0; font-family: 'Segoe UI', sans-serif;
     background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%);
-    min-height: 100vh;
-    display: flex; justify-content: center; align-items: center;
+    min-height: 100vh; display: flex; justify-content: center; align-items: center;
 }
-
 .app-container {
-    background: white; padding: 30px; border-radius: 25px;
-    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-    text-align: center; width: 350px;
-    position: relative; /* Potrzebne do pozycjonowania ukrytego wejścia */
+    background: white; padding: 25px; border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px;
 }
-
-h1 { color: #333; margin-bottom: 5px; }
-h1 span { color: #f8b500; } /* Naprawa koloru ikonki/tekstu */
-
-.menu-grid { display: flex; gap: 15px; margin-top: 20px; }
-.card { background: #f9f9f9; padding: 15px; border-radius: 15px; flex: 1; border: 2px solid #eee; color: #333; }
-
+.menu-grid { display: flex; gap: 10px; margin: 20px 0; }
+.card { background: #fdfdfd; padding: 15px; border-radius: 15px; flex: 1; border: 1px solid #eee; }
 button {
-    background: #333; color: white; border: none; padding: 10px;
-    border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold;
-    transition: 0.2s;
+    background: #333; color: white; border: none; padding: 12px;
+    border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px;
 }
-
-button:hover { background: #444; }
-
-/* Ukryty przycisk wejścia na samym dole */
-.secret-trigger {
-    position: absolute;
-    bottom: 5px;
-    right: 5px;
-    width: 20px;
-    height: 20px;
-    opacity: 0.05; /* Prawie niewidoczny */
-    cursor: pointer;
+.modal {
+    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.3); z-index: 1000; width: 260px;
 }
+.status-box { background: #e3f2fd; padding: 10px; border-radius: 10px; margin-top: 15px; font-weight: bold; }

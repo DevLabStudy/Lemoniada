@@ -1,56 +1,106 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lemoniada - Zamów</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-container">
+    <h1>Lemonade <span>System</span></h1>
+
+    <div class="menu-grid">
+        <div class="card">
+            <span style="font-size:30px; cursor:pointer;" onclick="aTrig()">🍋</span>
+            <h3>Klasyk</h3><p>5.00 zł</p>
+            <button onclick="add('Klasyczna', 5)">Dodaj</button>
+        </div>
+        <div class="card">
+            <span style="font-size:30px">🍊</span>
+            <h3>Pomarańcz</h3><p>6.50 zł</p>
+            <button onclick="add('Pomarańczowa', 6.5)">Dodaj</button>
+        </div>
+    </div>
+
+    <div id="cart" class="card" style="display:none; background:#fffcf0; margin-top:10px;">
+        <h4>🛒 Koszyk</h4>
+        <div id="items" style="font-size:13px; text-align:left;"></div>
+        <p>Suma: <b id="total">0</b> zł</p>
+        <button onclick="openPay()" style="background:#2ecc71">ZAMAWIAM</button>
+    </div>
+
+    <div id="status-view"></div>
+</div>
+
+<div id="pay-modal" class="modal">
+    <h3>Płatność:</h3>
+    <button onclick="send('Gotówka')" style="background:#2ecc71">💵 Gotówka</button>
+    <p style="font-size:10px; color:gray; margin:10px 0;">Kliknij numer (BLIK):</p>
+    <button onclick="copyPay('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px;">📱 668 078 310</button>
+    <button onclick="copyPay('537282634', 'BLIK (537)')" style="background:#eb4d4b">📱 537 282 634</button>
+    <button onclick="closePay()" style="background:gray; margin-top:10px;">Anuluj</button>
+</div>
+
 <script>
-    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+    const API = "TU_WKLEJ_LINK_Z_CLOUDFLARE";
     let cart = [];
+    let ac = 0;
 
-    // ... reszta funkcji (addToCart, showPayment) bez zmian ...
+    function aTrig() {
+        ac++; if(ac >= 5) { let p = prompt("PIN:"); if(p==="1337") window.location.href="admin-tajne.html"; ac=0; }
+        setTimeout(()=> ac=0, 3000);
+    }
 
-    function finalizuj(metoda) {
-        const sum = cart.reduce((a, b) => a + b.price, 0).toFixed(2);
-        const produkty = cart.map(i => i.name).join(", ");
+    function add(n, p) {
+        cart.push({n, p});
+        document.getElementById('cart').style.display = 'block';
+        document.getElementById('items').innerHTML = cart.map(i => `• ${i.n}`).join('<br>');
+        document.getElementById('total').innerText = cart.reduce((s, i) => s + i.p, 0).toFixed(2);
+    }
+
+    function openPay() { document.getElementById('pay-modal').style.display = 'block'; }
+    function closePay() { document.getElementById('pay-modal').style.display = 'none'; }
+
+    function copyPay(nr, m) {
+        navigator.clipboard.writeText(nr);
+        alert("Skopiowano numer!");
+        send(m);
+    }
+
+    function send(metoda) {
+        const suma = cart.reduce((s, i) => s + i.p, 0).toFixed(2);
+        const produkty = cart.map(i => i.n).join(", ");
 
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty, suma: sum, platnosc: metoda })
+            body: JSON.stringify({ produkty, suma, platnosc: metoda })
         })
-            .then(r => r.json())
+            .then(res => res.json())
             .then(data => {
-                const orderId = data.id; // Pobieramy ID zamówienia z Twojego Linuxa
-                document.getElementById('payment-modal').style.display='none';
-                document.getElementById('cart-section').style.display='none';
+                closePay();
+                document.getElementById('cart').style.display='none';
                 cart = [];
-
-                // Start śledzenia statusu
-                trackStatus(orderId);
-            })
-            .catch(err => alert("Błąd połączenia z serwerem PC!"));
+                track(data.id);
+            });
     }
 
-    function trackStatus(id) {
-        const container = document.getElementById('status-container');
-        container.innerHTML = `<div class="status-box" id="status-info">Twoje zamówienie (ID: ${id}) zostało PRZYJĘTE.</div>`;
-
-        // Sprawdzaj status co 3 sekundy
-        const interval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`)
-                .then(r => r.json())
-                .then(data => {
-                    const myOrder = data.find(o => o.id === id);
-                    if(myOrder) {
-                        const info = document.getElementById('status-info');
-                        info.innerHTML = `Status zamówienia: <b>${myOrder.status}</b>`;
-
-                        if(myOrder.status === 'REALIZUJEMY') {
-                            info.parentElement.style.background = "#d1ecf1"; // Kolor niebieskawy
-                        }
-
-                        if(myOrder.status === 'GOTOWE') {
-                            info.innerHTML = "✨ <b>TWOJA LEMONIADA JEST GOTOWA!</b> ✨<br>Zapraszamy do odbioru.";
-                            info.parentElement.style.background = "#d4edda"; // Kolor zielony
-                            clearInterval(interval); // Zatrzymujemy sprawdzanie
-                        }
+    function track(id) {
+        const v = document.getElementById('status-view');
+        const intr = setInterval(() => {
+            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+                const z = data.find(o => o.id === id);
+                if(z) {
+                    v.innerHTML = `<div class="status-box">Status #${id}: ${z.status}</div>`;
+                    if(z.status === 'GOTOWE') {
+                        v.innerHTML = `<div class="status-box" style="background:#d4edda">ODBIERZ LEMONIADĘ! 🍋</div>`;
+                        clearInterval(intr);
                     }
-                });
+                }
+            });
         }, 3000);
     }
 </script>
+</body>
+</html>
