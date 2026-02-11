@@ -2,48 +2,86 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Admin</title>
+    <title>POS Admin</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="background:#222;">
-<div class="app-container" style="width:90%; max-width:400px;">
-    <h2 style="color:#333">Utarg: <span id="suma">0</span> zł</h2>
+<body style="background:#1a1a1a; color:white;">
+<div class="app-container" style="max-width:500px;">
+    <div class="card" style="color:black; margin-bottom:15px; background:#f1c40f;">
+        <h3>📦 Kubki: <span id="kubki-licznik">0</span></h3>
+        <input type="number" id="nowa-ilosc" style="width:50px;">
+        <button onclick="ustawKubki()" style="width:auto; background:#333;">Ustaw</button>
+        <button id="btn-przerwa" onclick="togglePrzerwa()" style="background:#e67e22; margin-top:5px;">Idę po więcej</button>
+    </div>
+
+    <div class="card" style="color:black; margin-bottom:15px;">
+        <h4>➕ Sprzedaż Ręczna</h4>
+        <button onclick="sprzedazReczna(5)" style="background:#2ecc71; width:45%;">Klasyk (5zł)</button>
+        <button onclick="sprzedazReczna(6.5)" style="background:#2ecc71; width:45%;">Pomarańcz (6.5zł)</button>
+    </div>
+
+    <h2>Utarg: <span id="suma-dnia">0</span> zł</h2>
     <div id="list"></div>
-    <button onclick="location.href='index.html'" style="background:gray">Powrót</button>
 </div>
 
 <script>
     const API = "TU_WKLEJ_LINK_Z_CLOUDFLARE";
 
-    function load() {
-        fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            const l = document.getElementById('list');
-            let s = 0; l.innerHTML = "";
-            data.forEach(z => {
-                s += parseFloat(z.suma);
-                l.innerHTML += `
-                    <div class="card" style="text-align:left; margin-bottom:10px; color:black; border-left: 5px solid ${z.status==='GOTOWE'?'green':'#17a2b8'}">
-                        <small>${z.godzina} (ID: ${z.id})</small>
-                        <p><b>${z.produkty}</b></p>
-                        <p>${z.suma} zł | ${z.platnosc}</p>
-                        <p>Status: ${z.status}</p>
-                        <button onclick="upd(${z.id}, 'REALIZUJEMY')" style="background:#17a2b8; width:48%">Realizujemy</button>
-                        <button onclick="upd(${z.id}, 'GOTOWE')" style="background:green; width:48%">Gotowe</button>
-                    </div>`;
-            });
-            document.getElementById('suma').innerText = s.toFixed(2);
-        });
-    }
-
-    function upd(id, ns) {
-        fetch(`${API}/update-status`, {
+    function ustawKubki() {
+        const ilosc = document.getElementById('nowa-ilosc').value;
+        fetch(`${API}/ustaw-kubki`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id, nowyStatus: ns})
+            body: JSON.stringify({ ilosc })
         }).then(() => load());
     }
 
-    setInterval(load, 4000);
+    function togglePrzerwa() {
+        fetch(`${API}/toggle-dostawa`, { method: 'POST' }).then(() => load());
+    }
+
+    function sprzedazReczna(cena) {
+        fetch(`${API}/sprzedaz-reczna`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ suma: cena.toFixed(2) })
+        }).then(() => load());
+    }
+
+    function load() {
+        // Stan magazynu
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(stan => {
+            document.getElementById('kubki-licznik').innerText = stan.kubki;
+            document.getElementById('btn-przerwa').innerText = stan.przerwa ? "WZNAWIAJ" : "IDĘ PO WIĘCEJ";
+        });
+
+        // Lista zamówień
+        fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+            const l = document.getElementById('list');
+            let total = 0; l.innerHTML = "";
+            data.forEach(z => {
+                total += parseFloat(z.suma);
+                l.innerHTML += `
+                    <div class="card" style="color:black; border-left: 10px solid ${z.status==='GOTOWE'?'#2ecc71':'#3498db'}">
+                        <small>${z.godzina} | ${z.platnosc}</small>
+                        <p><b>${z.produkty}</b> - ${z.suma} zł</p>
+                        <button onclick="upd(${z.id}, 'REALIZUJEMY')">W trakcie</button>
+                        <button onclick="upd(${z.id}, 'GOTOWE')" style="background:green">Gotowe</button>
+                    </div>`;
+            });
+            document.getElementById('suma-dnia').innerText = total.toFixed(2);
+        });
+    }
+
+    function upd(id, s) {
+        fetch(`${API}/update-status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id, nowyStatus: s })
+        }).then(() => load());
+    }
+
+    setInterval(load, 5000);
     load();
 </script>
 </body>
