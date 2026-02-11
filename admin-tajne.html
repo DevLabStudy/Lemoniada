@@ -2,43 +2,49 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>PANEL SZEFA</title>
+    <title>Admin Panel</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        body { background: #2d3436; }
-        .order-card {
-            background: white; margin: 10px 0; padding: 15px;
-            border-radius: 10px; display: flex; justify-content: space-between;
-            border-left: 8px solid #f8b500;
-        }
-    </style>
 </head>
-<body>
+<body style="background: #222;">
 <div class="app-container">
-    <h2>🛠 Zamówienia z <span>Linuxa</span></h2>
-    <div id="list">Czekam na dane...</div>
-    <button onclick="window.location.href='index.html'" style="margin-top:20px;">Wróć</button>
+    <h2>Panel <span>Produkcji</span></h2>
+    <div id="admin-list"></div>
 </div>
 
-<script>
-    const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+<audio id="bell" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
-    function load() {
-        fetch(`${API_URL}/list-zamowienia`)
+<script>
+    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+
+    function updateStatus(id, status) {
+        fetch(`${API}/update-status`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ id: id, nowyStatus: status })
+        }).then(() => {
+            if(status === 'GOTOWE') document.getElementById('bell').play();
+            loadOrders();
+        });
+    }
+
+    function loadOrders() {
+        fetch(`${API}/list-zamowienia`)
             .then(r => r.json())
             .then(data => {
-                const div = document.getElementById('list');
-                div.innerHTML = data.length ? "" : "Brak zamówień";
-                data.forEach(z => {
-                    div.innerHTML += `<div class="order-card">
-                        <span>[${z.godzina}] <b>${z.produkt}</b></span>
-                        <button onclick="this.parentElement.remove()" style="background:#2ecc71">OK</button>
+                const div = document.getElementById('admin-list');
+                div.innerHTML = "";
+                data.filter(z => z.status !== 'ODEBRANE').forEach(z => {
+                    div.innerHTML += `
+                    <div class="card" style="margin-bottom: 10px;">
+                        <p>${z.godzina} - <b>${z.produkt}</b></p>
+                        <button onclick="updateStatus(${z.id}, 'W PRODUKCJI')" style="background: orange">Robię</button>
+                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background: green; margin-top:5px">Gotowe!</button>
                     </div>`;
                 });
             });
     }
-    setInterval(load, 3000);
-    load();
+    setInterval(loadOrders, 4000);
+    loadOrders();
 </script>
 </body>
 </html>

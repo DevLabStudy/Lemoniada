@@ -2,56 +2,68 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade System 2026</title>
+    <title>Lemonade System</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app-container">
-    <header>
-        <h1 id="secret-trigger" onclick="checkAdmin()">Lemonade <span>System</span></h1>
-        <p>Najlepsze orzeźwienie z Twojego lokalnego serwera!</p>
-    </header>
+    <h1 id="secret-btn" onclick="checkSecret()">Lemonade <span>System</span></h1>
 
-    <main class="menu-grid">
-        <div class="product-card">
-            <div class="icon">🍋</div>
+    <div class="menu-grid">
+        <div class="card">
+            <span>🍋</span>
             <h3>Klasyczna</h3>
-            <p>5.00 zł</p>
-            <button onclick="zamow('Klasyczna')">ZAMÓW</button>
+            <button onclick="wyslijZamowienie('Klasyczna')">5.00 zł</button>
         </div>
-        <div class="product-card">
-            <div class="icon">🍊</div>
+        <div class="card">
+            <span>🍊</span>
             <h3>Pomarańczowa</h3>
-            <p>6.50 zł</p>
-            <button onclick="zamow('Pomarańczowa')">ZAMÓW</button>
+            <button onclick="wyslijZamowienie('Pomarańczowa')">6.50 zł</button>
         </div>
-    </main>
+    </div>
+
+    <div id="tracking"></div>
 </div>
 
 <script>
-    const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
-    let clicks = 0;
+    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+    let secretClicks = 0;
 
-    function checkAdmin() {
-        clicks++;
-        if (clicks >= 5) {
-            const pass = prompt("Podaj kod szefa:");
-            if (pass === "1337") window.location.href = "admin-tajne.html";
-            clicks = 0;
+    function checkSecret() {
+        secretClicks++;
+        if(secretClicks >= 5) {
+            const p = prompt("PIN:");
+            if(p === "1337") window.location.href = "admin-tajne.html";
         }
-        setTimeout(() => { clicks = 0; }, 2000); // Reset po 2 sek
     }
 
-    function zamow(produkt) {
-        fetch(`${API_URL}/zamow`, {
+    function wyslijZamowienie(produkt) {
+        fetch(`${API}/zamow`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ produkt: produkt })
         })
             .then(res => res.json())
-            .then(data => alert(`Wysłano zamówienie na lemoniadę ${produkt}!`))
-            .catch(err => alert("Serwer PC jest offline!"));
+            .then(data => startTracking(data.id, produkt));
+    }
+
+    function startTracking(id, nazwa) {
+        const trackDiv = document.getElementById('tracking');
+        const interval = setInterval(() => {
+            fetch(`${API}/list-zamowienia`)
+                .then(r => r.json())
+                .then(orders => {
+                    const myOrder = orders.find(o => o.id === id);
+                    if(myOrder) {
+                        trackDiv.innerHTML = `<div class="status-box">Twoja <b>${nazwa}</b> jest w etapie:<br>
+                        <b style="color: #d39e00">${myOrder.status}</b></div>`;
+                        if(myOrder.status === 'GOTOWE') {
+                            trackDiv.innerHTML = `<div class="status-box" style="background:#d4edda">ODEBIERZ! 🍋</div>`;
+                            clearInterval(interval);
+                        }
+                    }
+                });
+        }, 3000);
     }
 </script>
 </body>
