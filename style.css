@@ -1,20 +1,82 @@
 body {
-    margin: 0; font-family: 'Segoe UI', sans-serif;
-    background: linear-gradient(135deg, #fceabb 0%, #f8b500 100%);
-    min-height: 100vh; display: flex; justify-content: center; align-items: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    display: flex;
+    justify-content: center;
+    padding: 20px;
 }
+
 .app-container {
-    background: white; padding: 25px; border-radius: 20px;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.1); text-align: center; width: 320px;
+    max-width: 400px;
+    width: 100%;
+    text-align: center;
 }
-.menu-grid { display: flex; gap: 10px; margin: 20px 0; }
-.card { background: #fdfdfd; padding: 15px; border-radius: 15px; flex: 1; border: 1px solid #eee; }
+
+h1 { color: #2d3436; margin-bottom: 30px; }
+h1 span { color: #f1c40f; }
+
+/* GRID DLA KART */
+.menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+/* KARTA PRODUKTU - KLUCZ DO WYRÓWNANIA */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* To wyrównuje elementy w pionie */
+    align-items: center;
+    min-height: 220px; /* Stała wysokość kart */
+}
+
+.card span { font-size: 45px; margin-bottom: 10px; }
+.card h3 { margin: 10px 0 5px 0; font-size: 18px; }
+.card p { margin: 0 0 15px 0; font-weight: bold; color: #2ecc71; }
+
 button {
-    background: #333; color: white; border: none; padding: 12px;
-    border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold; margin-top: 5px;
+    background: #2ecc71;
+    color: white;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-weight: bold;
+    transition: 0.3s;
 }
+
+button:disabled {
+    background: #bdc3c7 !important;
+    cursor: not-allowed;
+}
+
+/* KOSZYK I STATUS */
+.cart-area, .status-box {
+    background: white;
+    padding: 15px;
+    border-radius: 15px;
+    margin-top: 20px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
 .modal {
-    display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-    background: white; padding: 20px; border-radius: 15px; box-shadow: 0 0 50px rgba(0,0,0,0.3); z-index: 1000; width: 260px;
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.3);
+    z-index: 1000;
+    width: 85%;
 }
-.status-box { background: #e3f2fd; padding: 10px; border-radius: 10px; margin-top: 15px; font-weight: bold; }
