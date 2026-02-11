@@ -2,12 +2,13 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Admin POS</title>
+    <title>Panel Szefa</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="background: #222; color: white;">
+<body style="background:#1a1a1a; color:white;">
 <div class="app-container">
-    <h2>💰 Razem: <span id="utarg" style="color: #2ecc71">0</span> zł</h2>
+    <h2>💰 Utarg: <span id="suma" style="color:#2ecc71">0</span> zł</h2>
+    <button onclick="clearOrders()" style="background:#c0392b; font-size:10px; margin-bottom:15px;">Wyczyść listę (Koniec dnia)</button>
     <div id="admin-list"></div>
 </div>
 <audio id="bell" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
@@ -15,41 +16,46 @@
 <script>
     const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
 
-    function loadOrders() {
+    function load() {
         fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            const div = document.getElementById('admin-list');
-            let sumaCalkowita = 0;
-            div.innerHTML = "";
-
+            const list = document.getElementById('admin-list');
+            let utarg = 0;
+            list.innerHTML = "";
             data.forEach(z => {
-                sumaCalkowita += parseFloat(z.suma);
-                div.innerHTML += `
-                    <div class="card" style="color: black; text-align: left; margin-bottom: 15px;">
-                        <small>${z.godzina} | ID: ${z.id}</small>
-                        <p><b>Produkty:</b> ${z.produkty}</p>
-                        <p><b>Kwota:</b> ${z.suma} zł (${z.platnosc})</p>
+                utarg += parseFloat(z.suma);
+                list.innerHTML += `
+                    <div class="card" style="color:black; margin-bottom:10px; text-align:left;">
+                        <p><b>${z.godzina}</b> | ID: ${z.id}</p>
+                        <p>📦 ${z.produkty}</p>
+                        <p>💰 ${z.suma} zł | <b>${z.platnosc}</b></p>
                         <p>Status: ${z.status}</p>
-                        <button onclick="updateStatus(${z.id}, 'W PRODUKCJI')" style="background: orange">Robię</button>
-                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background: green">Gotowe</button>
+                        <button onclick="setStatus(${z.id}, 'W PRODUKCJI')" style="background:orange">Robię</button>
+                        <button onclick="setStatus(${z.id}, 'GOTOWE')" style="background:green">Gotowe</button>
                     </div>`;
             });
-            document.getElementById('utarg').innerText = sumaCalkowita.toFixed(2);
+            document.getElementById('suma').innerText = utarg.toFixed(2);
         });
     }
 
-    function updateStatus(id, s) {
+    function setStatus(id, s) {
         fetch(`${API}/update-status`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({id, nowyStatus: s})
         }).then(() => {
             if(s === 'GOTOWE') document.getElementById('bell').play();
-            loadOrders();
+            load();
         });
     }
 
-    setInterval(loadOrders, 4000);
-    loadOrders();
+    function clearOrders() {
+        if(confirm("Czy na pewno wyczyścić wszystkie zamówienia?")) {
+            fetch(`${API}/clear-all`, {method:'POST'}).then(() => load());
+        }
+    }
+
+    setInterval(load, 4000);
+    load();
 </script>
 </body>
 </html>

@@ -8,87 +8,87 @@
 </head>
 <body>
 <div class="app-container">
-    <h1 onclick="checkSecret()" style="cursor: pointer; user-select: none;">Lemonade <span>System</span></h1>
+    <h1 onclick="checkSecret()" style="cursor:pointer; user-select:none;">Lemonade <span>System</span></h1>
 
     <div class="menu-grid">
         <div class="card">
-            <span>🍋</span><h3>Klasyczna</h3><p>5 zł</p>
-            <button onclick="addToCart('Klasyczna', 5)">+ Dodaj</button>
+            <span>🍋</span><h3>Klasyczna</h3><p>5.00 zł</p>
+            <button onclick="addToCart('Klasyczna', 5)">Dodaj</button>
         </div>
         <div class="card">
-            <span>🍊</span><h3>Pomarańcza</h3><p>6.5 zł</p>
-            <button onclick="addToCart('Pomarańczowa', 6.5)">+ Dodaj</button>
+            <span>🍊</span><h3>Pomarańcza</h3><p>6.50 zł</p>
+            <button onclick="addToCart('Pomarańczowa', 6.5)">Dodaj</button>
         </div>
     </div>
 
-    <div id="cart-section" class="card" style="margin-top:20px; display:none; background: #fffdf0;">
-        <h4>🛒 Twój koszyk:</h4>
-        <div id="cart-items" style="text-align: left; font-size: 14px;"></div>
-        <p>Suma: <b id="total-price">0</b> zł</p>
-        <button onclick="showPayment()" style="background:#2ecc71">ZAMÓW</button>
+    <div id="cart-section" class="card" style="margin-top:20px; display:none; background:#fffdf0;">
+        <h3>🛒 Koszyk</h3>
+        <div id="cart-items" style="text-align:left; margin-bottom:10px;"></div>
+        <p>Do zapłaty: <b id="total-price">0</b> zł</p>
+        <button onclick="showPayment()" style="background:#2ecc71">ZAMAWIAM</button>
     </div>
-
-    <div id="status-display"></div>
+    <div id="status-display" style="margin-top:20px;"></div>
 </div>
 
-<div id="payment-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:1000; width:80%;">
+<div id="payment-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:15px; box-shadow:0 0 30px rgba(0,0,0,0.5); z-index:1000; width:85%; text-align:center;">
     <h3>Jak płacisz?</h3>
-    <button onclick="finalizuj('Gotówka')" style="margin-bottom:10px">💵 Gotówka</button>
-    <button onclick="finalizuj('BLIK')" style="background:#eb4d4b">📱 BLIK</button>
-    <button onclick="document.getElementById('payment-modal').style.display='none'" style="background:gray; margin-top:10px">Anuluj</button>
+    <button onclick="finalizuj('Gotówka')" style="background:#2ecc71; margin-bottom:10px; width:100%;">💵 Gotówka</button>
+    <p style="font-size:11px; color:gray;">Kliknij numer, aby skopiować do BLIK:</p>
+    <button onclick="copyAndFinalize('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px; width:100%;">📱 668 078 310</button>
+    <button onclick="copyAndFinalize('537282634', 'BLIK (537)')" style="background:#eb4d4b; width:100%;">📱 537 282 634</button>
+    <button onclick="document.getElementById('payment-modal').style.display='none'" style="background:gray; margin-top:15px; width:100%;">Anuluj</button>
 </div>
 
 <script>
-    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com"; // Upewnij się, że ten link jest z Twojego terminala!
+    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
     let cart = [];
     let secretClicks = 0;
 
     function checkSecret() {
         secretClicks++;
         if(secretClicks >= 5) {
-            const p = prompt("PIN:");
+            const p = prompt("PIN Szefa:");
             if(p === "1337") window.location.href = "admin-tajne.html";
             secretClicks = 0;
         }
-        setTimeout(() => { secretClicks = 0; }, 2000);
+        setTimeout(() => { secretClicks = 0; }, 5000);
     }
 
-    function addToCart(name, price) {
-        cart.push({name, price});
-        updateCart();
+    function addToCart(n, p) {
+        cart.push({name: n, price: p});
+        updateUI();
     }
 
-    function updateCart() {
-        const div = document.getElementById('cart-items');
+    function updateUI() {
         const section = document.getElementById('cart-section');
-        if(cart.length > 0) section.style.display = 'block';
-
-        div.innerHTML = cart.map(i => `• ${i.name} - ${i.price}zł`).join('<br>');
+        section.style.display = cart.length ? 'block' : 'none';
+        document.getElementById('cart-items').innerHTML = cart.map(i => `• ${i.name}`).join('<br>');
         const sum = cart.reduce((a, b) => a + b.price, 0);
         document.getElementById('total-price').innerText = sum.toFixed(2);
     }
 
     function showPayment() { document.getElementById('payment-modal').style.display = 'block'; }
 
-    function finalizuj(metoda) {
-        const sum = cart.reduce((a, b) => a + b.price, 0);
-        const produkty = cart.map(i => i.name).join(", ");
+    function copyAndFinalize(nr, metoda) {
+        navigator.clipboard.writeText(nr);
+        alert("Skopiowano numer: " + nr + "\nZrób teraz przelew BLIK, a po kliknięciu OK zamówienie zostanie wysłane.");
+        finalizuj(metoda);
+    }
 
-        if(metoda === 'BLIK') alert("BLIK na: 668078310 / 537282634\nTytuł: Lemoniada");
+    function finalizuj(metoda) {
+        const sum = cart.reduce((a, b) => a + b.price, 0).toFixed(2);
+        const produkty = cart.map(i => i.name).join(", ");
 
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty, suma: sum.toFixed(2), platnosc: metoda })
-        })
-            .then(r => r.json())
-            .then(data => {
-                document.getElementById('payment-modal').style.display = 'none';
-                document.getElementById('cart-section').style.display = 'none';
-                cart = [];
-                document.getElementById('status-display').innerHTML = "<h3>Wysłano!</h3><p>Czekaj na przygotowanie...</p>";
-            })
-            .catch(e => alert("Błąd serwera!"));
+            body: JSON.stringify({ produkty, suma: sum, platnosc: metoda })
+        }).then(() => {
+            document.getElementById('payment-modal').style.display='none';
+            document.getElementById('cart-section').style.display='none';
+            cart = [];
+            document.getElementById('status-display').innerHTML = "<h3>Wysłano!</h3><p>Twoja lemoniada się robi.</p>";
+        });
     }
 </script>
 </body>

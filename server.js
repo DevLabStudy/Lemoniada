@@ -15,7 +15,7 @@ db.serialize(() => {
                                                       suma TEXT,
                                                       platnosc TEXT,
                                                       godzina TEXT,
-                                                      status TEXT DEFAULT 'PRZYJĘTE'
+                                                      status TEXT DEFAULT 'NOWE'
             )`);
 });
 
@@ -44,4 +44,12 @@ app.post('/update-status', (req, res) => {
     });
 });
 
-app.listen(3000, () => console.log('System POS aktywny na porcie 3000'));
+// Endpoint do czyszczenia bazy na koniec dnia
+app.post('/clear-all', (req, res) => {
+    db.run(`DELETE FROM zamowienia`, (err) => {
+        if (err) res.status(500).send(err.message);
+        else res.json({ success: true });
+    });
+});
+
+app.listen(3000, () => console.log('Backend Linux POS: Online'));
