@@ -1,46 +1,24 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Panel Admina</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body style="background:#1a1a1a; color:white;">
-<div class="app-container">
-    <h2>💰 Utarg: <span id="suma" style="color:#2ecc71">0</span> zł</h2>
-    <button onclick="clearAll()" style="background:gray; font-size:10px; margin-bottom:10px;">Wyczyść bazę</button>
-    <div id="admin-list"></div>
-</div>
-
-<audio id="bell" src="https://assets.mixkit.co/active_storage/sfx/2358/2358-preview.mp3"></audio>
-
 <script>
     const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
-    let lastCount = 0;
 
     function load() {
         fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            if(data.length > lastCount && lastCount !== 0) {
-                document.getElementById('bell').play().catch(() => {});
-            }
-            lastCount = data.length;
-
             const list = document.getElementById('admin-list');
             let total = 0;
             list.innerHTML = "";
             data.forEach(z => {
                 total += parseFloat(z.suma);
                 list.innerHTML += `
-                    <div class="card" style="color:black; margin-bottom:10px; text-align:left; border-left: 5px solid ${z.status === 'GOTOWE' ? '#2ecc71' : '#f1c40f'}">
-                        <p><small>${z.godzina} (ID: ${z.id})</small></p>
-                        <p><b>${z.produkty}</b></p>
-                        <p>${z.suma} zł | ${z.platnosc}</p>
-                        <p>Status: <b>${z.status}</b></p>
-                        <div style="display:flex; gap:5px;">
-                            <button onclick="updateStatus(${z.id}, 'W PRODUKCJI')" style="background:orange">Robię</button>
-                            <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background:green">Gotowe</button>
-                        </div>
-                    </div>`;
+                <div class="card" style="color:black; margin-bottom:10px; text-align:left; border-left: 8px solid ${z.status === 'GOTOWE' ? '#2ecc71' : (z.status === 'REALIZUJEMY' ? '#17a2b8' : '#f1c40f')}">
+                    <p><small>${z.godzina} | ID: ${z.id}</small></p>
+                    <p><b>${z.produkty}</b></p>
+                    <p>${z.suma} zł | ${z.platnosc}</p>
+                    <p>Status: <b>${z.status}</b></p>
+                    <div style="display:flex; gap:5px;">
+                        <button onclick="updateStatus(${z.id}, 'REALIZUJEMY')" style="background:#17a2b8">Realizujemy</button>
+                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background:#28a745">Gotowe</button>
+                    </div>
+                </div>`;
             });
             document.getElementById('suma').innerText = total.toFixed(2);
         });
@@ -54,14 +32,7 @@
         }).then(() => load());
     }
 
-    function clearAll() {
-        if(confirm("Usunąć historię?")) fetch(`${API}/clear-all`, {method:'POST'}).then(() => load());
-    }
-
-    setInterval(load, 3000);
+    // Odświeżanie co 4 sekundy, bez dźwięku
+    setInterval(load, 4000);
     load();
-    // Odblokowanie dźwięku przy pierwszym kliknięciu w panel
-    document.body.onclick = () => document.getElementById('bell').load();
 </script>
-</body>
-</html>

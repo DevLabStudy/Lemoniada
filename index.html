@@ -1,82 +1,13 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade System</title>
-    <link rel="stylesheet" href="style.css">
-</head>
-<body>
-<div class="app-container">
-    <h1>Lemonade <span>System</span></h1>
-
-    <div class="menu-grid">
-        <div class="card">
-            <span style="font-size:30px">🍋</span>
-            <h3>Klasyczna</h3>
-            <button onclick="addToCart('Klasyczna', 5)">5.00 zł</button>
-        </div>
-        <div class="card">
-            <span style="font-size:30px">🍊</span>
-            <h3>Pomarańcza</h3>
-            <button onclick="addToCart('Pomarańczowa', 6.50)">6.50 zł</button>
-        </div>
-    </div>
-
-    <div id="cart-section" class="card" style="display:none; margin-top:20px; background:#fffdf0;">
-        <h3>🛒 Koszyk</h3>
-        <div id="cart-items" style="text-align:left; font-size:14px; margin-bottom:10px;"></div>
-        <p>Suma: <b id="total-price">0</b> zł</p>
-        <button onclick="showPayment()" style="background:#2ecc71">ZAMAWIAM</button>
-    </div>
-
-    <div id="status-container" style="margin-top:20px;"></div>
-    <div class="secret-trigger" onclick="adminClick()" style="position:absolute; bottom:5px; right:5px; width:20px; height:20px; opacity:0.1; cursor:pointer;">.</div>
-</div>
-
-<div id="payment-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:15px; box-shadow:0 0 40px rgba(0,0,0,0.4); z-index:9999; width:280px; text-align:center;">
-    <h3>Płatność:</h3>
-    <button onclick="finalizuj('Gotówka')" style="background:#2ecc71; margin-bottom:10px">💵 Gotówka</button>
-    <p style="font-size:10px; color:gray; margin-bottom:5px;">Kliknij numer (BLIK):</p>
-    <button onclick="copyAndFinalize('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px">📱 668 078 310</button>
-    <button onclick="copyAndFinalize('537282634', 'BLIK (537)')" style="background:#eb4d4b">📱 537 282 634</button>
-    <button onclick="document.getElementById('payment-modal').style.display='none'" style="background:gray; margin-top:10px">Anuluj</button>
-</div>
-
 <script>
     const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
     let cart = [];
-    let clicks = 0;
 
-    function adminClick() {
-        clicks++;
-        if(clicks >= 5) {
-            const p = prompt("PIN:");
-            if(p === "1337") window.location.href = "admin-tajne.html";
-            clicks = 0;
-        }
-        setTimeout(() => { clicks = 0; }, 3000);
-    }
-
-    function addToCart(n, p) {
-        cart.push({name: n, price: p});
-        document.getElementById('cart-section').style.display = 'block';
-        document.getElementById('cart-items').innerHTML = cart.map(i => `• ${i.name}`).join('<br>');
-        const sum = cart.reduce((a, b) => a + b.price, 0);
-        document.getElementById('total-price').innerText = sum.toFixed(2);
-    }
-
-    function showPayment() { document.getElementById('payment-modal').style.display = 'block'; }
-
-    function copyAndFinalize(nr, metoda) {
-        navigator.clipboard.writeText(nr);
-        alert("Numer skopiowany! Zrób przelew BLIK.");
-        finalizuj(metoda);
-    }
+    // ... reszta funkcji (addToCart, showPayment) bez zmian ...
 
     function finalizuj(metoda) {
         const sum = cart.reduce((a, b) => a + b.price, 0).toFixed(2);
         const produkty = cart.map(i => i.name).join(", ");
+
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
@@ -84,27 +15,42 @@
         })
             .then(r => r.json())
             .then(data => {
+                const orderId = data.id; // Pobieramy ID zamówienia z Twojego Linuxa
                 document.getElementById('payment-modal').style.display='none';
                 document.getElementById('cart-section').style.display='none';
                 cart = [];
-                trackStatus(data.id);
-            });
+
+                // Start śledzenia statusu
+                trackStatus(orderId);
+            })
+            .catch(err => alert("Błąd połączenia z serwerem PC!"));
     }
 
     function trackStatus(id) {
         const container = document.getElementById('status-container');
+        container.innerHTML = `<div class="status-box" id="status-info">Twoje zamówienie (ID: ${id}) zostało PRZYJĘTE.</div>`;
+
+        // Sprawdzaj status co 3 sekundy
         const interval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-                const my = data.find(o => o.id === id);
-                if(my) {
-                    container.innerHTML = `<div class="status-box" style="background:${my.status === 'GOTOWE' ? '#d4edda' : '#fff3cd'}">
-                            Etap: <b>${my.status}</b>
-                        </div>`;
-                    if(my.status === 'GOTOWE') clearInterval(interval);
-                }
-            });
+            fetch(`${API}/list-zamowienia`)
+                .then(r => r.json())
+                .then(data => {
+                    const myOrder = data.find(o => o.id === id);
+                    if(myOrder) {
+                        const info = document.getElementById('status-info');
+                        info.innerHTML = `Status zamówienia: <b>${myOrder.status}</b>`;
+
+                        if(myOrder.status === 'REALIZUJEMY') {
+                            info.parentElement.style.background = "#d1ecf1"; // Kolor niebieskawy
+                        }
+
+                        if(myOrder.status === 'GOTOWE') {
+                            info.innerHTML = "✨ <b>TWOJA LEMONIADA JEST GOTOWA!</b> ✨<br>Zapraszamy do odbioru.";
+                            info.parentElement.style.background = "#d4edda"; // Kolor zielony
+                            clearInterval(interval); // Zatrzymujemy sprawdzanie
+                        }
+                    }
+                });
         }, 3000);
     }
 </script>
-</body>
-</html>
