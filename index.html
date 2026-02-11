@@ -3,7 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Lemonade System 2026</title>
+
+    <title>Lemonade System - Zamówienie</title>
+
+    <link rel="icon" href="https://fav.farm/🍋">
+
     <link rel="stylesheet" href="style.css">
     <meta name="theme-color" content="#FFD700">
 </head>
@@ -11,13 +15,15 @@
 
 <div class="app-container">
     <header>
-        <h1>🍋 Lemonade <span>Express</span></h1>
-        <p>Zamów i odbierz za 15 sekund!</p>
+        <h1 onclick="secretAdmin()">🍋 PROJEKT <span>Lemon</span></h1>
+        <p>Najlepsza lemoniada w okolicy!</p>
     </header>
+
+    <div class="brand-logo">🍋</div>
 
     <main>
         <div class="status-card" id="status-card">
-            <p>Wybierz swoją lemoniadę:</p>
+            <p>Wybierz smak i odbierz za chwilę:</p>
         </div>
 
         <div class="menu-grid">
@@ -41,18 +47,30 @@
     </main>
 
     <footer>
-        <button class="admin-btn" onclick="alert('Tu będzie panel Twojego serwera!')">Panel Administratora</button>
+        <p>&copy; 2026 Lemon Project Team</p>
     </footer>
 </div>
 
 <script>
+    // Funkcja zamówienia
     function order(smak) {
         const card = document.getElementById('status-card');
-        card.innerHTML = `<h3>Przyjęto: ${smak}!</h3><p>Idź do stoiska, zaraz zaczynamy!</p>`;
+        card.innerHTML = `<h3>Przyjęto: ${smak}!</h3><p>Czekaj na sygnał przy stoisku.</p>`;
         card.classList.add('active');
+        console.log("Nowe zamówienie: " + smak);
+    }
 
-        // To jest miejsce, gdzie Twój serwer otrzyma info o zamówieniu
-        console.log("Zamówiono: " + smak);
+    // Ukryty dostęp dla Ciebie
+    let clicks = 0;
+    function secretAdmin() {
+        clicks++;
+        if (clicks === 5) {
+            alert("Otwieranie panelu administratora...");
+            // Tu wpiszesz nazwę swojego tajnego pliku, np. admin-panel.html
+            // window.location.href = "admin-panel.html";
+            clicks = 0;
+        }
+        setTimeout(() => { clicks = 0; }, 3000);
     }
 </script>
 </body>

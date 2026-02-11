@@ -1,39 +1,39 @@
 :root {
-    --primary: #FFD700; /* Żółty lemoniadowy */
-    --secondary: #FFFACD;
+    --primary: #FFD700;
+    --bg: #fdfcf0;
     --dark: #2d3436;
     --white: #ffffff;
 }
 
 body {
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background-color: var(--secondary);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    background-color: var(--bg);
     margin: 0;
     display: flex;
     justify-content: center;
     color: var(--dark);
-    /* Blokada przesuwania strony na telefonie */
-    overflow: hidden;
+    overflow-x: hidden;
 }
 
 .app-container {
     width: 100%;
-    max-width: 500px;
-    height: 100vh;
+    max-width: 450px;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
-    padding: 20px;
+    padding: 30px 20px;
     box-sizing: border-box;
 }
 
 header {
     text-align: center;
-    margin-bottom: 30px;
 }
 
 header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0;
+    font-size: 2.2rem;
+    margin-bottom: 5px;
+    cursor: pointer;
+    user-select: none;
 }
 
 header h1 span {
@@ -41,19 +41,34 @@ header h1 span {
     font-weight: 300;
 }
 
+.brand-logo {
+    width: 60px;
+    height: 60px;
+    background: var(--primary);
+    margin: 10px auto 25px auto;
+    border-radius: 60% 40% 70% 30% / 50% 50% 50% 50%;
+    border: 3px solid var(--dark);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 4px 4px 0px var(--dark);
+}
+
 .status-card {
     background: var(--white);
     padding: 20px;
-    border-radius: 20px;
+    border-radius: 15px;
     text-align: center;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-    margin-bottom: 30px;
-    transition: all 0.3s ease;
+    border: 2px solid #eee;
+    margin-bottom: 25px;
+    transition: 0.3s;
 }
 
 .status-card.active {
-    background: #e1f5fe;
-    border: 2px solid #03a9f4;
+    background: #fff9db;
+    border-color: var(--primary);
+    transform: scale(1.02);
 }
 
 .menu-grid {
@@ -64,43 +79,38 @@ header h1 span {
 
 .menu-btn {
     background: var(--white);
-    border: none;
-    padding: 20px;
-    border-radius: 20px;
+    border: 2px solid var(--dark);
+    padding: 25px 15px;
+    border-radius: 15px;
     display: flex;
     flex-direction: column;
     align-items: center;
     cursor: pointer;
-    box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    transition: transform 0.1s;
+    box-shadow: 4px 4px 0px var(--dark);
+    transition: 0.1s;
 }
 
 .menu-btn:active {
-    transform: scale(0.95);
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0px var(--dark);
     background: var(--primary);
 }
 
 .menu-btn .emoji {
-    font-size: 3rem;
+    font-size: 2.5rem;
+    margin-bottom: 10px;
 }
 
 .menu-btn .name {
-    margin-top: 10px;
     font-weight: bold;
-    font-size: 1.1rem;
+    text-transform: uppercase;
+    font-size: 0.9rem;
 }
 
 footer {
     margin-top: auto;
     text-align: center;
-    padding-bottom: 10px;
-}
-
-.admin-btn {
-    background: transparent;
-    border: 1px solid #ccc;
-    padding: 8px 15px;
-    border-radius: 10px;
-    color: #888;
     font-size: 0.8rem;
+    color: #999;
+    padding-top: 40px;
 }
