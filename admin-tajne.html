@@ -2,48 +2,47 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>SYSTEM POS | Lemonade</title>
+    <title>ADMIN | Lemonade</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        /* Ciemny motyw, żeby od razu było widać, że to tryb admina */
         body { background: #1a1a1a; color: white; }
         .order-card {
-            background: #2d3436;
-            border-left: 10px solid #FFD700;
-            margin: 15px 0;
-            padding: 20px;
-            border-radius: 10px;
-            display: flex;
-            justify-content: space-between;
+            background: #2d3436; border-left: 10px solid #FFD700;
+            margin: 10px 0; padding: 15px; border-radius: 8px;
+            display: flex; justify-content: space-between; align-items: center;
         }
-        .btn-ready { background: #2ecc71; color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer; font-weight: bold;}
+        .btn-ready { background: #2ecc71; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <header>
-        <h1>🛠 Panel <span>Zarządzania</span></h1>
-        <p>Zalogowany jako: **DevLab Admin**</p>
-    </header>
-
-    <div id="admin-content">
-        <div class="status-card" style="color: black;">
-            <h3>Aktywne Zamówienia:</h3>
-            <div id="orders-list">
-                <div class="order-card">
-                    <span>🍋 Klasyczna - 1szt.</span>
-                    <button class="btn-ready" onclick="this.parentElement.remove()">ZREALIZUJ</button>
-                </div>
-            </div>
-        </div>
-    </div>
-
+    <h1>🛠 Aktywne <span>Zamówienia</span></h1>
+    <div id="orders-list">Wczytywanie z bazy SQLite...</div>
     <button onclick="window.location.href='index.html'" style="margin-top:20px; background:none; border:none; color:gray; cursor:pointer;">← Powrót do menu</button>
 </div>
 
 <script>
-    // Prosta weryfikacja IP (opcjonalnie w przyszłości)
-    console.log("Panel admina gotowy na PC: " + window.location.hostname);
+    const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+
+    function odswiez() {
+        fetch(`${API_URL}/list-zamowienia`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('orders-list');
+                list.innerHTML = data.length ? "" : "Brak nowych zamówień.";
+                data.forEach(zam => {
+                    list.innerHTML += `
+                            <div class="order-card">
+                                <span>[${zam.godzina}] <b>${zam.produkt}</b></span>
+                                <button class="btn-ready" onclick="this.parentElement.remove()">GOTOWE</button>
+                            </div>`;
+                });
+            })
+            .catch(err => console.error("Serwer offline"));
+    }
+
+    setInterval(odswiez, 3000); // Odświeżaj co 3 sekundy
+    odswiez();
 </script>
 </body>
 </html>

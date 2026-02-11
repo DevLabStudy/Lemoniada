@@ -2,76 +2,61 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-
-    <title>Lemonade System - Zamówienie</title>
-
-    <link rel="icon" href="https://fav.farm/🍋">
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lemoniada System 2026</title>
     <link rel="stylesheet" href="style.css">
-    <meta name="theme-color" content="#FFD700">
 </head>
 <body>
-
 <div class="app-container">
     <header>
-        <h1 onclick="secretAdmin()">🍋 PROJEKT <span>Lemon</span></h1>
-        <p>Najlepsza lemoniada w okolicy!</p>
+        <h1 id="main-title" onclick="handleSecretClick()">Lemonade <span>System</span></h1>
+        <p>Najlepsze orzeźwienie w Twojej okolicy!</p>
     </header>
 
-    <div class="brand-logo">🍋</div>
-
-    <main>
-        <div class="status-card" id="status-card">
-            <p>Wybierz smak i odbierz za chwilę:</p>
+    <main class="menu-grid">
+        <div class="product-card">
+            <div class="icon">🍋</div>
+            <h3>Klasyczna</h3>
+            <p>5.00 zł</p>
+            <button onclick="zamow('Klasyczna')">ZAMÓW</button>
         </div>
-
-        <div class="menu-grid">
-            <button class="menu-btn" onclick="order('Klasyczna Cytryna')">
-                <span class="emoji">🍋</span>
-                <span class="name">Klasyczna</span>
-            </button>
-            <button class="menu-btn" onclick="order('Truskawkowa')">
-                <span class="emoji">🍓</span>
-                <span class="name">Truskawka</span>
-            </button>
-            <button class="menu-btn" onclick="order('Arbuzowa')">
-                <span class="emoji">🍉</span>
-                <span class="name">Arbuz</span>
-            </button>
-            <button class="menu-btn" onclick="order('Lodowa Mięta')">
-                <span class="emoji">🍃</span>
-                <span class="name">Mięta</span>
-            </button>
+        <div class="product-card">
+            <div class="icon">🍓</div>
+            <h3>Truskawkowa</h3>
+            <p>6.50 zł</p>
+            <button onclick="zamow('Truskawkowa')">ZAMÓW</button>
         </div>
     </main>
-
-    <footer>
-        <p>&copy; 2026 Lemon Project Team</p>
-    </footer>
 </div>
 
 <script>
-    // Funkcja zamówienia
-    function order(smak) {
-        const card = document.getElementById('status-card');
-        card.innerHTML = `<h3>Przyjęto: ${smak}!</h3><p>Czekaj na sygnał przy stoisku.</p>`;
-        card.classList.add('active');
-        console.log("Nowe zamówienie: " + smak);
+    const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+    let clickCount = 0;
+
+    function handleSecretClick() {
+        clickCount++;
+        if (clickCount >= 5) {
+            const pin = prompt("Wprowadź kod dostępu:");
+            if (pin === "1337") {
+                window.location.href = "admin-tajne.html";
+            } else {
+                alert("Błędny kod!");
+                clickCount = 0;
+            }
+        }
+        // Reset licznika po 3 sekundach bezczynności
+        setTimeout(() => { clickCount = 0; }, 3000);
     }
 
-    let adminCode = "";
-    function secretAdmin() {
-        // Reaguje na każde kliknięcie w nagłówek
-        // Możesz np. kazać kuzynowi klikać 3 razy, żeby wywołać okno
-        let password = prompt("Podaj kod dostępu:");
-
-        if (password === "1337") { // Twój tajny PIN
-            alert("Autoryzacja pomyślna!");
-            window.location.href = "admin-tajne.html";
-        } else {
-            alert("Błędny kod. Próba zapisana w logach."); // Mały straszak na ciekawskich
-        }
+    function zamow(produkt) {
+        fetch(`${API_URL}/zamow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ produkt: produkt })
+        })
+            .then(res => res.json())
+            .then(data => alert(`Zamówiono ${produkt}! (Nr: ${data.id})`))
+            .catch(err => alert("Błąd połączenia z serwerem PC!"));
     }
 </script>
 </body>
