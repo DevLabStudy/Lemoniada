@@ -3,119 +3,108 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade System</title>
-    <link rel="stylesheet" href="style.css">
+    <title>Lemoniada Bar</title>
+    <style>
+        body { font-family: sans-serif; background: linear-gradient(135deg, #f1c40f, #f39c12); margin: 0; display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
+        .app { max-width: 400px; width: 100%; background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; height: fit-content; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .card { background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; }
+        .card span { font-size: 40px; }
+        .add-btn { background: #2ecc71; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .status-box { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-top: 20px; border: 3px solid #eee; }
+        .admin-dot { position: fixed; bottom: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.03); border-radius: 50%; cursor: pointer; }
+    </style>
 </head>
 <body>
-<div class="app-container">
+<div class="app">
     <h1>Lemonade <span>System</span></h1>
 
-    <div class="menu-grid">
+    <div class="grid">
         <div class="card">
             <span>🍋</span>
-            <h3>Klasyk</h3>
+            <h4>Klasyk</h4>
             <p>5.00 zł</p>
-            <button onclick="add('Klasyczna', 5)">Dodaj</button>
+            <button class="add-btn" onclick="addToCart('Klasyczna', 5)">Dodaj</button>
         </div>
         <div class="card">
             <span>🍊</span>
-            <h3>Pomarańcz</h3>
+            <h4>Pomarańcz</h4>
             <p>6.50 zł</p>
-            <button onclick="add('Pomarańczowa', 6.5)">Dodaj</button>
+            <button class="add-btn" onclick="addToCart('Pomarańczowa', 6.5)">Dodaj</button>
         </div>
     </div>
 
-    <div id="cart" class="cart-area" style="display:none;">
-        <h4>🛒 Twój Koszyk</h4>
-        <div id="items" style="font-size: 14px; margin-bottom: 10px;"></div>
-        <p>Suma: <b id="total">0.00</b> zł</p>
-        <button id="order-btn" class="pay-btn" style="background:#2ecc71; color:white;" onclick="openPay()">ZAMÓW</button>
+    <div id="cart" style="display:none; border-top: 2px dashed #eee; padding-top: 15px;">
+        <p id="cart-items"></p>
+        <h3>Suma: <span id="cart-total">0</span> zł</h3>
+        <button class="add-btn" style="width:100%; padding:15px;" onclick="sendOrder()">ZAMÓW I ZAPŁAĆ</button>
     </div>
 
-    <div id="status-view"></div>
+    <div id="status-area"></div>
 </div>
 
-<div id="pay-modal" class="modal">
-    <h3 style="margin-top:0;">Płatność:</h3>
-    <button class="pay-btn" style="background:#2ecc71; color:white;" onclick="send('Gotówka')">💵 Gotówka</button>
-    <button class="pay-btn" style="background:#eb4d4b; color:white;" onclick="copyAndSend('668078310', 'BLIK (668)')">📱 668 078 310</button>
-    <button class="pay-btn" style="background:#eb4d4b; color:white;" onclick="copyAndSend('537282634', 'BLIK (537)')">📱 537 282 634</button>
-    <button class="pay-btn" style="background:#eee; color:#333;" onclick="closePay()">Anuluj</button>
-</div>
-
-<div class="admin-trigger" onclick="aTrig()"></div>
+<div class="admin-dot" onclick="checkAdmin()"></div>
 
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
     let cart = [];
     let clicks = 0;
 
-    function aTrig() {
+    function checkAdmin() {
         clicks++;
         if(clicks >= 5) {
             let p = prompt("PIN:");
             if(p === "1337") window.location.href = "admin-tajne.html";
-            else clicks = 0;
         }
-        setTimeout(() => clicks = 0, 5000);
+        setTimeout(() => clicks = 0, 3000);
     }
 
-    function add(name, price) {
+    function addToCart(name, price) {
         cart.push({name, price});
         document.getElementById('cart').style.display = 'block';
-        document.getElementById('items').innerHTML = cart.map(i => `• ${i.name}`).join('<br>');
-        document.getElementById('total').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
+        document.getElementById('cart-items').innerText = cart.map(i => i.name).join(", ");
+        document.getElementById('cart-total').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
     }
 
-    function openPay() { document.getElementById('pay-modal').style.display = 'block'; }
-    function closePay() { document.getElementById('pay-modal').style.display = 'none'; }
-
-    function copyAndSend(nr, metoda) {
-        navigator.clipboard.writeText(nr);
-        alert("Numer skopiowany!");
-        send(metoda);
-    }
-
-    function send(platnosc) {
-        const suma = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
-        const produkty = cart.map(i => i.name).join(", ");
+    function sendOrder() {
+        const total = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
+        const items = cart.map(i => i.name).join(", ");
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty, suma, platnosc })
+            body: JSON.stringify({ produkty: items, suma: total, platnosc: 'BLIK' })
         }).then(r => r.json()).then(data => {
-            closePay();
+            alert("Zamówienie przyjęte!");
             document.getElementById('cart').style.display = 'none';
             cart = [];
-            track(data.id);
+            trackOrder(data.id);
         });
     }
 
-    function track(id) {
-        const v = document.getElementById('status-view');
-        setInterval(() => {
+    function trackOrder(id) {
+        const area = document.getElementById('status-area');
+        const itv = setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
                 const z = data.find(o => o.id === id);
-                if(z) v.innerHTML = `<div style="background:white; padding:15px; border-radius:15px; margin-top:15px; border-left: 5px solid #f1c40f;"><b>Status #${id}: ${z.status}</b></div>`;
+                if(z) {
+                    let col = "#f1c40f";
+                    if(z.status === 'W REALIZACJI') col = "#3498db";
+                    if(z.status === 'DO ODBIORU') col = "#2ecc71";
+                    if(z.status === 'WYDANE') {
+                        area.innerHTML = "<h4>Dziękujemy! Smacznej lemoniady! 🍋</h4>";
+                        clearInterval(itv);
+                        return;
+                    }
+                    area.innerHTML = `
+                            <div class="status-box" style="border-color: ${col}">
+                                <small>Zamówienie #${id}</small>
+                                <h3 style="color:${col}">${z.status}</h3>
+                                ${z.status === 'DO ODBIORU' ? '<b>ZAPRASZAMY PO ODBIÓR! 🎉</b>' : ''}
+                            </div>`;
+                }
             });
-        }, 5000);
+        }, 4000);
     }
-
-    function check() {
-        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(stan => {
-            const btn = document.getElementById('order-btn');
-            if(stan.kubki <= 0 || stan.przerwa) {
-                btn.disabled = true;
-                btn.innerText = stan.przerwa ? "PRZERWA" : "WYPRZEDANE";
-                btn.style.background = "#bdc3c7";
-            } else {
-                btn.disabled = false;
-                btn.innerText = "ZAMÓW";
-                btn.style.background = "#2ecc71";
-            }
-        });
-    }
-    setInterval(check, 5000);
 </script>
 </body>
 </html>
