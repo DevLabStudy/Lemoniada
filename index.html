@@ -7,70 +7,88 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-container">
+<div class="app-container" style="position: relative;">
     <h1>Lemonade <span>System</span></h1>
 
     <div class="menu-grid">
         <div class="card">
-            <span style="font-size:30px; cursor:pointer;" onclick="aTrig()">🍋</span>
-            <h3>Klasyk</h3><p>5.00 zł</p>
+            <span style="font-size:40px; user-select:none;">🍋</span>
+            <h3>Klasyk</h3>
+            <p>5.00 zł</p>
             <button onclick="add('Klasyczna', 5)">Dodaj</button>
         </div>
         <div class="card">
-            <span style="font-size:30px">🍊</span>
-            <h3>Pomarańcz</h3><p>6.50 zł</p>
+            <span style="font-size:40px;">🍊</span>
+            <h3>Pomarańcz</h3>
+            <p>6.50 zł</p>
             <button onclick="add('Pomarańczowa', 6.5)">Dodaj</button>
         </div>
     </div>
 
-    <div id="cart" class="card" style="display:none; background:#fffcf0; margin-top:10px;">
-        <h4>🛒 Koszyk</h4>
-        <div id="items" style="font-size:13px; text-align:left;"></div>
+    <div id="cart" class="card" style="display:none; background:#fffcf0; margin-top:10px; border: 2px solid #f1c40f;">
+        <h4>🛒 Twój Koszyk</h4>
+        <div id="items" style="font-size:14px; text-align:left; margin-bottom: 10px;"></div>
         <p>Suma: <b id="total">0</b> zł</p>
-        <button onclick="openPay()" style="background:#2ecc71">ZAMAWIAM</button>
+        <button onclick="openPay()" style="background:#2ecc71">PRZEJDŹ DO ZAMÓWIENIA</button>
     </div>
 
     <div id="status-view"></div>
+
+    <div onclick="aTrig()" style="position:absolute; bottom:5px; right:5px; width:20px; height:20px; opacity:0.05; cursor:pointer; user-select:none;">.</div>
 </div>
 
 <div id="pay-modal" class="modal">
-    <h3>Płatność:</h3>
-    <button onclick="send('Gotówka')" style="background:#2ecc71">💵 Gotówka</button>
-    <p style="font-size:10px; color:gray; margin:10px 0;">Kliknij numer (BLIK):</p>
-    <button onclick="copyPay('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px;">📱 668 078 310</button>
-    <button onclick="copyPay('537282634', 'BLIK (537)')" style="background:#eb4d4b">📱 537 282 634</button>
-    <button onclick="closePay()" style="background:gray; margin-top:10px;">Anuluj</button>
+    <h3 style="margin-top:0;">Forma płatności:</h3>
+    <button onclick="send('Gotówka')" style="background:#2ecc71; margin-bottom:15px;">💵 Gotówka przy odbiorze</button>
+
+    <div style="background:#f9f9f9; padding:10px; border-radius:10px;">
+        <p style="font-size:11px; color:gray; margin-bottom:8px;">Kliknij numer, aby skopiować (BLIK):</p>
+        <button onclick="copyPay('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px; font-size:13px;">📱 668 078 310</button>
+        <button onclick="copyPay('537282634', 'BLIK (537)')" style="background:#eb4d4b; font-size:13px;">📱 537 282 634</button>
+    </div>
+
+    <button onclick="closePay()" style="background:gray; margin-top:15px;">Anuluj</button>
 </div>
 
 <script>
-    const API = "TU_WKLEJ_LINK_Z_CLOUDFLARE";
+    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+
     let cart = [];
     let ac = 0;
 
     function aTrig() {
-        ac++; if(ac >= 5) { let p = prompt("PIN:"); if(p==="1337") window.location.href="admin-tajne.html"; ac=0; }
-        setTimeout(()=> ac=0, 3000);
+        ac++;
+        if(ac >= 5) {
+            let p = prompt("Podaj PIN Szefa:");
+            if(p === "1337") {
+                window.location.href = "admin-tajne.html";
+            } else {
+                ac = 0;
+            }
+        }
+        setTimeout(() => { ac = 0; }, 4000);
     }
 
     function add(n, p) {
-        cart.push({n, p});
+        cart.push({name: n, price: p});
         document.getElementById('cart').style.display = 'block';
-        document.getElementById('items').innerHTML = cart.map(i => `• ${i.n}`).join('<br>');
-        document.getElementById('total').innerText = cart.reduce((s, i) => s + i.p, 0).toFixed(2);
+        document.getElementById('items').innerHTML = cart.map(i => `• ${i.name} (${i.price.toFixed(2)} zł)`).join('<br>');
+        document.getElementById('total').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
     }
 
     function openPay() { document.getElementById('pay-modal').style.display = 'block'; }
     function closePay() { document.getElementById('pay-modal').style.display = 'none'; }
 
-    function copyPay(nr, m) {
-        navigator.clipboard.writeText(nr);
-        alert("Skopiowano numer!");
-        send(m);
+    function copyPay(nr, metoda) {
+        navigator.clipboard.writeText(nr).then(() => {
+            alert("Skopiowano numer: " + nr);
+            send(metoda);
+        });
     }
 
     function send(metoda) {
-        const suma = cart.reduce((s, i) => s + i.p, 0).toFixed(2);
-        const produkty = cart.map(i => i.n).join(", ");
+        const suma = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
+        const produkty = cart.map(i => i.name).join(", ");
 
         fetch(`${API}/zamow`, {
             method: 'POST',
@@ -80,25 +98,27 @@
             .then(res => res.json())
             .then(data => {
                 closePay();
-                document.getElementById('cart').style.display='none';
+                document.getElementById('cart').style.display = 'none';
                 cart = [];
                 track(data.id);
             });
     }
 
     function track(id) {
-        const v = document.getElementById('status-view');
-        const intr = setInterval(() => {
-            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-                const z = data.find(o => o.id === id);
-                if(z) {
-                    v.innerHTML = `<div class="status-box">Status #${id}: ${z.status}</div>`;
-                    if(z.status === 'GOTOWE') {
-                        v.innerHTML = `<div class="status-box" style="background:#d4edda">ODBIERZ LEMONIADĘ! 🍋</div>`;
-                        clearInterval(intr);
+        const view = document.getElementById('status-view');
+        const interval = setInterval(() => {
+            fetch(`${API}/list-zamowienia`)
+                .then(r => r.json())
+                .then(data => {
+                    const z = data.find(o => o.id === id);
+                    if(z) {
+                        if(z.status === 'REALIZUJEMY') view.innerHTML = `<div class="status-box" style="background:#d1ecf1">Status: REALIZUJEMY...</div>`;
+                        if(z.status === 'GOTOWE') {
+                            view.innerHTML = `<div class="status-box" style="background:#d4edda">✨ GOTOWA! ODBIERZ ✨</div>`;
+                            clearInterval(interval);
+                        }
                     }
-                }
-            });
+                });
         }, 3000);
     }
 </script>
