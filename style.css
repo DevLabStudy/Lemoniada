@@ -10,18 +10,30 @@ body {
     background: white; padding: 30px; border-radius: 25px;
     box-shadow: 0 15px 35px rgba(0,0,0,0.15);
     text-align: center; width: 350px;
+    position: relative; /* Potrzebne do pozycjonowania ukrytego wejścia */
 }
 
+h1 { color: #333; margin-bottom: 5px; }
+h1 span { color: #f8b500; } /* Naprawa koloru ikonki/tekstu */
+
 .menu-grid { display: flex; gap: 15px; margin-top: 20px; }
-.card { background: #f9f9f9; padding: 15px; border-radius: 15px; flex: 1; border: 2px solid #eee; }
-.card h3 { margin: 10px 0; font-size: 16px; }
+.card { background: #f9f9f9; padding: 15px; border-radius: 15px; flex: 1; border: 2px solid #eee; color: #333; }
 
 button {
     background: #333; color: white; border: none; padding: 10px;
     border-radius: 10px; cursor: pointer; width: 100%; font-weight: bold;
+    transition: 0.2s;
 }
 
-.status-box {
-    margin-top: 20px; padding: 15px; background: #fff3cd;
-    border-radius: 10px; border: 1px solid #ffeeba; font-size: 14px;
+button:hover { background: #444; }
+
+/* Ukryty przycisk wejścia na samym dole */
+.secret-trigger {
+    position: absolute;
+    bottom: 5px;
+    right: 5px;
+    width: 20px;
+    height: 20px;
+    opacity: 0.05; /* Prawie niewidoczny */
+    cursor: pointer;
 }
