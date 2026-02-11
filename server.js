@@ -9,13 +9,13 @@ app.use(express.json());
 let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    produkty TEXT,
-    suma TEXT,
-    platnosc TEXT,
-    godzina TEXT,
-    status TEXT DEFAULT 'PRZYJĘTE'
-)`);
+                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                  produkty TEXT,
+                                                  suma TEXT,
+                                                  platnosc TEXT,
+                                                  godzina TEXT,
+                                                  status TEXT DEFAULT 'PRZYJĘTE'
+        )`);
 
 let stanKubkow = 0;
 let statusPrzerwy = false;
@@ -77,4 +77,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM READY - PORT 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 SERWER LEMONIADY GOTOWY'));
