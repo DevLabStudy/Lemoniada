@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lemonade System 2026</title>
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#FFD700">
+</head>
+<body>
+
+<div class="app-container">
+    <header>
+        <h1>🍋 Lemonade <span>Express</span></h1>
+        <p>Zamów i odbierz za 15 sekund!</p>
+    </header>
+
+    <main>
+        <div class="status-card" id="status-card">
+            <p>Wybierz swoją lemoniadę:</p>
+        </div>
+
+        <div class="menu-grid">
+            <button class="menu-btn" onclick="order('Klasyczna Cytryna')">
+                <span class="emoji">🍋</span>
+                <span class="name">Klasyczna</span>
+            </button>
+            <button class="menu-btn" onclick="order('Truskawkowa')">
+                <span class="emoji">🍓</span>
+                <span class="name">Truskawka</span>
+            </button>
+            <button class="menu-btn" onclick="order('Arbuzowa')">
+                <span class="emoji">🍉</span>
+                <span class="name">Arbuz</span>
+            </button>
+            <button class="menu-btn" onclick="order('Lodowa Mięta')">
+                <span class="emoji">🍃</span>
+                <span class="name">Mięta</span>
+            </button>
+        </div>
+    </main>
+
+    <footer>
+        <button class="admin-btn" onclick="alert('Tu będzie panel Twojego serwera!')">Panel Administratora</button>
+    </footer>
+</div>
+
+<script>
+    function order(smak) {
+        const card = document.getElementById('status-card');
+        card.innerHTML = `<h3>Przyjęto: ${smak}!</h3><p>Idź do stoiska, zaraz zaczynamy!</p>`;
+        card.classList.add('active');
+
+        // To jest miejsce, gdzie Twój serwer otrzyma info o zamówieniu
+        console.log("Zamówiono: " + smak);
+    }
+</script>
+</body>
+</html>
