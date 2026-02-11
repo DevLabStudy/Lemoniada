@@ -6,30 +6,42 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// Baza danych
 let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  produkty TEXT,
-                                                  suma TEXT,
-                                                  platnosc TEXT,
-                                                  godzina TEXT,
-                                                  status TEXT DEFAULT 'PRZYJĘTE'
-        )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
 let stanKubkow = 0;
-let statusDostawy = false;
+let statusPrzerwy = false;
+let powodPrzerwy = "";
 
-// Endpointy
-app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow, przerwa: statusDostawy }));
+app.get('/stan-magazynu', (req, res) => {
+    res.json({
+        kubki: stanKubkow,
+        przerwa: statusPrzerwy || stanKubkow <= 0,
+        powod: stanKubkow <= 0 ? "Brak kubków! Zaraz uzupełnimy." : powodPrzerwy
+    });
+});
 
 app.post('/ustaw-kubki', (req, res) => {
     stanKubkow = parseInt(req.body.ilosc) || 0;
     res.json({ success: true });
 });
 
+app.post('/ustaw-przerwe', (req, res) => {
+    statusPrzerwy = req.body.przerwa;
+    powodPrzerwy = req.body.powod;
+    res.json({ success: true });
+});
+
 app.post('/zamow', (req, res) => {
+    if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
     const { produkty, suma, platnosc } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina) VALUES (?, ?, ?, ?)`,
@@ -40,6 +52,7 @@ app.post('/zamow', (req, res) => {
 });
 
 app.post('/sprzedaz-stacjonarna', (req, res) => {
+    if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
     const { produkty, suma } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, status) VALUES (?, ?, 'Gotówka (Stacjonarna)', ?, 'WYDANE')`,
@@ -60,11 +73,8 @@ app.post('/update-status', (req, res) => {
 
 app.post('/reset-bazy', (req, res) => {
     db.run(`DELETE FROM zamowienia`, () => {
-        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => {
-            console.log("🧹 Baza wyczyszczona");
-            res.json({ success: true });
-        });
+        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true }));
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('✅ SERWER DZIAŁA NA PORCIE 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM READY - PORT 3000'));

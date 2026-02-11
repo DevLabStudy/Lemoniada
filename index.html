@@ -3,108 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada Bar</title>
+    <title>Lemoniada Bar - Zamów Online</title>
     <style>
-        body { font-family: sans-serif; background: linear-gradient(135deg, #f1c40f, #f39c12); margin: 0; display: flex; justify-content: center; min-height: 100vh; padding: 20px; }
-        .app { max-width: 400px; width: 100%; background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; height: fit-content; }
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .card { background: #fff; padding: 15px; border-radius: 15px; border: 1px solid #eee; display: flex; flex-direction: column; justify-content: space-between; min-height: 180px; }
-        .card span { font-size: 40px; }
-        .add-btn { background: #2ecc71; color: white; border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .status-box { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-top: 20px; border: 3px solid #eee; }
-        .admin-dot { position: fixed; bottom: 5px; right: 5px; width: 20px; height: 20px; background: rgba(0,0,0,0.03); border-radius: 50%; cursor: pointer; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; margin: 0; padding: 20px; display: flex; justify-content: center; min-height: 100vh; }
+        .app { max-width: 450px; width: 100%; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); text-align: center; height: fit-content; }
+
+        .product-card { border: 2px solid #f9f9f9; padding: 15px; border-radius: 20px; margin: 15px 0; display: flex; align-items: center; justify-content: space-between; transition: 0.3s; }
+        .product-card:hover { border-color: #f1c40f; }
+
+        .btn-add { background: #2ecc71; color: white; border: none; padding: 12px 20px; border-radius: 12px; cursor: pointer; font-weight: bold; }
+
+        #cart-area { display: none; border-top: 3px dashed #eee; margin-top: 25px; padding-top: 20px; }
+        .payment-box { text-align: left; background: #f7f7f7; padding: 15px; border-radius: 15px; margin: 15px 0; border: 1px solid #eee; }
+
+        .order-status { background: #fffde7; padding: 20px; border-radius: 20px; margin-top: 20px; border: 4px solid #f1c40f; animation: pulse 2s infinite; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.02); } 100% { transform: scale(1); } }
+
+        /* Nakładka PRZERWA */
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.96); display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 9999; text-align: center; padding: 20px; }
     </style>
 </head>
 <body>
-<div class="app">
-    <h1>Lemonade <span>System</span></h1>
 
-    <div class="grid">
-        <div class="card">
-            <span>🍋</span>
-            <h4>Klasyk</h4>
-            <p>5.00 zł</p>
-            <button class="add-btn" onclick="addToCart('Klasyczna', 5)">Dodaj</button>
-        </div>
-        <div class="card">
-            <span>🍊</span>
-            <h4>Pomarańcz</h4>
-            <p>6.50 zł</p>
-            <button class="add-btn" onclick="addToCart('Pomarańczowa', 6.5)">Dodaj</button>
-        </div>
-    </div>
-
-    <div id="cart" style="display:none; border-top: 2px dashed #eee; padding-top: 15px;">
-        <p id="cart-items"></p>
-        <h3>Suma: <span id="cart-total">0</span> zł</h3>
-        <button class="add-btn" style="width:100%; padding:15px;" onclick="sendOrder()">ZAMÓW I ZAPŁAĆ</button>
-    </div>
-
-    <div id="status-area"></div>
+<div id="closed-screen" class="overlay">
+    <span style="font-size: 80px;">⚠️</span>
+    <h1 style="color: #e74c3c; font-size: 32px; margin: 10px 0;">PRZERWA TECHNICZNA</h1>
+    <p id="closed-msg" style="font-size: 18px; color: #555;"></p>
+    <p style="color: #aaa;">Zajrzyj do nas za kilka minut!</p>
 </div>
 
-<div class="admin-dot" onclick="checkAdmin()"></div>
+<div class="app">
+    <h1 style="margin-bottom: 5px;">🍋 Lemonade Bar</h1>
+    <p style="color: #888; margin-top: 0;">Najlepsza ochłoda w mieście!</p>
+
+    <div class="product-card">
+        <div style="text-align: left;">
+            <b style="font-size: 18px;">Lemoniada Klasyczna</b><br>
+            <span style="color: #2ecc71; font-weight: bold;">5.00 zł</span>
+        </div>
+        <button class="btn-add" onclick="addToCart('Klasyczna', 5.00)">DODAJ</button>
+    </div>
+
+    <div class="product-card">
+        <div style="text-align: left;">
+            <b style="font-size: 18px;">Lemoniada Pomarańczowa</b><br>
+            <span style="color: #2ecc71; font-weight: bold;">6.50 zł</span>
+        </div>
+        <button class="btn-add" onclick="addToCart('Pomarańczowa', 6.50)">DODAJ</button>
+    </div>
+
+    <div id="cart-area">
+        <p id="cart-items" style="font-weight: bold; color: #555;"></p>
+        <h2 style="margin: 10px 0;">Suma: <span id="cart-total" style="color: #2ecc71;">0.00</span> zł</h2>
+
+        <div class="payment-box">
+            <b>Metoda płatności:</b><br>
+            <div style="margin-top: 8px;">
+                <label><input type="radio" name="pay-method" value="BLIK" checked> BLIK (płacisz kodem przy odbiorze)</label><br><br>
+                <label><input type="radio" name="pay-method" value="Gotówka"> Gotówka (przy odbiorze)</label>
+            </div>
+        </div>
+
+        <button class="btn-add" style="width: 100%; padding: 18px; font-size: 18px; background: #27ae60;" onclick="sendOrder()">ZAMÓW I ODBIERZ</button>
+    </div>
+
+    <div id="status-container"></div>
+</div>
 
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
     let cart = [];
-    let clicks = 0;
-
-    function checkAdmin() {
-        clicks++;
-        if(clicks >= 5) {
-            let p = prompt("PIN:");
-            if(p === "1337") window.location.href = "admin-tajne.html";
-        }
-        setTimeout(() => clicks = 0, 3000);
-    }
 
     function addToCart(name, price) {
         cart.push({name, price});
-        document.getElementById('cart').style.display = 'block';
-        document.getElementById('cart-items').innerText = cart.map(i => i.name).join(", ");
-        document.getElementById('cart-total').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
+        document.getElementById('cart-area').style.display = 'block';
+        document.getElementById('cart-items').innerText = "Wybrano: " + cart.map(i => i.name).join(", ");
+        document.getElementById('cart-total').innerText = cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
     }
 
     function sendOrder() {
         const total = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
         const items = cart.map(i => i.name).join(", ");
+        const method = document.querySelector('input[name="pay-method"]:checked').value;
+
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty: items, suma: total, platnosc: 'BLIK' })
+            body: JSON.stringify({ produkty: items, suma: total, platnosc: method })
         }).then(r => r.json()).then(data => {
-            alert("Zamówienie przyjęte!");
-            document.getElementById('cart').style.display = 'none';
+            alert("Zamówienie przyjęte! Zapraszamy do stoiska.");
             cart = [];
-            trackOrder(data.id);
-        });
+            document.getElementById('cart-area').style.display = 'none';
+            trackMyOrder(data.id);
+        }).catch(() => alert("Błąd połączenia z serwerem!"));
     }
 
-    function trackOrder(id) {
-        const area = document.getElementById('status-area');
-        const itv = setInterval(() => {
+    function trackMyOrder(id) {
+        const container = document.getElementById('status-container');
+        const checkInterval = setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-                const z = data.find(o => o.id === id);
-                if(z) {
-                    let col = "#f1c40f";
-                    if(z.status === 'W REALIZACJI') col = "#3498db";
-                    if(z.status === 'DO ODBIORU') col = "#2ecc71";
-                    if(z.status === 'WYDANE') {
-                        area.innerHTML = "<h4>Dziękujemy! Smacznej lemoniady! 🍋</h4>";
-                        clearInterval(itv);
+                const myOrder = data.find(o => o.id === id);
+                if(myOrder) {
+                    let statusColor = "#f1c40f";
+                    let msg = "Twoje zamówienie zostało przyjęte!";
+
+                    if(myOrder.status === 'W REALIZACJI') { statusColor = "#3498db"; msg = "Wyciskamy owoce... 🍋"; }
+                    if(myOrder.status === 'DO ODBIORU') { statusColor = "#2ecc71"; msg = "GOTOWA! Zapraszamy po odbiór! 🎉"; }
+                    if(myOrder.status === 'WYDANE') {
+                        container.innerHTML = "<h3>Dziękujemy! Smacznego! 🍋</h3>";
+                        clearInterval(checkInterval);
+                        setTimeout(() => { container.innerHTML = ""; }, 5000);
                         return;
                     }
-                    area.innerHTML = `
-                            <div class="status-box" style="border-color: ${col}">
+
+                    container.innerHTML = `
+                            <div class="order-status" style="border-color: ${statusColor}">
                                 <small>Zamówienie #${id}</small>
-                                <h3 style="color:${col}">${z.status}</h3>
-                                ${z.status === 'DO ODBIORU' ? '<b>ZAPRASZAMY PO ODBIÓR! 🎉</b>' : ''}
+                                <h2 style="margin: 10px 0; color: ${statusColor}">${myOrder.status}</h2>
+                                <p style="font-weight: bold;">${msg}</p>
                             </div>`;
                 }
             });
         }, 4000);
     }
+
+    // Monitoring statusu stoiska (przerwy)
+    setInterval(() => {
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(data => {
+            const screen = document.getElementById('closed-screen');
+            if(data.przerwa) {
+                screen.style.display = 'flex';
+                document.getElementById('closed-msg').innerText = data.powod;
+            } else {
+                screen.style.display = 'none';
+            }
+        });
+    }, 5000);
 </script>
 </body>
 </html>
