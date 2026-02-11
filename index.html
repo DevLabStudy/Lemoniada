@@ -3,122 +3,61 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada u Chłopaków</title>
+    <title>Lemoniada</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        /* Szybki fix, żeby przycisk "wyłączony" wyglądał czytelnie */
-        button:disabled {
-            cursor: not-allowed;
-            opacity: 0.7;
-        }
-        .status-box {
-            margin-top: 15px;
-            padding: 10px;
-            border-radius: 8px;
-            font-weight: bold;
-            text-align: center;
-        }
-    </style>
 </head>
 <body>
-<div class="app-container" style="position: relative;">
+<div class="app-container">
     <h1>Lemonade <span>System</span></h1>
 
     <div class="menu-grid">
         <div class="card">
-            <span style="font-size:40px; user-select:none;">🍋</span>
-            <h3>Klasyk</h3>
+            <h3>🍋 Klasyk</h3>
             <p>5.00 zł</p>
-            <button class="add-btn" onclick="add('Klasyczna', 5)">Dodaj</button>
+            <button onclick="add('Klasyczna', 5)">Dodaj</button>
         </div>
         <div class="card">
-            <span style="font-size:40px;">🍊</span>
-            <h3>Pomarańcz</h3>
+            <h3>🍊 Pomarańcz</h3>
             <p>6.50 zł</p>
-            <button class="add-btn" onclick="add('Pomarańczowa', 6.5)">Dodaj</button>
+            <button onclick="add('Pomarańczowa', 6.5)">Dodaj</button>
         </div>
     </div>
 
-    <div id="cart" class="card" style="display:none; background:#fffcf0; margin-top:10px; border: 2px solid #f1c40f;">
-        <h4>🛒 Twój Koszyk</h4>
-        <div id="items" style="font-size:14px; text-align:left; margin-bottom: 10px;"></div>
-        <p>Suma: <b id="total">0</b> zł</p>
-        <button id="main-order-btn" onclick="openPay()" style="background:#2ecc71; width: 100%; padding: 12px; font-weight: bold;">PRZEJDŹ DO ZAMÓWIENIA</button>
+    <div id="cart" class="card" style="display:none; margin-top:20px; border:2px solid #f1c40f;">
+        <h4>Koszyk</h4>
+        <div id="items"></div>
+        <p>Suma: <b id="total">0.00</b> zł</p>
+        <button id="order-btn" onclick="openPay()" style="background:#2ecc71; width:100%; color:white; padding:10px;">ZAMÓW</button>
     </div>
 
     <div id="status-view"></div>
-
-    <div onclick="aTrig()" style="position:absolute; bottom:5px; right:5px; width:25px; height:25px; opacity:0.1; cursor:pointer; user-select:none;">.</div>
 </div>
 
-<div id="pay-modal" class="modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); background:white; padding:20px; border-radius:15px; box-shadow: 0 0 20px rgba(0,0,0,0.5); z-index:100; width: 80%;">
-    <h3 style="margin-top:0; color: black;">Wybierz płatność:</h3>
-    <button onclick="send('Gotówka')" style="background:#2ecc71; margin-bottom:10px; width:100%; color:white;">💵 Gotówka (na stoisku)</button>
-
-    <div style="background:#f0f0f0; padding:10px; border-radius:10px; color: black;">
-        <p style="font-size:11px; color:gray; margin-bottom:5px;">BLIK (kliknij numer aby skopiować):</p>
-        <button onclick="copyPay('668078310', 'BLIK (668)')" style="background:#eb4d4b; margin-bottom:5px; font-size:12px; width:100%;">📱 668 078 310</button>
-        <button onclick="copyPay('537282634', 'BLIK (537)')" style="background:#eb4d4b; font-size:12px; width:100%;">📱 537 282 634</button>
-    </div>
-
-    <button onclick="closePay()" style="background:gray; margin-top:10px; width:100%; color:white;">Anuluj</button>
+<div id="pay-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.5); width:80%; color:black; z-index:1000;">
+    <h3>Metoda płatności:</h3>
+    <button onclick="send('Gotówka')" style="background:#2ecc71; color:white; width:100%; margin-bottom:10px;">💵 Gotówka przy odbiorze</button>
+    <button onclick="copyAndSend('668078310', 'BLIK')" style="background:#eb4d4b; color:white; width:100%;">📱 BLIK (Kopiuj numer)</button>
+    <button onclick="closePay()" style="background:gray; color:white; width:100%; margin-top:10px;">Anuluj</button>
 </div>
 
 <script>
-    const API = "TU_WKLEJ_TWOJ_LINK_Z_CLOUDFLARE";
-
+    const API = "TWOJ_LINK_Z_CLOUDFLARE";
     let cart = [];
-    let ac = 0;
 
-    // Funkcja ukrytego wejścia (admin)
-    function aTrig() {
-        ac++;
-        if(ac >= 5) {
-            let p = prompt("Podaj PIN:");
-            if(p === "1337") window.location.href = "admin-tajne.html";
-            else ac = 0;
-        }
-        setTimeout(() => { ac = 0; }, 5000);
-    }
-
-    // Magazyn i blokada przycisku
-    function sprawdzStan() {
-        fetch(`${API}/stan-magazynu`)
-            .then(r => r.json())
-            .then(stan => {
-                const btn = document.getElementById('main-order-btn');
-                if (stan.kubki <= 0) {
-                    btn.disabled = true;
-                    btn.innerText = "WYPRZEDANE 🍋";
-                    btn.style.background = "#bdc3c7";
-                } else if (stan.przerwa) {
-                    btn.disabled = true;
-                    btn.innerText = "PRZERWA (DOSTAWA)";
-                    btn.style.background = "#e67e22";
-                } else {
-                    btn.disabled = false;
-                    btn.innerText = "PRZEJDŹ DO ZAMÓWIENIA";
-                    btn.style.background = "#2ecc71";
-                }
-            }).catch(e => console.log("Serwer offline"));
-    }
-
-    // Dodawanie do koszyka
     function add(n, p) {
         cart.push({name: n, price: p});
         document.getElementById('cart').style.display = 'block';
-        document.getElementById('items').innerHTML = cart.map(i => `• ${i.name} (${i.price.toFixed(2)} zł)`).join('<br>');
+        document.getElementById('items').innerHTML = cart.map(i => `• ${i.name}`).join('<br>');
         document.getElementById('total').innerText = cart.reduce((s, i) => s + i.price, 0).toFixed(2);
     }
 
     function openPay() { document.getElementById('pay-modal').style.display = 'block'; }
     function closePay() { document.getElementById('pay-modal').style.display = 'none'; }
 
-    function copyPay(nr, metoda) {
-        navigator.clipboard.writeText(nr).then(() => {
-            alert("Numer skopiowany! Po wysłaniu BLIKa kliknij przycisk zamówienia.");
-            send(metoda);
-        });
+    function copyAndSend(nr, metoda) {
+        navigator.clipboard.writeText(nr);
+        alert("Skopiowano numer: " + nr + ". Wyślij BLIK i wróć tutaj.");
+        send(metoda);
     }
 
     function send(metoda) {
@@ -139,31 +78,26 @@
             });
     }
 
-    // Śledzenie statusu zamówienia
     function track(id) {
-        const view = document.getElementById('status-view');
-        view.innerHTML = `<div class="status-box" style="background:#f1c40f">Oczekiwanie na przyjęcie...</div>`;
-
-        const interval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`)
-                .then(r => r.json())
-                .then(data => {
-                    const z = data.find(o => o.id === id);
-                    if(z) {
-                        if(z.status === 'REALIZUJEMY') {
-                            view.innerHTML = `<div class="status-box" style="background:#3498db; color:white;">Status: ROBIMY TWOJĄ LEMONIADĘ! 🍋</div>`;
-                        }
-                        if(z.status === 'GOTOWE') {
-                            view.innerHTML = `<div class="status-box" style="background:#2ecc71; color:white;">✨ GOTOWE! Odbierz przy stoisku ✨</div>`;
-                            clearInterval(interval);
-                        }
-                    }
-                });
-        }, 4000);
+        const v = document.getElementById('status-view');
+        v.innerHTML = "Przyjęto zamówienie! Czekaj na status...";
+        setInterval(() => {
+            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+                const z = data.find(o => o.id === id);
+                if(z) v.innerHTML = `<div style="padding:10px; background:#f1c40f; border-radius:10px; margin-top:10px;"><b>Status zamówienia #${id}: ${z.status}</b></div>`;
+            });
+        }, 5000);
     }
 
-    setInterval(sprawdzStan, 10000); // Sprawdzaj magazyn co 10 sek
-    sprawdzStan();
+    function checkStatus() {
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(stan => {
+            const btn = document.getElementById('order-btn');
+            if(stan.kubki <= 0) { btn.disabled = true; btn.innerText = "WYPRZEDANE"; }
+            else if(stan.przerwa) { btn.disabled = true; btn.innerText = "PRZERWA"; }
+            else { btn.disabled = false; btn.innerText = "ZAMÓW"; }
+        });
+    }
+    setInterval(checkStatus, 5000);
 </script>
 </body>
 </html>
