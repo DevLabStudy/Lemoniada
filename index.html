@@ -3,17 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade POS</title>
+    <title>Lemonade System</title>
     <link rel="stylesheet" href="style.css">
-    <style>
-        .cart-box { background: #eee; padding: 15px; border-radius: 15px; margin-top: 20px; }
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 50px rgba(0,0,0,0.5); width: 80%; z-index: 100; }
-    </style>
 </head>
 <body>
 <div class="app-container">
-    <h1 onclick="checkSecret()">Lemonade <span>System</span></h1>
+    <h1 onclick="checkSecret()" style="cursor: pointer; user-select: none;">Lemonade <span>System</span></h1>
 
     <div class="menu-grid">
         <div class="card">
@@ -26,76 +21,75 @@
         </div>
     </div>
 
-    <div class="cart-box">
-        <h4>Twój Koszyk:</h4>
-        <div id="cart-list">Pusto</div>
-        <hr>
-        <p>Suma: <b id="cart-total">0</b> zł</p>
-        <button id="order-btn" onclick="showPayment()" style="display:none; background: #27ae60;">ZAMÓW I ZAPŁAĆ</button>
+    <div id="cart-section" class="card" style="margin-top:20px; display:none; background: #fffdf0;">
+        <h4>🛒 Twój koszyk:</h4>
+        <div id="cart-items" style="text-align: left; font-size: 14px;"></div>
+        <p>Suma: <b id="total-price">0</b> zł</p>
+        <button onclick="showPayment()" style="background:#2ecc71">ZAMÓW</button>
     </div>
 
-    <div id="tracking"></div>
+    <div id="status-display"></div>
 </div>
 
-<div id="payment-modal" class="modal">
-    <h3>Wybierz formę płatności:</h3>
+<div id="payment-modal" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); background:white; padding:20px; border-radius:15px; box-shadow:0 0 20px rgba(0,0,0,0.3); z-index:1000; width:80%;">
+    <h3>Jak płacisz?</h3>
     <button onclick="finalizuj('Gotówka')" style="margin-bottom:10px">💵 Gotówka</button>
-    <button onclick="finalizuj('BLIK')" style="background: #eb4d4b">📱 BLIK</button>
-    <button onclick="closePayment()" style="background: gray; margin-top: 10px;">Anuluj</button>
+    <button onclick="finalizuj('BLIK')" style="background:#eb4d4b">📱 BLIK</button>
+    <button onclick="document.getElementById('payment-modal').style.display='none'" style="background:gray; margin-top:10px">Anuluj</button>
 </div>
 
 <script>
-    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
+    const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com"; // Upewnij się, że ten link jest z Twojego terminala!
     let cart = [];
-    let total = 0;
+    let secretClicks = 0;
+
+    function checkSecret() {
+        secretClicks++;
+        if(secretClicks >= 5) {
+            const p = prompt("PIN:");
+            if(p === "1337") window.location.href = "admin-tajne.html";
+            secretClicks = 0;
+        }
+        setTimeout(() => { secretClicks = 0; }, 2000);
+    }
 
     function addToCart(name, price) {
         cart.push({name, price});
-        renderCart();
+        updateCart();
     }
 
-    function renderCart() {
-        const list = document.getElementById('cart-list');
-        total = cart.reduce((sum, item) => sum + item.price, 0);
-        list.innerHTML = cart.map(i => `• ${i.name}`).join('<br>');
-        document.getElementById('cart-total').innerText = total.toFixed(2);
-        document.getElementById('order-btn').style.display = cart.length ? 'block' : 'none';
+    function updateCart() {
+        const div = document.getElementById('cart-items');
+        const section = document.getElementById('cart-section');
+        if(cart.length > 0) section.style.display = 'block';
+
+        div.innerHTML = cart.map(i => `• ${i.name} - ${i.price}zł`).join('<br>');
+        const sum = cart.reduce((a, b) => a + b.price, 0);
+        document.getElementById('total-price').innerText = sum.toFixed(2);
     }
 
     function showPayment() { document.getElementById('payment-modal').style.display = 'block'; }
-    function closePayment() { document.getElementById('payment-modal').style.display = 'none'; }
 
     function finalizuj(metoda) {
-        if(metoda === 'BLIK') {
-            alert("Prześlij BLIK na nr: 668 078 310 lub 537 282 634\nTytuł: Lemoniada x" + cart.length);
-        }
+        const sum = cart.reduce((a, b) => a + b.price, 0);
+        const produkty = cart.map(i => i.name).join(", ");
 
-        const produktyString = cart.map(i => i.name).join(', ');
+        if(metoda === 'BLIK') alert("BLIK na: 668078310 / 537282634\nTytuł: Lemoniada");
 
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty: produktyString, suma: total.toFixed(2), platnosc: metoda })
+            body: JSON.stringify({ produkty, suma: sum.toFixed(2), platnosc: metoda })
         })
-            .then(res => res.json())
+            .then(r => r.json())
             .then(data => {
-                closePayment();
-                cart = []; renderCart();
-                document.getElementById('tracking').innerHTML = "Zamówienie wysłane! Czekaj na status...";
-                startTracking(data.id);
-            });
+                document.getElementById('payment-modal').style.display = 'none';
+                document.getElementById('cart-section').style.display = 'none';
+                cart = [];
+                document.getElementById('status-display').innerHTML = "<h3>Wysłano!</h3><p>Czekaj na przygotowanie...</p>";
+            })
+            .catch(e => alert("Błąd serwera!"));
     }
-
-    function startTracking(id) {
-        setInterval(() => {
-            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(orders => {
-                const my = orders.find(o => o.id === id);
-                if(my) document.getElementById('tracking').innerHTML = `Status: <b>${my.status}</b>`;
-            });
-        }, 4000);
-    }
-
-    function checkSecret() { /* kod na 5 kliknięć bez zmian */ }
 </script>
 </body>
 </html>
