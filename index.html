@@ -46,9 +46,7 @@
 </div>
 
 <script>
-    // --- TUTAJ WKLEJ AKTUALNY LINK Z TUNELU ---
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
-    // ------------------------------------------
 
     let cart = [];
 
@@ -62,10 +60,16 @@
     function send() {
         const method = document.querySelector('input[name="p"]:checked').value;
         let plat = "Gotówka";
+        let numerDoSkopiowania = "";
 
         if(method === "BLIK") {
-            const num = document.querySelector('input[name="num"]:checked').value;
-            plat = "BLIK na " + num;
+            numerDoSkopiowania = document.querySelector('input[name="num"]:checked').value;
+            plat = "BLIK na " + numerDoSkopiowania;
+
+            // KOPIOWANIE NUMERU DO SCHOWKA
+            navigator.clipboard.writeText(numerDoSkopiowania).catch(err => {
+                console.error('Błąd kopiowania: ', err);
+            });
         }
 
         const bodyData = {
@@ -81,7 +85,11 @@
         })
             .then(r => r.json())
             .then(d => {
-                alert("Wysłano zamówienie!");
+                let msg = "Wysłano zamówienie!";
+                if(method === "BLIK") {
+                    msg += "\n\nNumer telefonu został skopiowany do schowka. Możesz go wkleić w aplikacji bankowej.";
+                }
+                alert(msg);
                 cart=[];
                 document.getElementById('cart').style.display='none';
                 track(d.id);
