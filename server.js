@@ -77,4 +77,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 SERWER LEMONIADY GOTOWY'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADY ONLINE'));

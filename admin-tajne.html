@@ -2,88 +2,63 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Szef - Lemoniada</title>
+    <title>Panel Szefa</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <style>
-        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 10px; margin: 0; }
+        body { font-family: sans-serif; background: #1a1a1a; color: white; padding: 10px; }
         .card { background: #2d2d2d; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid #444; }
         .btn { padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
         .on { background: #27ae60; color: white; }
         .off { background: #e74c3c; color: white; }
-        .order { background: white; color: black; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 8px solid #ccc; font-size: 14px; }
+        .order { background: white; color: black; padding: 12px; border-radius: 10px; margin-bottom: 10px; border-left: 8px solid #ccc; }
         .status-btn { width: 100%; margin-top: 10px; padding: 12px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; }
-        input[type="number"] { padding: 10px; border-radius: 8px; border: none; width: 60px; text-align: center; }
     </style>
 </head>
 <body>
 <div style="max-width: 500px; margin: auto;">
-    <h2 style="color:#f1c40f">🍋 Panel Szefa</h2>
-
     <div class="card" style="text-align:center;">
-        <button id="p-btn" class="btn on" style="width:47%" onclick="togglePause()">OTWARTE</button>
-        <button id="c-btn" class="btn on" style="width:47%" onclick="toggleCups()">KUBKI OK</button>
+        <button id="p-btn" class="btn on" style="width:90%" onclick="tglP()">STOISKO: OTWARTE</button>
     </div>
-
     <div class="card">
-        <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+        <div style="display:flex; justify-content:space-between">
             <span>Kubki: <b id="c-count">0</b></span>
-            <span style="color:#2ecc71">Utarg: <b id="money">0.00</b> zł</span>
+            <span style="color:#2ecc71">Utarg: <b id="money">0</b> zł</span>
         </div>
-        <input type="number" id="n-cups" placeholder="Ilość">
-        <button class="btn on" onclick="setCups()">USTAW</button>
+        <input type="number" id="n-cups" style="width:60px; padding:10px; margin-top:10px;">
+        <button class="btn on" onclick="set()">USTAW MAGAZYN</button>
         <hr style="opacity:0.2; margin:15px 0;">
-        <button class="btn on" style="width:48%" onclick="quick('Klasyk', 5.00)">+ KLASYK</button>
-        <button class="btn on" style="width:48%" onclick="quick('Pomarańcz', 6.50)">+ POMAR</button>
+        <button class="btn on" style="width:48%" onclick="qs('Klasyczna',5)">+ Klasyczna</button>
+        <button class="btn on" style="width:48%" onclick="qs('Pomarańczowa',6.5)">+ Pomarańczowa</button>
     </div>
-
-    <h3>📝 Zamówienia Online</h3>
-    <div id="list">Wczytywanie...</div>
-
-    <button onclick="resetDay()" style="background:#e74c3c; color:white; width:100%; padding:15px; border:none; border-radius:10px; margin-top:30px; font-weight:bold;">WYCZYŚĆ DZIEŃ</button>
+    <div id="list"></div>
+    <button onclick="reset()" style="background:#e74c3c; color:white; width:100%; padding:15px; border:none; border-radius:10px; margin-top:20px;">RESET DNIA</button>
 </div>
-
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
-    let isP = false, isC = false;
-
-    function togglePause() { isP = !isP; sync(); }
-    function toggleCups() { isC = !isC; sync(); }
-
-    function sync() {
-        const bp = document.getElementById('p-btn'); bp.className = `btn ${isP?'off':'on'}`; bp.innerText = isP?'PRZERWA':'OTWARTE';
-        const bc = document.getElementById('c-btn'); bc.className = `btn ${isC?'off':'on'}`; bc.innerText = isC?'BRAK KUBKÓW':'KUBKI OK';
-        fetch(`${API}/ustaw-przerwe`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({przerwa:isP||isC, powod:isC?"Brak kubków!":"Zaraz wracamy!"})});
+    let iP=false;
+    function tglP(){ iP=!iP; srv(); }
+    function srv(){
+        const b = document.getElementById('p-btn'); b.className = `btn ${iP?'off':'on'}`; b.innerText = iP?'STOISKO: PRZERWA':'STOISKO: OTWARTE';
+        fetch(`${API}/ustaw-przerwe`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({przerwa:iP,powod:"Zaraz wracamy!"})});
     }
-
-    function setCups() {
-        fetch(`${API}/ustaw-kubki`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ilosc:document.getElementById('n-cups').value})});
-    }
-
-    function quick(p, s) {
-        fetch(`${API}/sprzedaz-stacjonarna`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produkty:p, suma:s.toFixed(2)})});
-    }
-
-    function load() {
-        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(s => document.getElementById('c-count').innerText = s.kubki);
-        fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-            let m = 0, h = "";
-            data.forEach(z => {
-                m += parseFloat(z.suma);
+    function set(){ fetch(`${API}/ustaw-kubki`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ilosc:document.getElementById('n-cups').value})}); }
+    function qs(p,s){ fetch(`${API}/sprzedaz-stacjonarna`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({produkty:p,suma:s.toFixed(2)})}); }
+    function load(){
+        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(s=>document.getElementById('c-count').innerText=s.kubki);
+        fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data=>{
+            let m=0, h="";
+            data.forEach(z=>{
+                m+=parseFloat(z.suma);
                 if(z.platnosc.includes("Stacjonarna")) return;
-                let btn = "", col = "#f1c40f";
-                if(z.status==='PRZYJĘTE') btn = `<button class="status-btn" style="background:#3498db;color:white" onclick="upd(${z.id},'W REALIZACJI')">ROZPOCZNIJ</button>`;
-                else if(z.status==='W REALIZACJI') { btn = `<button class="status-btn" style="background:#f1c40f" onclick="upd(${z.id},'DO ODBIORU')">GOTOWA</button>`; col="#3498db"; }
-                else if(z.status==='DO ODBIORU') { btn = `<button class="status-btn" style="background:#2ecc71;color:white" onclick="upd(${z.id},'WYDANE')">WYDAJ</button>`; col="#2ecc71"; }
-                h += `<div class="order" style="border-left:8px solid ${col}"><b>#${z.id}</b> | ${z.suma}zł | <b>${z.platnosc}</b><br><small>${z.produkty}</small><br>${btn}</div>`;
+                let btn="", col="#f1c40f";
+                if(z.status==='PRZYJĘTE') btn=`<button class="status-btn" style="background:#3498db;color:white" onclick="upd(${z.id},'W REALIZACJI')">ROZPOCZNIJ</button>`;
+                else if(z.status==='W REALIZACJI'){ btn=`<button class="status-btn" style="background:#f1c40f" onclick="upd(${z.id},'DO ODBIORU')">GOTOWA</button>`; col="#3498db";}
+                else if(z.status==='DO ODBIORU'){ btn=`<button class="status-btn" style="background:#2ecc71;color:white" onclick="upd(${z.id},'WYDANE')">WYDAJ</button>`; col="#2ecc71";}
+                h+=`<div class="order" style="border-left:8px solid ${col}"><b>#${z.id}</b> | ${z.suma}zł | <b>${z.platnosc}</b><br><small>${z.produkty}</small><br>${btn}</div>`;
             });
-            document.getElementById('money').innerText = m.toFixed(2);
-            document.getElementById('list').innerHTML = h || "Brak zamówień";
+            document.getElementById('money').innerText=m.toFixed(2);
+            document.getElementById('list').innerHTML=h || "Brak zamówień";
         });
     }
-
-    function upd(id, s) { fetch(`${API}/update-status`, {method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, nowyStatus:s})}); }
-    function resetDay() { if(confirm("Reset?")) fetch(`${API}/reset-bazy`, {method:'POST'}); }
-    setInterval(load, 3000); load();
-</script>
-</body>
-</html>
+    function upd(id,s){ fetch(`${API}/update-status`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id,nowyStatus:s})}); }
+    function reset(){ if(
