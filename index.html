@@ -60,17 +60,18 @@
         console.log("Nowe zamówienie: " + smak);
     }
 
-    // Ukryty dostęp dla Ciebie
-    let clicks = 0;
+    let adminCode = "";
     function secretAdmin() {
-        clicks++;
-        if (clicks === 5) {
-            alert("Otwieranie panelu administratora...");
-            // Tu wpiszesz nazwę swojego tajnego pliku, np. admin-panel.html
-            // window.location.href = "admin-panel.html";
-            clicks = 0;
+        // Reaguje na każde kliknięcie w nagłówek
+        // Możesz np. kazać kuzynowi klikać 3 razy, żeby wywołać okno
+        let password = prompt("Podaj kod dostępu:");
+
+        if (password === "1337") { // Twój tajny PIN
+            alert("Autoryzacja pomyślna!");
+            window.location.href = "admin-tajne.html";
+        } else {
+            alert("Błędny kod. Próba zapisana w logach."); // Mały straszak na ciekawskich
         }
-        setTimeout(() => { clicks = 0; }, 3000);
     }
 </script>
 </body>
