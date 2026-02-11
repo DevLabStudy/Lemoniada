@@ -16,20 +16,25 @@
 </head>
 <body>
 <div id="closed" class="overlay"><h1 style="color:#e74c3c">⚠️ PRZERWA</h1><p id="msg"></p></div>
+
 <div class="app">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin:0">🍋 Lemoniada</h2>
+        <h2 style="margin:0">🍋 Bar</h2>
         <span class="badge">Zostało: <b id="c-left">0</b> szt.</span>
     </div>
+
     <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
     <div class="card"><h3>Pomarańczowa 🍊 6.50zł</h3><button class="btn" onclick="add('Pomarańczowa', 6.5)">DODAJ</button></div>
+
     <div id="cart" style="display:none; border-top: 2px dashed #ccc; padding-top: 15px; margin-top: 20px;">
         <p id="summary" style="font-weight:bold"></p>
         <h2>Suma: <span id="total">0</span> zł</h2>
+
         <div class="pay-box">
             <b>Płatność:</b><br><br>
-            <label><input type="radio" name="p" value="Gotówka" checked onclick="hB()"> 💵 Gotówka</label><br><br>
-            <label><input type="radio" name="p" value="BLIK" onclick="sB()"> 📱 Przelew BLIK</label>
+            <label><input type="radio" name="p" value="Gotówka" checked onchange="document.getElementById('blik-box').style.display='none'"> 💵 Gotówka</label><br><br>
+            <label><input type="radio" name="p" value="BLIK" onchange="document.getElementById('blik-box').style.display='block'"> 📱 Przelew BLIK</label>
+
             <div id="blik-box" style="display:none; margin-top:15px; padding-left:10px; border-left:4px solid #2ecc71;">
                 <label><input type="radio" name="num" value="668 078 310" checked> 668 078 310</label><br><br>
                 <label><input type="radio" name="num" value="537 282 634"> 537 282 634</label>
@@ -39,25 +44,74 @@
     </div>
     <div id="st"></div>
 </div>
+
 <script>
+    // --- TUTAJ WKLEJ AKTUALNY LINK Z TUNELU ---
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
+    // ------------------------------------------
+
     let cart = [];
-    function sB(){ document.getElementById('blik-box').style.display='block'; }
-    function hB(){ document.getElementById('blik-box').style.display='none'; }
-    function add(n,p){ cart.push({n,p}); document.getElementById('cart').style.display='block'; document.getElementById('summary').innerText="Wybrano: "+cart.map(i=>i.n).join(", "); document.getElementById('total').innerText=cart.reduce((a,b)=>a+b.p,0).toFixed(2); }
-    function send() {
-        const m = document.querySelector('input[name="p"]:checked').value;
-        const plat = m === "BLIK" ? `BLIK na ${document.querySelector('input[name="num"]:checked').value}` : "Gotówka";
-        fetch(`${API}/zamow`, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({produkty:cart.map(i=>i.n).join(", "), suma:document.getElementById('total').innerText, platnosc:plat})})
-            .then(r=>r.json()).then(d=>{ alert("Zamówienie wysłane!"); cart=[]; document.getElementById('cart').style.display='none'; track(d.id); });
+
+    function add(n,p){
+        cart.push({n,p});
+        document.getElementById('cart').style.display='block';
+        document.getElementById('summary').innerText="Wybrano: "+cart.map(i=>i.n).join(", ");
+        document.getElementById('total').innerText=cart.reduce((a,b)=>a+b.p,0).toFixed(2);
     }
+
+    function send() {
+        const method = document.querySelector('input[name="p"]:checked').value;
+        let plat = "Gotówka";
+
+        if(method === "BLIK") {
+            const num = document.querySelector('input[name="num"]:checked').value;
+            plat = "BLIK na " + num;
+        }
+
+        const bodyData = {
+            produkty: cart.map(i=>i.n).join(", "),
+            suma: document.getElementById('total').innerText,
+            platnosc: plat
+        };
+
+        fetch(`${API}/zamow`, {
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body: JSON.stringify(bodyData)
+        })
+            .then(r => r.json())
+            .then(d => {
+                alert("Wysłano zamówienie!");
+                cart=[];
+                document.getElementById('cart').style.display='none';
+                track(d.id);
+            })
+            .catch(err => alert("Błąd! Sprawdź czy serwer działa i link jest poprawny."));
+    }
+
     function track(id) {
-        setInterval(() => {
+        const interval = setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
                 const z = data.find(o=>o.id===id);
                 if(z) {
-                    document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db">Status: <b>${z.status}</b></div>`;
-                    if(z.status==='WYDANE') location.reload();
+                    document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db">Status: <b>${z.status}</b><br><small>#${id}</small></div>`;
+                    if(z.status==='WYDANE') {
+                        alert("Smacznego!");
+                        clearInterval(interval);
+                        location.reload();
+                    }
                 }
             });
-        }, 3000
+        }, 3000);
+    }
+
+    setInterval(() => {
+        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => {
+            document.getElementById('c-left').innerText = d.kubki;
+            document.getElementById('closed').style.display = d.przerwa ? 'flex' : 'none';
+            document.getElementById('msg').innerText = d.powod;
+        }).catch(e => console.log("Serwer offline"));
+    }, 3000);
+</script>
+</body>
+</html>
