@@ -8,16 +8,15 @@ app.use(express.json());
 
 const db = new sqlite3.Database('./lemoniada.db');
 
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                      id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                      produkty TEXT,
-                                                      suma TEXT,
-                                                      platnosc TEXT,
-                                                      godzina TEXT,
-                                                      status TEXT DEFAULT 'NOWE'
-            )`);
-});
+// Inicjalizacja bazy
+db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc } = req.body;
@@ -44,12 +43,8 @@ app.post('/update-status', (req, res) => {
     });
 });
 
-// Endpoint do czyszczenia bazy na koniec dnia
 app.post('/clear-all', (req, res) => {
-    db.run(`DELETE FROM zamowienia`, (err) => {
-        if (err) res.status(500).send(err.message);
-        else res.json({ success: true });
-    });
+    db.run(`DELETE FROM zamowienia`, () => res.json({ success: true }));
 });
 
-app.listen(3000, () => console.log('Backend Linux POS: Online'));
+app.listen(3000, '0.0.0.0', () => console.log('Serwer POS działa na porcie 3000'));
