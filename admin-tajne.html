@@ -2,47 +2,52 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Panel</title>
+    <title>Admin POS</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body style="background: #222;">
+<body style="background: #222; color: white;">
 <div class="app-container">
-    <h2>Panel <span>Produkcji</span></h2>
+    <h2>💰 Razem: <span id="utarg" style="color: #2ecc71">0</span> zł</h2>
     <div id="admin-list"></div>
 </div>
-
 <audio id="bell" src="https://www.soundjay.com/buttons/sounds/button-3.mp3"></audio>
 
 <script>
     const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
 
-    function updateStatus(id, status) {
+    function loadOrders() {
+        fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+            const div = document.getElementById('admin-list');
+            let sumaCalkowita = 0;
+            div.innerHTML = "";
+
+            data.forEach(z => {
+                sumaCalkowita += parseFloat(z.suma);
+                div.innerHTML += `
+                    <div class="card" style="color: black; text-align: left; margin-bottom: 15px;">
+                        <small>${z.godzina} | ID: ${z.id}</small>
+                        <p><b>Produkty:</b> ${z.produkty}</p>
+                        <p><b>Kwota:</b> ${z.suma} zł (${z.platnosc})</p>
+                        <p>Status: ${z.status}</p>
+                        <button onclick="updateStatus(${z.id}, 'W PRODUKCJI')" style="background: orange">Robię</button>
+                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background: green">Gotowe</button>
+                    </div>`;
+            });
+            document.getElementById('utarg').innerText = sumaCalkowita.toFixed(2);
+        });
+    }
+
+    function updateStatus(id, s) {
         fetch(`${API}/update-status`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ id: id, nowyStatus: status })
+            body: JSON.stringify({id, nowyStatus: s})
         }).then(() => {
-            if(status === 'GOTOWE') document.getElementById('bell').play();
+            if(s === 'GOTOWE') document.getElementById('bell').play();
             loadOrders();
         });
     }
 
-    function loadOrders() {
-        fetch(`${API}/list-zamowienia`)
-            .then(r => r.json())
-            .then(data => {
-                const div = document.getElementById('admin-list');
-                div.innerHTML = "";
-                data.filter(z => z.status !== 'ODEBRANE').forEach(z => {
-                    div.innerHTML += `
-                    <div class="card" style="margin-bottom: 10px;">
-                        <p>${z.godzina} - <b>${z.produkt}</b></p>
-                        <button onclick="updateStatus(${z.id}, 'W PRODUKCJI')" style="background: orange">Robię</button>
-                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background: green; margin-top:5px">Gotowe!</button>
-                    </div>`;
-                });
-            });
-    }
     setInterval(loadOrders, 4000);
     loadOrders();
 </script>
