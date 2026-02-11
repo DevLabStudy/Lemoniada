@@ -2,47 +2,43 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>ADMIN | Lemonade</title>
+    <title>PANEL SZEFA</title>
     <link rel="stylesheet" href="style.css">
     <style>
-        body { background: #1a1a1a; color: white; }
+        body { background: #2d3436; }
         .order-card {
-            background: #2d3436; border-left: 10px solid #FFD700;
-            margin: 10px 0; padding: 15px; border-radius: 8px;
-            display: flex; justify-content: space-between; align-items: center;
+            background: white; margin: 10px 0; padding: 15px;
+            border-radius: 10px; display: flex; justify-content: space-between;
+            border-left: 8px solid #f8b500;
         }
-        .btn-ready { background: #2ecc71; color: white; border: none; padding: 8px; border-radius: 5px; cursor: pointer; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <h1>🛠 Aktywne <span>Zamówienia</span></h1>
-    <div id="orders-list">Wczytywanie z bazy SQLite...</div>
-    <button onclick="window.location.href='index.html'" style="margin-top:20px; background:none; border:none; color:gray; cursor:pointer;">← Powrót do menu</button>
+    <h2>🛠 Zamówienia z <span>Linuxa</span></h2>
+    <div id="list">Czekam na dane...</div>
+    <button onclick="window.location.href='index.html'" style="margin-top:20px;">Wróć</button>
 </div>
 
 <script>
     const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
 
-    function odswiez() {
+    function load() {
         fetch(`${API_URL}/list-zamowienia`)
-            .then(res => res.json())
+            .then(r => r.json())
             .then(data => {
-                const list = document.getElementById('orders-list');
-                list.innerHTML = data.length ? "" : "Brak nowych zamówień.";
-                data.forEach(zam => {
-                    list.innerHTML += `
-                            <div class="order-card">
-                                <span>[${zam.godzina}] <b>${zam.produkt}</b></span>
-                                <button class="btn-ready" onclick="this.parentElement.remove()">GOTOWE</button>
-                            </div>`;
+                const div = document.getElementById('list');
+                div.innerHTML = data.length ? "" : "Brak zamówień";
+                data.forEach(z => {
+                    div.innerHTML += `<div class="order-card">
+                        <span>[${z.godzina}] <b>${z.produkt}</b></span>
+                        <button onclick="this.parentElement.remove()" style="background:#2ecc71">OK</button>
+                    </div>`;
                 });
-            })
-            .catch(err => console.error("Serwer offline"));
+            });
     }
-
-    setInterval(odswiez, 3000); // Odświeżaj co 3 sekundy
-    odswiez();
+    setInterval(load, 3000);
+    load();
 </script>
 </body>
 </html>

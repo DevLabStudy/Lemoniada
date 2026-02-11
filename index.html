@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada System 2026</title>
+    <title>Lemonade System 2026</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app-container">
     <header>
-        <h1 id="main-title" onclick="handleSecretClick()">Lemonade <span>System</span></h1>
-        <p>Najlepsze orzeźwienie w Twojej okolicy!</p>
+        <h1 id="secret-trigger" onclick="checkAdmin()">Lemonade <span>System</span></h1>
+        <p>Najlepsze orzeźwienie z Twojego lokalnego serwera!</p>
     </header>
 
     <main class="menu-grid">
@@ -21,31 +21,26 @@
             <button onclick="zamow('Klasyczna')">ZAMÓW</button>
         </div>
         <div class="product-card">
-            <div class="icon">🍓</div>
-            <h3>Truskawkowa</h3>
+            <div class="icon">🍊</div>
+            <h3>Pomarańczowa</h3>
             <p>6.50 zł</p>
-            <button onclick="zamow('Truskawkowa')">ZAMÓW</button>
+            <button onclick="zamow('Pomarańczowa')">ZAMÓW</button>
         </div>
     </main>
 </div>
 
 <script>
     const API_URL = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
-    let clickCount = 0;
+    let clicks = 0;
 
-    function handleSecretClick() {
-        clickCount++;
-        if (clickCount >= 5) {
-            const pin = prompt("Wprowadź kod dostępu:");
-            if (pin === "1337") {
-                window.location.href = "admin-tajne.html";
-            } else {
-                alert("Błędny kod!");
-                clickCount = 0;
-            }
+    function checkAdmin() {
+        clicks++;
+        if (clicks >= 5) {
+            const pass = prompt("Podaj kod szefa:");
+            if (pass === "1337") window.location.href = "admin-tajne.html";
+            clicks = 0;
         }
-        // Reset licznika po 3 sekundach bezczynności
-        setTimeout(() => { clickCount = 0; }, 3000);
+        setTimeout(() => { clicks = 0; }, 2000); // Reset po 2 sek
     }
 
     function zamow(produkt) {
@@ -55,8 +50,8 @@
             body: JSON.stringify({ produkt: produkt })
         })
             .then(res => res.json())
-            .then(data => alert(`Zamówiono ${produkt}! (Nr: ${data.id})`))
-            .catch(err => alert("Błąd połączenia z serwerem PC!"));
+            .then(data => alert(`Wysłano zamówienie na lemoniadę ${produkt}!`))
+            .catch(err => alert("Serwer PC jest offline!"));
     }
 </script>
 </body>
