@@ -1,38 +1,63 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lemonade POS - Admin</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body style="background: #1a1a1a; color: white; display: block; overflow-y: auto;">
+<div class="app-container" style="margin: 20px auto; width: 90%; max-width: 500px;">
+    <h1 style="color: white;">🍋 Aktywne <span>Zamówienia</span></h1>
+    <h2 style="margin-bottom: 20px;">Utarg: <span id="suma" style="color: #2ecc71;">0</span> zł</h2>
+
+    <div id="admin-list">
+    </div>
+
+    <button onclick="location.href='index.html'" style="background: #444; margin-top: 20px;">← Powrót do menu</button>
+</div>
+
 <script>
+    // PAMIĘTAJ: Tu musi być Twój aktualny link z terminala Cloudflare!
     const API = "https://ensemble-seafood-wiki-richard.trycloudflare.com";
 
-    function load() {
-        fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            const list = document.getElementById('admin-list');
-            let total = 0;
-            list.innerHTML = "";
-            data.forEach(z => {
-                total += parseFloat(z.suma);
-                list.innerHTML += `
-                <div class="card" style="color:black; margin-bottom:10px; text-align:left; border-left: 8px solid ${z.status === 'GOTOWE' ? '#2ecc71' : (z.status === 'REALIZUJEMY' ? '#17a2b8' : '#f1c40f')}">
-                    <p><small>${z.godzina} | ID: ${z.id}</small></p>
-                    <p><b>${z.produkty}</b></p>
-                    <p>${z.suma} zł | ${z.platnosc}</p>
-                    <p>Status: <b>${z.status}</b></p>
-                    <div style="display:flex; gap:5px;">
-                        <button onclick="updateStatus(${z.id}, 'REALIZUJEMY')" style="background:#17a2b8">Realizujemy</button>
-                        <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background:#28a745">Gotowe</button>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('suma').innerText = total.toFixed(2);
-        });
+    function loadOrders() {
+        fetch(`${API}/list-zamowienia`)
+            .then(res => res.json())
+            .then(data => {
+                const list = document.getElementById('admin-list');
+                let total = 0;
+                list.innerHTML = "";
+
+                data.forEach(z => {
+                    total += parseFloat(z.suma || 0);
+                    list.innerHTML += `
+                    <div class="card" style="color: black; margin-bottom: 15px; text-align: left; border-left: 10px solid ${z.status === 'GOTOWE' ? '#28a745' : (z.status === 'REALIZUJEMY' ? '#17a2b8' : '#f1c40f')}">
+                        <p style="font-size: 12px; color: gray;">[${z.godzina}] ID: ${z.id}</p>
+                        <p><b>📦 ${z.produkty}</b></p>
+                        <p>💰 ${z.suma} zł | Metoda: <b>${z.platnosc}</b></p>
+                        <p>Status: <b style="color: blue;">${z.status}</b></p>
+                        <div style="display: flex; gap: 10px; margin-top: 10px;">
+                            <button onclick="updateStatus(${z.id}, 'REALIZUJEMY')" style="background: #17a2b8; font-size: 12px;">REALIZUJEMY</button>
+                            <button onclick="updateStatus(${z.id}, 'GOTOWE')" style="background: #28a745; font-size: 12px;">GOTOWE</button>
+                        </div>
+                    </div>`;
+                });
+                document.getElementById('suma').innerText = total.toFixed(2);
+            })
+            .catch(err => console.error("Błąd pobierania:", err));
     }
 
     function updateStatus(id, s) {
         fetch(`${API}/update-status`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id, nowyStatus: s})
-        }).then(() => load());
+            body: JSON.stringify({ id, nowyStatus: s })
+        }).then(() => loadOrders());
     }
 
-    // Odświeżanie co 4 sekundy, bez dźwięku
-    setInterval(load, 4000);
-    load();
+    setInterval(loadOrders, 4000);
+    loadOrders();
 </script>
+</body>
+</html>
