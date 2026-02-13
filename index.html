@@ -9,37 +9,37 @@
         body { font-family: 'Segoe UI', sans-serif; background: var(--main); text-align: center; padding: 15px; margin: 0; }
         .app { max-width: 450px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); min-height: 85vh; }
         .card { background: #fdfdfd; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #eee; }
-        .btn { background: var(--green); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 17px; }
+        .btn { background: var(--green); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 17px; transition: 0.2s; }
         .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #27ae60; }
-        .btn.sold-out { background: #95a5a6 !important; box-shadow: 0 4px 0 #7f8c8d !important; cursor: not-allowed; }
-        #k-status { font-weight: bold; margin-bottom: 20px; padding: 10px; border-radius: 10px; background: #fff3cd; color: #856404; }
+        #k-status { font-weight: bold; margin-bottom: 20px; padding: 10px; border-radius: 10px; background: #fff3cd; color: #856404; font-size: 14px; }
         #cart { display: none; margin-top: 20px; border-top: 3px solid #f1f1f1; padding-top: 15px; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #eee; }
         #success { display: none; padding: 25px; }
         .status-badge { background: var(--blue); color: white; padding: 12px 25px; border-radius: 25px; font-size: 18px; font-weight: bold; margin: 20px 0; display: inline-block; }
+        .blik-box { display: none; margin-top: 10px; padding: 15px; background: #e3f2fd; border-radius: 15px; border: 1px solid var(--blue); }
     </style>
 </head>
 <body>
 
 <div class="app">
     <h1>🍋 LemonIada</h1>
-    <div id="k-status">Łączenie...</div>
+    <div id="k-status">Sprawdzanie dostępności...</div>
 
     <div id="main-ui">
         <div class="card">
             <h3>Klasyczna 🍋 5zł</h3>
-            <button class="btn btn-add" onclick="dodaj('Klasyczna', 5)">DODAJ</button>
+            <button class="btn" onclick="dodaj('Klasyczna', 5)">DODAJ DO KOSZYKA</button>
         </div>
         <div class="card">
             <h3>Pomarańczowa 🍊 7zł</h3>
-            <button class="btn btn-add" onclick="dodaj('Pomarańczowa', 7)">DODAJ</button>
+            <button class="btn" onclick="dodaj('Pomarańczowa', 7)">DODAJ DO KOSZYKA</button>
         </div>
 
         <div style="background: #fdf2e9; padding: 15px; border-radius: 20px; border: 1px dashed #e67e22; margin-top: 10px;">
-            <p id="p-msg" style="margin:0 0 10px 0; font-weight:bold;">🎟️ Masz kod rabatowy?</p>
+            <p id="p-msg" style="margin:0 0 10px 0;">🎟️ Masz kod rabatowy?</p>
             <button id="w-btn" class="btn" style="background:#9b59b6; box-shadow:0 4px 0 #8e44ad;" onclick="losuj()">LOSUJ RABAT</button>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <input type="text" id="p-in" placeholder="Wpisz kod..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
+            <div id="kod-input-area" style="display:flex; gap:5px; margin-top:10px;">
+                <input type="text" id="p-in" placeholder="Kod..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
                 <button class="btn" style="width:70px; margin:0; background:#34495e; box-shadow:0 4px 0 #2c3e50" onclick="sprawdzKod()">OK</button>
             </div>
         </div>
@@ -48,82 +48,46 @@
             <h3>🛒 Twój Koszyk:</h3>
             <div id="cart-list"></div>
             <h2>Suma: <span id="total">0.00</span> zł</h2>
-            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 GOTÓWKA</button>
-            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">📱 BLIK</button>
+            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 PŁACĘ GOTÓWKĄ</button>
+            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="pokazBlik()">📱 PŁACĘ BLIKIEM</button>
 
-            <div id="blik-p" style="display:none; margin-top:10px; padding:10px; background:#e3f2fd; border-radius:10px;">
-                <p>Kliknij numer, aby skopiować i zamówić:</p>
-                <button class="btn" style="background:var(--blue);" onclick="copyB('668078310')">668 078 310</button>
+            <div id="blik-p" class="blik-box">
+                <p><b>Kliknij numer, aby skopiować i zamówić:</b></p>
+                <button class="btn" style="background:var(--blue); margin: 5px 0;" onclick="copyB('668078310')">668 078 310</button>
+                <button class="btn" style="background:var(--blue); margin: 5px 0;" onclick="copyB('537282634')">537 282 634</button>
             </div>
         </div>
     </div>
 
     <div id="success">
-        <h2>ZAMÓWIENIE PRZYJĘTE! ✅</h2>
-        <div id="cur-status" class="status-badge">W KOLEJCE</div>
+        <h2 id="s-title">ZAMÓWIENIE WYSŁANE! ✅</h2>
+        <div id="cur-status" class="status-badge">PRZETWARZANIE...</div>
         <h1 id="o-num" style="font-size:80px; margin:20px 0;">#?</h1>
-        <p>Gdy status zmieni się na <b>GOTOWE</b>, podejdź do stoiska!</p>
+        <p>Gdy lemoniada będzie gotowa, zobaczysz tu napis <b>GOTOWE</b>.</p>
+        <button class="btn" style="background:#95a5a6;" onclick="location.reload()">POWRÓT</button>
     </div>
 </div>
 
 <script>
     const API = "https://lemoniada.com.pl:8443";
     let koszyk = [];
-    let stanLokalny = 0;
+    let stanLokalny = 50; // Zapas awaryjny
     let rabat = 0;
     const dzis = new Date().toLocaleDateString();
 
-    // Ładowanie stanu
     function refreshStock() {
         fetch(`${API}/stan-magazynu`)
             .then(r => r.json())
             .then(d => {
                 stanLokalny = d.kubki;
                 document.getElementById('k-status').innerText = "Dostępne kubki: " + stanLokalny;
-                document.getElementById('k-status').style.background = stanLokalny > 0 ? "#d4edda" : "#f8d7da";
+                document.getElementById('k-status').style.color = "green";
                 odswiez();
             })
-            .catch(e => {
-                // TRYB AWARYJNY: Jeśli API nie działa, pozwalamy dodać 10 kubków do testów
-                stanLokalny = 10;
-                document.getElementById('k-status').innerText = "BŁĄD API (Tryb testowy: 10 kubków)";
-                odswiez();
+            .catch(() => {
+                document.getElementById('k-status').innerText = "Tryb Offline (API niedostępne)";
+                document.getElementById('k-status').style.color = "red";
             });
-    }
-
-    // Losowanie
-    function losuj() {
-        if(localStorage.getItem('ostatnie_losowanie') === dzis) {
-            alert("Już dzisiaj losowałeś!");
-            return;
-        }
-        const mozliwe = [5, 10, 15, 20];
-        const wylosowany = mozliwe[Math.floor(Math.random()*mozliwe.length)];
-        const kod = "RABAT" + wylosowany;
-
-        localStorage.setItem('moj_kod', kod);
-        localStorage.setItem('ostatnie_losowanie', dzis);
-
-        document.getElementById('p-msg').innerHTML = `TWÓJ KOD: <b style="color:#e67e22">${kod}</b> (-${wylosowany}%)`;
-        document.getElementById('w-btn').style.display = 'none';
-        alert("Wylosowałeś " + wylosowany + "% zniżki! Kod: " + kod);
-    }
-
-    function sprawdzKod() {
-        const wpisany = document.getElementById('p-in').value.toUpperCase().trim();
-        const mojKod = localStorage.getItem('moj_kod');
-
-        if(wpisany === mojKod) {
-            rabat = parseInt(wpisany.replace("RABAT", ""));
-            alert("Kod poprawny! Rabat " + rabat + "% naliczony.");
-        } else if(wpisany === "LEMON10") {
-            rabat = 10;
-            alert("Kod promocyjny Lemon10 aktywny!");
-        } else {
-            alert("Niepoprawny kod.");
-            rabat = 0;
-        }
-        odswiez();
     }
 
     function dodaj(nazwa, cena) {
@@ -131,7 +95,7 @@
             koszyk.push({nazwa, cena});
             odswiez();
         } else {
-            alert("Brak dostępnych kubków!");
+            alert("Brak wolnych kubków!");
         }
     }
 
@@ -141,52 +105,78 @@
     }
 
     function odswiez() {
-        const cartDiv = document.getElementById('cart');
+        document.getElementById('cart').style.display = koszyk.length ? 'block' : 'none';
         const listDiv = document.getElementById('cart-list');
-        cartDiv.style.display = koszyk.length ? 'block' : 'none';
-
         listDiv.innerHTML = koszyk.map((i, idx) => `
             <div class="cart-item">
                 <span>${i.nazwa} - ${i.cena}zł</span>
-                <button onclick="usun(${idx})" style="color:red; border:none; background:none; font-weight:bold;">X</button>
+                <button onclick="usun(${idx})" style="color:red; border:none; background:none; font-weight:bold; cursor:pointer;">USUŃ</button>
             </div>
         `).join('');
 
         let suma = koszyk.reduce((a, b) => a + b.cena, 0);
         if(rabat > 0) suma = suma * (1 - rabat/100);
-
         document.getElementById('total').innerText = suma.toFixed(2);
+    }
+
+    function losuj() {
+        if(localStorage.getItem('last_l') === dzis) return alert("Już dzisiaj losowałeś!");
+        const r = [5, 10, 15, 20][Math.floor(Math.random()*4)];
+        const kod = "RABAT" + r;
+        localStorage.setItem('my_k', kod);
+        localStorage.setItem('last_l', dzis);
+        document.getElementById('p-msg').innerHTML = "TWÓJ KOD: <b>" + kod + "</b> (-" + r + "%)";
+        document.getElementById('w-btn').style.display = 'none';
+    }
+
+    function sprawdzKod() {
+        const v = document.getElementById('p-in').value.toUpperCase().trim();
+        if(v === localStorage.getItem('my_k') || v === "LEMON10") {
+            rabat = v === "LEMON10" ? 10 : parseInt(v.replace("RABAT",""));
+            alert("Rabat naliczony!");
+            odswiez();
+        } else { alert("Błędny kod!"); }
+    }
+
+    function pokazBlik() {
+        document.getElementById('blik-p').style.display = 'block';
     }
 
     async function copyB(n) {
         try {
             await navigator.clipboard.writeText(n);
-            alert("Numer skopiowany!");
+            alert("Numer skopiowany! Teraz kliknij OK, aby wysłać zamówienie.");
         } catch (e) {}
         zamow("BLIK (" + n + ")");
     }
 
     function zamow(metoda) {
-        const produkty = koszyk.map(i => i.nazwa).join(", ");
+        const prod = koszyk.map(i => i.nazwa).join(", ");
         const suma = document.getElementById('total').innerText;
+
+        // WYMUSZONE PRZEJŚCIE DO EKRANU SUKCESU (żeby klient wiedział, że coś się dzieje)
+        document.getElementById('main-ui').style.display = 'none';
+        document.getElementById('success').style.display = 'block';
 
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty, suma, platnosc: metoda, kod: localStorage.getItem('moj_kod') || "BRAK" })
+            body: JSON.stringify({ produkty: prod, suma: suma, platnosc: metoda, kod: localStorage.getItem('my_k') || "BRAK" })
         })
             .then(r => r.json())
             .then(d => {
-                document.getElementById('main-ui').style.display = 'none';
-                document.getElementById('success').style.display = 'block';
-                document.getElementById('o-num').innerText = "#" + d.id;
+                document.getElementById('o-num').innerText = "#" + (d.id || "?");
+                document.getElementById('cur-status').innerText = "W KOLEJCE";
             })
-            .catch(() => alert("Błąd połączenia z serwerem."));
+            .catch(() => {
+                document.getElementById('cur-status').innerText = "BŁĄD WYSYŁANIA";
+                document.getElementById('cur-status').style.background = "red";
+                alert("Wystąpił błąd przy wysyłaniu do bazy, ale przekaż obsłudze numer: " + metoda);
+            });
     }
 
     setInterval(refreshStock, 5000);
     window.onload = refreshStock;
 </script>
-
 </body>
 </html>
