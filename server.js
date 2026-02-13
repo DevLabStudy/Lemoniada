@@ -1,100 +1,81 @@
 const express = require('express');
-const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+const cors = require('cors');
 const axios = require('axios');
 const app = express();
 
 app.use(cors());
 app.use(express.json());
 
-const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwi35h7ewGcZsOmGod7dsoJk7MGuZ_Xa_kGcrbogO0ytiOEn_CJfXElaOTEmaGECW-3/exec';
+// TUTAJ WKLEJ SWÓJ URL Z GOOGLE APPS SCRIPT
+const GOOGLE_URL = 'TWÓJ_URL_APPS_SCRIPT';
+
 const db = new sqlite3.Database('./lemoniada.db');
 
 db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id TEXT, produkty TEXT, cena_total REAL, platnosc TEXT, status TEXT, data TEXT, kod TEXT)`);
-    db.run(`CREATE TABLE IF NOT EXISTS ustawienia (klucz TEXT PRIMARY KEY, wartosc REAL)`);
-    // Inicjalizacja podstawowych wartości
-    db.run(`INSERT OR IGNORE INTO ustawienia VALUES ('utarg', 0)`);
-    db.run(`INSERT OR IGNORE INTO ustawienia VALUES ('kubeczki', 0)`);
+    db.run("CREATE TABLE IF NOT EXISTS zapas (id INTEGER PRIMARY KEY, kubeczki INTEGER)");
+    db.run("CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREMENT, produkty TEXT, cena_total REAL, platnosc TEXT, data TEXT, kod TEXT, status TEXT)");
+    db.run("INSERT OR IGNORE INTO zapas (id, kubeczki) VALUES (1, 0)");
 });
 
-// API: Pobieranie info o kubeczkach
-app.get('/api/info', (req, res) => {
-    db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'kubeczki'`, (err, row) => {
-        res.json({ kubeczki: row ? row.wartosc : 0 });
-    });
-});
+const KODY = { "START": 2, "LEMON": 5 };
 
-// API: ADMIN - Ustawianie kubeczków (WERSJA PANCERNA)
-app.post('/api/admin/set-kubeczki', (req, res) => {
-    const ilosc = parseInt(req.body.ilosc);
-    console.log(`[SERWER] Otrzymano żądanie ustawienia kubeczków na: ${ilosc}`);
-
-    if (isNaN(ilosc)) {
-        return res.status(400).json({ error: "To nie jest liczba" });
-    }
-
-    // INSERT OR REPLACE zadziała nawet jeśli wiersz nie istnieje
-    db.run(`INSERT OR REPLACE INTO ustawienia (klucz, wartosc) VALUES ('kubeczki', ?)`, [ilosc], function(err) {
-        if (err) {
-            console.error("[BŁĄD SQL]", err.message);
-            return res.status(500).json({ success: false });
-        }
-        console.log(`[MAGAZYN] Pomyślnie ustawiono stan na: ${ilosc}`);
-        res.json({ success: true, count: ilosc });
-    });
-});
-
-// API: Składanie zamówienia
 app.post('/api/zamow', (req, res) => {
     const { koszyk, kod, platnosc } = req.body;
-    const sztukRazem = koszyk.reduce((a, b) => a + b.sztuk, 0);
+    db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, row) => {
+        let sztuk = koszyk.reduce((a, b) => a + b.sztuk, 0);
+        if (row.kubeczki < sztuk) return res.status(400).json({ error: "Brak kubeczków!" });
 
-    db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'kubeczki'`, (err, row) => {
-        const aktualneKubeczki = row ? row.wartosc : 0;
-        if (aktualneKubeczki < sztukRazem) {
-            return res.status(400).json({ error: "Brak kubeczków! Zostało: " + aktualneKubeczki });
-        }
+        let cena = koszyk.reduce((a, b) => a + (b.cena * b.sztuk), 0);
+        let znizka = KODY[kod.toUpperCase()] || 0;
+        cena = Math.max(0, cena - znizka);
 
-        const id = Math.floor(100 + Math.random() * 899).toString();
-        const data = new Date().toLocaleString("pl-PL");
-        let cenaFinal = koszyk.reduce((a, b) => a + (b.cena * b.sztuk), 0).toFixed(2);
-        let produktyString = koszyk.map(p => `${p.nazwa} x${p.sztuk}`).join(", ");
+        let produktyStr = koszyk.map(i => `${i.nazwa} x${i.sztuk}`).join(", ");
+        let dataStr = new Date().toLocaleDateString();
 
-        db.serialize(() => {
-            db.run(`UPDATE ustawienia SET wartosc = wartosc - ? WHERE klucz = 'kubeczki'`, [sztukRazem]);
-            db.run(`INSERT INTO zamowienia VALUES (?, ?, ?, ?, 'przyjęte', ?, ?)`, [id, produktyString, cenaFinal, platnosc, data, kod || "BRAK"], async () => {
-                try { await axios.post(GOOGLE_URL, { data, nr: id, produkt: produktyString, cena: cenaFinal, platnosc, kod: kod || "BRAK" }); } catch(e) {}
-                res.json({ success: true, id });
+        db.run("INSERT INTO zamowienia (produkty, cena_total, platnosc, data, kod, status) VALUES (?, ?, ?, ?, ?, 'nowe')",
+            [produktyStr, cena, platnosc, dataStr, kod], function(err) {
+                db.run("UPDATE zapas SET kubeczki = kubeczki - ? WHERE id = 1", [sztuk]);
+
+                axios.post(GOOGLE_URL, {
+                    id: this.lastID, data: dataStr, produkty: produktyStr, suma: cena, platnosc: platnosc, kod: kod
+                }).catch(e => console.log("Błąd Sheets"));
+
+                res.json({ success: true, id: this.lastID });
             });
-        });
     });
 });
 
-// API: Pobieranie danych dla Admina
 app.get('/api/admin/data', (req, res) => {
-    db.all(`SELECT * FROM zamowienia ORDER BY rowid DESC LIMIT 30`, (err, rows) => {
-        db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'utarg'`, (err, rev) => {
-            db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'kubeczki'`, (err, kub) => {
-                res.json({ zamowienia: rows || [], utarg: rev ? rev.wartosc : 0, kubeczki: kub ? kub.wartosc : 0 });
+    db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, zapas) => {
+        db.all("SELECT * FROM zamowienia ORDER BY id DESC", (err, rows) => {
+            let utarg = rows.reduce((a, b) => a + b.cena_total, 0);
+            res.json({ kubeczki: zapas ? zapas.kubeczki : 0, zamowienia: rows || [], utarg: utarg });
+        });
+    });
+});
+
+app.post('/api/admin/reset', (req, res) => {
+    const { workers } = req.body;
+    db.all("SELECT cena_total FROM zamowienia", (err, rows) => {
+        let total = rows.reduce((a, b) => a + b.cena_total, 0);
+        axios.post(GOOGLE_URL, { type: "END_DAY", totalRev: total, workers: workers, data: new Date().toLocaleDateString() })
+        .then(() => {
+            db.serialize(() => {
+                db.run("DELETE FROM zamowienia");
+                db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'");
+                res.json({ success: true });
             });
         });
     });
 });
 
-// API: Status
+app.post('/api/admin/set-kubeczki', (req, res) => {
+    db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [req.body.ilosc], () => res.json({success:true}));
+});
+
 app.post('/api/admin/status', (req, res) => {
-    const { id, status } = req.body;
-    db.get(`SELECT * FROM zamowienia WHERE id = ?`, [id], (err, row) => {
-        if(row && status === 'zrealizowane' && row.status !== 'zrealizowane') {
-            db.run(`UPDATE ustawienia SET wartosc = wartosc + ? WHERE klucz = 'utarg'`, [row.cena_total]);
-        }
-        db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [status, id], () => res.json({success:true}));
-    });
+    db.run("UPDATE zamowienia SET status = ? WHERE id = ?", [req.body.status, req.body.id], () => res.json({success:true}));
 });
 
-app.get('/api/status/:id', (req, res) => {
-    db.get(`SELECT status FROM zamowienia WHERE id = ?`, [req.params.id], (err, row) => res.json(row || {status:'brak'}));
-});
-
-app.listen(8443, '0.0.0.0', () => console.log("--- SYSTEM ONLINE (8443) ---"));
+app.listen(8443, () => console.log("Serwer Lemoniady na 8443"));

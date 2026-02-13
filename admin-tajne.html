@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Lemoniada 🍋</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; --success: #10b981; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
 
@@ -14,6 +14,7 @@
         .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; position: relative; }
         .val { font-size: 2.5rem; font-weight: 900; color: var(--primary); display: block; }
         .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .sub-val { color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 5px; display: block; }
 
         /* Magazyn UI */
         .mgmt-ui { display: flex; gap: 10px; margin-top: 15px; }
@@ -32,11 +33,11 @@
         .btn-yellow { background: var(--primary); color: #000; }
         .btn-green { background: var(--success); color: white; }
         .btn-blue { background: #3b82f6; color: white; }
+        .btn-end-day { background: var(--danger); color: white; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; border: none; cursor: pointer; margin-bottom: 30px; font-size: 1.1rem; }
 
         /* Zamówienia */
         .order-card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
         .order-info b { font-size: 1.2rem; }
-        .status-dot { font-size: 0.8rem; font-weight: bold; margin-bottom: 10px; display: block; }
     </style>
 </head>
 <body>
@@ -49,18 +50,26 @@
 
     <div class="box-grid">
         <div class="box">
-            <span class="label">Całkowity Utarg</span>
+            <span class="label">Utarg Dzisiejszy</span>
             <span class="val" id="rev-display">0.00 zł</span>
+            <div style="margin-top: 10px;">
+                <span class="label">Osób:</span>
+                <input type="number" id="worker-count" value="2" min="1" oninput="calculateSplit()"
+                       style="width: 50px; padding: 5px; background: #0f172a; border: 1px solid var(--accent); color: white; border-radius: 8px; font-size: 0.9rem;">
+                <span class="sub-val" id="split-display">Na głowę: 0.00 zł</span>
+            </div>
         </div>
         <div class="box">
-            <span class="label">Kubeczki w zapasie</span>
+            <span class="label">Magazyn (Kubki)</span>
             <span class="val" id="cups-display">0</span>
             <div class="mgmt-ui">
                 <input type="number" id="cups-input" placeholder="Sztuki">
-                <button class="btn-action" onclick="setCups()">USTAW ZAPAS</button>
+                <button class="btn-action" onclick="setCups()">USTAW</button>
             </div>
         </div>
     </div>
+
+    <button class="btn-end-day" onclick="endDay()">🏁 ZAKOŃCZ DZIEŃ (RESET + ARCHIWUM GOOGLE)</button>
 
     <div class="pos-container">
         <h3 style="margin-top:0;">🛒 Szybka Sprzedaż (Stacjonarnie)</h3>
@@ -78,80 +87,67 @@
     </div>
 
     <h2>Aktywne Zamówienia</h2>
-    <div id="order-list-container">
-        </div>
+    <div id="order-list-container"></div>
 </div>
 
 <script>
     const API = "https://api.lemoniada.com.pl";
     let adminCart = [];
+    let currentUtarg = 0;
 
-    // 1. Ładowanie danych z serwera
+    function calculateSplit() {
+        const count = parseInt(document.getElementById('worker-count').value) || 1;
+        const split = (currentUtarg / count).toFixed(2);
+        document.getElementById('split-display').innerText = `Na głowę: ${split} zł`;
+    }
+
     async function refreshData() {
         try {
             const r = await fetch(`${API}/api/admin/data`);
-            if (!r.ok) throw new Error();
             const d = await r.json();
 
             document.getElementById('conn-status').innerText = "● SYSTEM ONLINE";
             document.getElementById('conn-status').style.color = "#10b981";
 
+            currentUtarg = d.utarg;
             document.getElementById('rev-display').innerText = d.utarg.toFixed(2) + " zł";
             document.getElementById('cups-display').innerText = d.kubeczki;
+            calculateSplit();
 
             let html = '';
-            // Pokazujemy tylko zamówienia, które nie są jeszcze zrealizowane
-            const activeOrders = d.zamowienia.filter(o => o.status !== 'zrealizowane');
-
-            activeOrders.forEach(o => {
-                html += `
-                    <div class="order-card">
-                        <div class="order-info">
-                            <small>ID: #${o.id} | ${o.data.split(',')[1]}</small><br>
-                            <b>${o.produkty}</b><br>
-                            <span>${o.cena_total} zł (${o.platnosc})</span>
-                        </div>
-                        <div style="display:flex; gap:8px;">
-                            <button class="btn-action" style="background:var(--primary); color:#000;" onclick="changeStatus('${o.id}','gotowe')">GOTOWE</button>
+            d.zamowienia.forEach(o => {
+                if(o.status !== 'zrealizowane') {
+                    html += `
+                        <div class="order-card">
+                            <div class="order-info">
+                                <small>ID: #${o.id} | ${o.data}</small><br>
+                                <b>${o.produkty}</b><br>
+                                <span>${o.cena_total} zł (${o.platnosc}) | Kod: ${o.kod || 'Brak'}</span>
+                            </div>
                             <button class="btn-action" style="background:var(--success); color:#fff;" onclick="changeStatus('${o.id}','zrealizowane')">ZAKOŃCZ</button>
                         </div>
-                    </div>
-                `;
+                    `;
+                }
             });
             document.getElementById('order-list-container').innerHTML = html || "<p style='opacity:0.5; text-align:center;'>Brak nowych zamówień.</p>";
-
         } catch (e) {
             document.getElementById('conn-status').innerText = "● BŁĄD POŁĄCZENIA";
             document.getElementById('conn-status').style.color = "#ef4444";
         }
     }
 
-    // 2. Naprawione ustawianie kubeczków
     async function setCups() {
-        const input = document.getElementById('cups-input');
-        const count = parseInt(input.value);
-
-        if (isNaN(count)) return alert("Wpisz poprawną liczbę!");
-
-        try {
-            const res = await fetch(`${API}/api/admin/set-kubeczki`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ ilosc: count })
-            });
-
-            if (res.ok) {
-                document.getElementById('cups-display').innerText = count;
-                input.value = "";
-                alert("Zaktualizowano stan magazynu!");
-                refreshData();
-            }
-        } catch (e) {
-            alert("Błąd połączenia!");
-        }
+        const count = parseInt(document.getElementById('cups-input').value);
+        if (isNaN(count)) return;
+        await fetch(`${API}/api/admin/set-kubeczki`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ilosc: count })
+        });
+        document.getElementById('cups-input').value = "";
+        refreshData();
     }
 
-    // 3. Obsługa szybkiego koszyka
     function addToAdminCart(nazwa, cena) {
         let item = adminCart.find(i => i.nazwa === nazwa);
         if (item) item.sztuk++;
@@ -159,21 +155,9 @@
         renderAdminCart();
     }
 
-    function removeFromAdminCart(nazwa) {
-        let item = adminCart.find(i => i.nazwa === nazwa);
-        if (item) {
-            item.sztuk--;
-            if (item.sztuk <= 0) adminCart = adminCart.filter(i => i.nazwa !== nazwa);
-        }
-        renderAdminCart();
-    }
-
     function renderAdminCart() {
         const container = document.getElementById('admin-cart-items');
-        if (adminCart.length === 0) {
-            container.innerText = "Koszyk jest pusty";
-            return;
-        }
+        if (adminCart.length === 0) { container.innerText = "Koszyk jest pusty"; return; }
         container.innerHTML = adminCart.map(i => `
             <div class="admin-cart-row">
                 <span><b>${i.nazwa}</b> (x${i.sztuk})</span>
@@ -182,32 +166,22 @@
         `).join('');
     }
 
-    // 4. Finalizacja sprzedaży stacjonarnej
-    async function finalizeSale(platnosc) {
-        if (adminCart.length === 0) return alert("Koszyk jest pusty!");
-
-        try {
-            const res = await fetch(`${API}/api/zamow`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc: platnosc })
-            });
-
-            if (res.ok) {
-                adminCart = [];
-                renderAdminCart();
-                alert("Sprzedaż zapisana!");
-                refreshData();
-            } else {
-                const err = await res.json();
-                alert("Błąd: " + err.error);
-            }
-        } catch (e) {
-            alert("Błąd sieci!");
-        }
+    function removeFromAdminCart(nazwa) {
+        let item = adminCart.find(i => i.nazwa === nazwa);
+        if (item) { item.sztuk--; if (item.sztuk <= 0) adminCart = adminCart.filter(i => i.nazwa !== nazwa); }
+        renderAdminCart();
     }
 
-    // 5. Zmiana statusu zamówienia (np. na Zrealizowane)
+    async function finalizeSale(platnosc) {
+        if (adminCart.length === 0) return alert("Koszyk pusty!");
+        const res = await fetch(`${API}/api/zamow`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc: platnosc })
+        });
+        if (res.ok) { adminCart = []; renderAdminCart(); refreshData(); }
+    }
+
     async function changeStatus(id, status) {
         await fetch(`${API}/api/admin/status`, {
             method: 'POST',
@@ -217,10 +191,19 @@
         refreshData();
     }
 
-    // Start i interwał
-    setInterval(refreshData, 4000);
+    async function endDay() {
+        const workers = document.getElementById('worker-count').value;
+        if(!confirm("Czy na pewno chcesz zakończyć dzień? Dane zostaną wysłane do Google Sheets, a lista zamówień wyczyszczona.")) return;
+        const res = await fetch(`${API}/api/admin/reset`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ workers: workers })
+        });
+        if(res.ok) { alert("Dzień zakończony!"); refreshData(); }
+    }
+
+    setInterval(refreshData, 5000);
     refreshData();
 </script>
-
 </body>
 </html>
