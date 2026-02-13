@@ -9,20 +9,24 @@ app.use(express.json());
 const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 const db = new sqlite3.Database('./lemoniada.db');
 
-db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-    id INTEGER PRIMARY KEY AUTOINCREMENT, 
-    produkty TEXT, 
-    suma TEXT, 
-    platnosc TEXT, 
-    godzina TEXT, 
-    kod_rabatowy TEXT, 
-    status TEXT DEFAULT 'PRZYJĘTE'
-)`);
+db.serialize(() => {
+    db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
+        id INTEGER PRIMARY KEY AUTOINCREMENT, 
+        produkty TEXT, 
+        suma TEXT, 
+        platnosc TEXT, 
+        godzina TEXT, 
+        kod_rabatowy TEXT, 
+        status TEXT DEFAULT 'PRZYJĘTE'
+    )`);
+});
+
+// Port 8443 jest kluczowy dla Cloudflare HTTPS Proxy
+const PORT = 8443;
+
+app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow || 0 }));
 
 let stanKubkow = 0;
-
-app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
-
 app.post('/ustaw-kubki', (req, res) => {
     stanKubkow = parseInt(req.body.ilosc, 10) || 0;
     res.json({ success: true, stan: stanKubkow });
@@ -36,16 +40,13 @@ app.get('/zarobki', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
-    const ilosc = produkty.split(', ').length;
-
-    if (stanKubkow < ilosc) return res.status(400).json({ error: "BRAK_KUBKOW" });
-
+    const ilosc = produkty ? produkty.split(', ').length : 0;
     const godzina = new Date().toLocaleTimeString('pl-PL');
+
     db.run('INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)',
         [produkty, suma, platnosc, godzina, kod], function(err) {
             if (err) return res.status(500).json({ error: "BŁĄD BAZY" });
             const lastId = this.lastID;
-            stanKubkow -= ilosc;
 
             fetch(GOOGLE_URL, {
                 method: 'POST',
@@ -65,11 +66,4 @@ app.post('/update-status', (req, res) => {
     db.run('UPDATE zamowienia SET status = ? WHERE id = ?', [req.body.nowyStatus, req.body.id], () => res.json({ success: true }));
 });
 
-app.post('/reset-bazy', (req, res) => {
-    db.serialize(() => {
-        db.run('DELETE FROM zamowienia');
-        db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => res.json({ success: true }));
-    });
-});
-
-app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada działa na porcie 3000'));
+app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Serwer LemonIada działa na porcie ${PORT} (HTTPS Ready)`));
