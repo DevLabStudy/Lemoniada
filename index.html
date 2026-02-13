@@ -2,25 +2,27 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LemonIada</title>
+    <title>LemonIada - Zamów</title>
     <style>
-        :root { --main: #f1c40f; --green: #2ecc71; --red: #e74c3c; --dark: #2c3e50; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--main); text-align: center; padding: 15px; }
-        .app { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .btn { background: var(--green); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; margin: 5px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; }
+        :root { --main: #f1c40f; --green: #2ecc71; --red: #e74c3c; --blue: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--main); text-align: center; padding: 15px; margin: 0; }
+        .app { max-width: 450px; margin: auto; background: white; padding: 20px; border-radius: 30px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); min-height: 80vh; }
+        .btn { background: var(--green); color: white; border: none; padding: 15px; border-radius: 12px; width: 100%; margin: 5px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 16px; }
         .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #27ae60; }
         .btn.sold-out { background: var(--red) !important; box-shadow: 0 4px 0 #c0392b !important; }
-        .card { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #eee; }
+        .card { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #eee; position: relative; }
         #success { display: none; padding: 20px; border: 4px solid #eee; border-radius: 25px; transition: 0.3s; }
-        .status-badge { background: #3498db; color: white; padding: 10px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; margin: 10px 0; display: inline-block; }
+        .status-badge { background: var(--blue); color: white; padding: 10px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; margin: 10px 0; display: inline-block; }
         .ready-mode { background: #fafffa; border-color: var(--green) !important; animation: pulse 1.5s infinite; }
         @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0); } }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: white; padding: 8px 12px; border-radius: 8px; margin-bottom: 5px; border: 1px solid #ddd; }
+        .btn-del { color: var(--red); border: none; background: none; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
 <div class="app">
     <h1>🍋 LemonIada</h1>
-    <p id="k-status">Łączenie...</p>
+    <p id="k-status" style="font-weight:bold; color:#d35400;">Łączenie...</p>
 
     <div id="main-ui">
         <div class="card">
@@ -32,8 +34,8 @@
             <button class="btn btn-add" onclick="dodaj('Pomarańczowa', 7)">DODAJ</button>
         </div>
 
-        <div style="background: #fff9e6; padding: 10px; border-radius: 15px;">
-            <p id="p-msg" style="margin:5px;">Masz kod?</p>
+        <div style="background: #fff9e6; padding: 10px; border-radius: 15px; border: 1px dashed #f39c12;">
+            <p id="p-msg" style="margin:5px;">🎟️ Masz kod rabatowy?</p>
             <button id="w-btn" class="btn" style="background:#9b59b6; box-shadow:0 4px 0 #8e44ad;" onclick="losuj()">LOSUJ RABAT</button>
             <div style="display:flex; gap:5px; margin-top:5px;">
                 <input type="text" id="p-in" placeholder="Kod..." style="flex:1; padding:10px; border-radius:8px; border:1px solid #ccc;">
@@ -41,14 +43,16 @@
             </div>
         </div>
 
-        <div id="cart" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
+        <div id="cart" style="display:none; margin-top:15px; border-top:2px solid #eee; padding-top:10px;">
+            <h3>🛒 Twój Koszyk:</h3>
             <div id="cart-list"></div>
-            <h3>Suma: <span id="total">0</span> zł</h3>
-            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">GOTÓWKĄ</button>
-            <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">BLIKIEM</button>
+            <h3>Suma: <span id="total">0.00</span> zł</h3>
+            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 PŁACĘ GOTÓWKĄ</button>
+            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">📱 PŁACĘ BLIKIEM</button>
             <div id="blik-p" style="display:none; padding:10px; background:#ebf5fb; border-radius:10px; margin-top:5px;">
-                <button class="btn" style="background:#3498db; margin:2px 0;" onclick="copyB('668078310')">668 078 310</button>
-                <button class="btn" style="background:#3498db; margin:2px 0;" onclick="copyB('537282634')">537 282 634</button>
+                <p>Kliknij numer, aby skopiować:</p>
+                <button class="btn" style="background:var(--blue); margin:2px 0;" onclick="copyB('668078310')">668 078 310</button>
+                <button class="btn" style="background:var(--blue); margin:2px 0;" onclick="copyB('537282634')">537 282 634</button>
             </div>
         </div>
     </div>
@@ -57,7 +61,8 @@
         <h2 id="s-title">PRZYJĘTE! ✅</h2>
         <div id="cur-status" class="status-badge">W KOLEJCE</div>
         <h1 id="o-num" style="font-size:80px; margin:15px 0;">#?</h1>
-        <p id="s-info" style="font-weight:bold; color:orange;">⚠️ NIE ODŚWIEŻAJ STRONY!</p>
+        <p id="s-info" style="font-weight:bold; color:orange;">⚠️ NIE ZAMYKAJ TEJ STRONY!</p>
+        <p>Gdy Twoja lemoniada będzie gotowa, pojawi się tu informacja.</p>
     </div>
 </div>
 
@@ -68,40 +73,56 @@
     let zuzyte = JSON.parse(localStorage.getItem('z') || "[]");
 
     function dodaj(n, p) { if(koszyk.length < stanLokalny) { koszyk.push({n, p}); odswiez(); } }
+
+    function usun(idx) {
+        koszyk.splice(idx, 1);
+        odswiez();
+    }
+
     function odswiez() {
-        document.getElementById('cart').style.display = koszyk.length ? 'block' : 'none';
-        document.getElementById('cart-list').innerHTML = koszyk.map(i=>`<div><b>${i.n}</b></div>`).join('');
+        const cartDiv = document.getElementById('cart');
+        const listDiv = document.getElementById('cart-list');
+        cartDiv.style.display = koszyk.length ? 'block' : 'none';
+
+        listDiv.innerHTML = koszyk.map((i, idx) => `
+            <div class="cart-item">
+                <span><b>${i.n}</b> - ${i.p}zł</span>
+                <button class="btn-del" onclick="usun(${idx})">USUŃ</button>
+            </div>
+        `).join('');
+
         let s = koszyk.reduce((a, b) => a + b.p, 0) * (1 - rabat/100);
         document.getElementById('total').innerText = s.toFixed(2);
+
         document.querySelectorAll('.btn-add').forEach(b => {
             b.classList.toggle('sold-out', koszyk.length >= stanLokalny);
-            b.innerText = koszyk.length >= stanLokalny ? "LIMIT" : "DODAJ";
+            b.innerText = koszyk.length >= stanLokalny ? "WYPRZEDANE" : "DODAJ";
         });
     }
 
     function refreshStock() {
         fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => {
             stanLokalny = d.kubki;
-            document.getElementById('k-status').innerText = "Kubki: " + d.kubki;
+            document.getElementById('k-status').innerText = "Pozostało kubków: " + d.kubki;
             odswiez();
-        }).catch(()=> document.getElementById('k-status').innerText = "BŁĄD POŁĄCZENIA");
+        }).catch(()=> document.getElementById('k-status').innerText = "BŁĄD SERWERA");
     }
 
     function losuj() {
         if(localStorage.getItem('dl') === dzis) return alert("Już losowałeś!");
         const r = [5, 10, 15, 20][Math.floor(Math.random()*4)];
         localStorage.setItem('kl', "WYGRANA"+r); localStorage.setItem('dl', dzis);
-        document.getElementById('p-msg').innerText = "KOD: WYGRANA"+r;
+        document.getElementById('p-msg').innerText = "TWÓJ KOD: WYGRANA"+r;
         document.getElementById('w-btn').style.display = 'none';
     }
 
     function sprawdz() {
         const v = document.getElementById('p-in').value.toUpperCase().trim();
-        if(zuzyte.includes(v)) return alert("Kod już zużyty!");
+        if(zuzyte.includes(v)) return alert("Ten kod został już zużyty!");
         const s = {"FB10":10, "LEMON20":20, "CHAMPION":15};
-        if(v === localStorage.getItem('kl')) { rabat = parseInt(v.replace("WYGRANA","")); uzytyKod = v; alert("Rabat dodany!"); }
-        else if(s[v]) { rabat = s[v]; uzytyKod = v; alert("Rabat dodany!"); }
-        else { alert("Zły kod"); }
+        if(v === localStorage.getItem('kl')) { rabat = parseInt(v.replace("WYGRANA","")); uzytyKod = v; alert("Rabat przyznany!"); }
+        else if(s[v]) { rabat = s[v]; uzytyKod = v; alert("Kod poprawny: " + rabat + "% zniżki"); }
+        else { alert("Niepoprawny kod"); }
         odswiez();
     }
 
@@ -137,7 +158,7 @@
 
                         if(z.status === "WYDANE") {
                             clearInterval(i);
-                            badge.innerText = "DZIĘKUJEMY!";
+                            badge.innerText = "DZIĘKUJEMY I ZAPRASZAMY PONOWNIE!";
                             setTimeout(() => location.reload(), 3000);
                         }
                     }

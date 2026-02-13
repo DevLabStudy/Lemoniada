@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// PODSTAW TU SWÓJ LINK Z GOOGLE APPS SCRIPT
 const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 let db = new sqlite3.Database('./lemoniada.db');
 
@@ -18,6 +19,7 @@ app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 
 app.post('/ustaw-kubki', (req, res) => {
     stanKubkow = parseInt(req.body.ilosc) || 0;
+    console.log(`Zmieniono stan magazynu na: ${stanKubkow}`);
     res.json({ success: true, stan: stanKubkow });
 });
 
@@ -29,7 +31,8 @@ app.get('/zarobki', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
-    const ilosc = produkty.split(', ').length;
+    const produktyArray = produkty.split(', ');
+    const ilosc = produktyArray.length;
 
     if (stanKubkow < ilosc) return res.status(400).json({ error: "BRAK_KUBKOW" });
 
@@ -38,11 +41,13 @@ app.post('/zamow', (req, res) => {
         [produkty, suma, platnosc, godzina, kod], function(err) {
             const lastId = this.lastID;
             stanKubkow -= ilosc;
+
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
-            }).catch(e => console.log("Błąd Sheets"));
+            }).catch(e => console.log("Błąd Google Sheets"));
+
             res.json({ id: lastId });
         });
 });
@@ -61,4 +66,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 LemonIada Engine Online'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada działa na porcie 3000'));
