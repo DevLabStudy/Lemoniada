@@ -11,8 +11,10 @@
         .btn:active { transform: translateY(2px); box-shadow: 0 1px 0 #27ae60; }
         .btn.sold-out { background: var(--red) !important; box-shadow: 0 4px 0 #c0392b !important; }
         .card { background: #f9f9f9; padding: 15px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #eee; }
-        #success { display: none; }
-        .status-badge { background: #3498db; color: white; padding: 5px 15px; border-radius: 20px; font-size: 14px; }
+        #success { display: none; padding: 20px; border: 4px solid #eee; border-radius: 25px; transition: 0.3s; }
+        .status-badge { background: #3498db; color: white; padding: 10px 15px; border-radius: 20px; font-size: 16px; font-weight: bold; margin: 10px 0; display: inline-block; }
+        .ready-mode { background: #fafffa; border-color: var(--green) !important; animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0); } }
     </style>
 </head>
 <body>
@@ -42,9 +44,9 @@
         <div id="cart" style="display:none; margin-top:15px; border-top:1px solid #eee; padding-top:10px;">
             <div id="cart-list"></div>
             <h3>Suma: <span id="total">0</span> zł</h3>
-            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">GOTÓWKA</button>
-            <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">PŁACĘ BLIKIEM</button>
-            <div id="blik-p" style="display:none; background:#ebf5fb; padding:10px; border-radius:10px; margin-top:5px;">
+            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">GOTÓWKĄ</button>
+            <button class="btn" style="background:#3498db; box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">BLIKIEM</button>
+            <div id="blik-p" style="display:none; padding:10px; background:#ebf5fb; border-radius:10px; margin-top:5px;">
                 <button class="btn" style="background:#3498db; margin:2px 0;" onclick="copyB('668078310')">668 078 310</button>
                 <button class="btn" style="background:#3498db; margin:2px 0;" onclick="copyB('537282634')">537 282 634</button>
             </div>
@@ -52,11 +54,10 @@
     </div>
 
     <div id="success">
-        <h2 style="color:var(--green)">PRZYJĘTE! ✅</h2>
-        <p>TWÓJ STATUS:</p>
-        <div id="cur-status" class="status-badge">PRZYJĘTE</div>
+        <h2 id="s-title">PRZYJĘTE! ✅</h2>
+        <div id="cur-status" class="status-badge">W KOLEJCE</div>
         <h1 id="o-num" style="font-size:80px; margin:15px 0;">#?</h1>
-        <p style="font-weight:bold; color:orange;">⚠️ NIE ZAMYKAJ TEJ STRONY!</p>
+        <p id="s-info" style="font-weight:bold; color:orange;">⚠️ NIE ODŚWIEŻAJ STRONY!</p>
     </div>
 </div>
 
@@ -69,7 +70,7 @@
     function dodaj(n, p) { if(koszyk.length < stanLokalny) { koszyk.push({n, p}); odswiez(); } }
     function odswiez() {
         document.getElementById('cart').style.display = koszyk.length ? 'block' : 'none';
-        document.getElementById('cart-list').innerHTML = koszyk.map(i=>`<div>${i.n}</div>`).join('');
+        document.getElementById('cart-list').innerHTML = koszyk.map(i=>`<div><b>${i.n}</b></div>`).join('');
         let s = koszyk.reduce((a, b) => a + b.p, 0) * (1 - rabat/100);
         document.getElementById('total').innerText = s.toFixed(2);
         document.querySelectorAll('.btn-add').forEach(b => {
@@ -87,24 +88,24 @@
     }
 
     function losuj() {
-        if(localStorage.getItem('dl') === dzis) return alert("Dziś już losowałeś!");
+        if(localStorage.getItem('dl') === dzis) return alert("Już losowałeś!");
         const r = [5, 10, 15, 20][Math.floor(Math.random()*4)];
         localStorage.setItem('kl', "WYGRANA"+r); localStorage.setItem('dl', dzis);
-        document.getElementById('p-msg').innerText = "TWÓJ KOD: WYGRANA"+r;
+        document.getElementById('p-msg').innerText = "KOD: WYGRANA"+r;
         document.getElementById('w-btn').style.display = 'none';
     }
 
     function sprawdz() {
         const v = document.getElementById('p-in').value.toUpperCase().trim();
-        if(zuzyte.includes(v)) return alert("Kod już użyty!");
+        if(zuzyte.includes(v)) return alert("Kod już zużyty!");
         const s = {"FB10":10, "LEMON20":20, "CHAMPION":15};
         if(v === localStorage.getItem('kl')) { rabat = parseInt(v.replace("WYGRANA","")); uzytyKod = v; alert("Rabat dodany!"); }
-        else if(s[v]) { rabat = s[v]; uzytyKod = v; alert("Rabat!"); }
-        else { alert("Zły kod"); rabat = 0; uzytyKod = ""; }
+        else if(s[v]) { rabat = s[v]; uzytyKod = v; alert("Rabat dodany!"); }
+        else { alert("Zły kod"); }
         odswiez();
     }
 
-    function copyB(n) { navigator.clipboard.writeText(n); alert("Skopiowano!"); zamow("BLIK ("+n+")"); }
+    function copyB(n) { navigator.clipboard.writeText(n); alert("Numer skopiowany!"); zamow("BLIK ("+n+")"); }
 
     function zamow(metoda) {
         fetch(`${API}/zamow`, {
@@ -122,8 +123,23 @@
                 fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
                     const z = data.find(o => o.id === d.id);
                     if(z) {
-                        document.getElementById('cur-status').innerText = z.status;
-                        if(z.status === "WYDANE") { clearInterval(i); setTimeout(() => location.reload(), 3000); }
+                        const badge = document.getElementById('cur-status');
+                        const box = document.getElementById('success');
+
+                        if(z.status === "GOTOWE") {
+                            badge.innerText = "MOŻESZ PODEJŚĆ! 🍋";
+                            badge.style.background = "#2ecc71";
+                            box.classList.add('ready-mode');
+                            document.getElementById('s-title').innerText = "GOTOWE!";
+                        } else {
+                            badge.innerText = z.status;
+                        }
+
+                        if(z.status === "WYDANE") {
+                            clearInterval(i);
+                            badge.innerText = "DZIĘKUJEMY!";
+                            setTimeout(() => location.reload(), 3000);
+                        }
                     }
                 });
             }, 3000);
