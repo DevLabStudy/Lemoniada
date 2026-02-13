@@ -3,100 +3,119 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade Bar 🍋</title>
+    <title>Lemonade Bar</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #fffde7; padding: 20px; }
+        :root { --yellow: #FFD600; --dark: #1A1A1A; --gray: #F5F5F5; }
+        body { font-family: 'Inter', sans-serif; background: var(--gray); margin: 0; padding: 20px; color: var(--dark); }
+        .app { max-width: 400px; margin: auto; }
+        .card { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
+        h1 { font-size: 28px; font-weight: 800; margin: 0 0 8px 0; }
+        .product { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--gray); border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
+        .product:active { transform: scale(0.98); border-color: var(--yellow); }
+        .btn-main { background: var(--yellow); border: none; width: 100%; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 12px; }
+        .promo-section { display: flex; gap: 8px; margin-top: 16px; }
+        input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #DDD; }
+        .blik-option { padding: 16px; border: 1px solid #DDD; border-radius: 12px; margin-top: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+        .pulsate { animation: pulse 1.5s infinite; color: #FF6D00; font-weight: 800; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
         .hidden { display: none; }
-        .box { background: white; padding: 20px; border-radius: 20px; border: 3px solid #fbc02d; max-width: 400px; margin: auto; }
-        .pulsate { animation: pulse 1s infinite; font-size: 1.5rem; color: #e67e22; font-weight: bold; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-        .num-btn { background: #f8f9fa; border: 1px solid #ddd; padding: 15px; margin: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; }
     </style>
 </head>
 <body>
+    <div class="app">
+        <div id="step-1">
+            <div class="card">
+                <h1>Lemonade Bar 🍋</h1>
+                <p>Wybierz orzeźwienie na dziś:</p>
+                <div class="product" onclick="setProduct('Zwykła', 5)">
+                    <span>🟡 Zwykła Lemoniada</span><b>5.00 zł</b>
+                </div>
+                <div class="product" onclick="setProduct('Pomarańcz', 7)">
+                    <span>🟠 Pomarańczowa</span><b>7.00 zł</b>
+                </div>
+                <div class="promo-section">
+                    <input type="text" id="promo-input" placeholder="Kod rabatowy">
+                    <button onclick="luckyDraw()" style="border:none; background:white; cursor:pointer;">🍀</button>
+                </div>
+            </div>
+        </div>
 
-    <div id="view-menu" class="box">
-        <h1>Lemonade Bar 🍋</h1>
-        <button onclick="wybierz('Zwykła', 5)">Zwykła (5 zł)</button>
-        <button onclick="wybierz('Pomarańcz', 7)">Pomarańcz (7 zł)</button>
-        <div style="margin-top:20px;">
-            <input type="text" id="kod-input" placeholder="Wpisz kod rabatowy">
-            <button onclick="losujKod()">🍀 Losuj kod</button>
+        <div id="step-2" class="hidden">
+            <div class="card">
+                <h1>Płatność 💳</h1>
+                <p>Wybrałeś: <b id="summary-name"></b></p>
+                <button class="btn-main" onclick="pay('Gotówka')">💵 Zapłacę Gotówką</button>
+                <p style="margin-top: 20px; font-size: 12px; color: #888;">LUB PRZELEW BLIK:</p>
+                <div class="blik-option" onclick="copyBlik('668078310')"><span>📞 668 078 310</span> 📋</div>
+                <div class="blik-option" onclick="copyBlik('537282634')"><span>📞 537 282 634</span> 📋</div>
+                <button class="btn-main" style="background:#000; color:white; margin-top:16px;" onclick="pay('BLIK')">Potwierdzam przelew</button>
+            </div>
+        </div>
+
+        <div id="step-3" class="hidden">
+            <div class="card" style="text-align: center;">
+                <p>Twoje zamówienie</p>
+                <h1 id="order-id">#---</h1>
+                <div id="status-msg" style="margin: 24px 0; font-size: 18px;">Przyjęte do kuchni...</div>
+            </div>
         </div>
     </div>
 
-    <div id="view-pay" class="box hidden">
-        <h2>Płatność za <span id="pay-name"></span></h2>
-        <button onclick="finalizuj('Gotówka')">💵 Gotówka</button>
-        <button onclick="document.getElementById('view-blik').classList.remove('hidden'); document.getElementById('view-pay').classList.add('hidden');">📲 BLIK</button>
-    </div>
-
-    <div id="view-blik" class="box hidden">
-        <h3>Skopiuj numer do BLIK:</h3>
-        <div class="num-btn" onclick="copy('668078310')">668 078 310</div>
-        <div class="num-btn" onclick="copy('537282634')">537 282 634</div>
-        <button onclick="finalizuj('BLIK')" style="margin-top:20px; background:#2ecc71; color:white; border:none; padding:10px; border-radius:5px;">POTWIERDZAM PRZELEW</button>
-    </div>
-
-    <div id="view-status" class="box hidden">
-        <h2>Zamówienie #<span id="order-id"></span></h2>
-        <div id="st-msg" style="margin:20px; font-weight:bold;">Przyjęto do realizacji...</div>
-    </div>
-
     <script>
-        let selected = {};
         const API = "https://api.lemoniada.com.pl";
+        let orderData = { produkt: '', cena: 0 };
 
-        function wybierz(n, c) {
-            selected = { rodzaj: n, cena: c };
-            document.getElementById('view-menu').classList.add('hidden');
-            document.getElementById('pay-name').innerText = n;
-            document.getElementById('view-pay').classList.remove('hidden');
+        function setProduct(name, price) {
+            orderData.produkt = name; orderData.cena = price;
+            document.getElementById('summary-name').innerText = name + " (" + price + "zł)";
+            document.getElementById('step-1').classList.add('hidden');
+            document.getElementById('step-2').classList.remove('hidden');
         }
 
-        function losujKod() {
-            if(localStorage.getItem('promo_used')) return alert("Już losowałeś!");
-            const kody = ["WYGRANA10", "WYGRANA15", "WYGRANA20", "BRAK"];
-            const w = kody[Math.floor(Math.random()*kody.length)];
-            if(w !== "BRAK") {
-                document.getElementById('kod-input').value = w;
-                localStorage.setItem('promo_used', 'true');
-                alert("Wylosowałeś: " + w);
-            } else { alert("Niestety, spróbuj jutro!"); }
+        function luckyDraw() {
+            if(localStorage.getItem('draw')) return alert("Już losowałeś!");
+            const wins = ["WYGRANA10", "WYGRANA15", "WYGRANA20", "BRAK"];
+            const res = wins[Math.floor(Math.random()*wins.length)];
+            if(res !== "BRAK") {
+                document.getElementById('promo-input').value = res;
+                alert("GRATULACJE! Twój kod: " + res);
+            } else alert("Nic tym razem!");
+            localStorage.setItem('draw', '1');
         }
 
-        function copy(n) {
-            navigator.clipboard.writeText(n);
+        function copyBlik(nr) {
+            navigator.clipboard.writeText(nr);
             alert("Skopiowano numer!");
         }
 
-        async function finalizuj(p) {
-            const kod = document.getElementById('kod-input').value;
+        async function pay(method) {
+            const kod = document.getElementById('promo-input').value;
             const res = await fetch(`${API}/api/zamow`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({...selected, kod, platnosc: p})
+                body: JSON.stringify({...orderData, platnosc: method, kod})
             });
             const d = await res.json();
-            showStatus(d.orderId);
+            trackStatus(d.id);
         }
 
-        function showStatus(id) {
-            document.querySelectorAll('.box').forEach(b => b.classList.add('hidden'));
-            document.getElementById('view-status').classList.remove('hidden');
-            document.getElementById('order-id').innerText = id;
+        function trackStatus(id) {
+            document.getElementById('step-2').classList.add('hidden');
+            document.getElementById('step-3').classList.remove('hidden');
+            document.getElementById('order-id').innerText = "#" + id;
 
-            const int = setInterval(async () => {
+            const check = setInterval(async () => {
                 const r = await fetch(`${API}/api/status/${id}`);
-                const o = await r.json();
-                const msg = document.getElementById('st-msg');
-                msg.innerText = "Status: " + o.status.toUpperCase();
-                if(o.status === 'gotowe') {
-                    msg.className = 'pulsate';
-                    msg.innerText = "MOŻESZ PODEJŚĆ I ODEBRAĆ! 🍋";
+                const d = await r.json();
+                const msg = document.getElementById('status-msg');
+                msg.innerText = d.status.toUpperCase();
+
+                if(d.status === 'gotowe') {
+                    msg.classList.add('pulsate');
+                    msg.innerText = "ODBIERZ ZAMÓWIENIE! 🍋";
                 }
-                if(o.status === 'zrealizowane') {
-                    clearInterval(int);
+                if(d.status === 'zrealizowane') {
+                    clearInterval(check);
                     setTimeout(() => location.reload(), 4000);
                 }
             }, 3000);
