@@ -2,43 +2,39 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Admin Lemoniada 🍋</title>
+    <title>Centrum Dowodzenia 🍋</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .box-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --success: #10b981; --danger: #ef4444; --accent: #38bdf8; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; padding: 20px; }
+        .container { max-width: 800px; margin: auto; }
+        .header { display: flex; justify-content: space-between; align-items: center; }
+        .box-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 20px 0; }
+        .box { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; }
         .val { font-size: 2.5rem; font-weight: 900; color: var(--primary); display: block; }
-        .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; }
-        .sub-val { color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 5px; display: block; }
-        input { background: #0f172a; border: 1px solid var(--accent); color: white; padding: 12px; border-radius: 12px; outline: none; }
-        .btn-action { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
-        .pos-container { background: var(--card); border: 2px solid var(--primary); padding: 25px; border-radius: 24px; margin-bottom: 30px; }
+        .pos-container { border: 2px solid var(--primary); padding: 20px; border-radius: 20px; }
+        .cart-preview { background: #000; padding: 10px; border-radius: 10px; min-height: 40px; margin-bottom: 10px; cursor: pointer; }
+        .btn-end { background: var(--danger); color: white; width: 100%; padding: 15px; border-radius: 15px; border: none; font-weight: 900; margin-bottom: 20px; cursor: pointer; }
         .btn-pos { padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; background: var(--primary); }
-        .btn-end { background: var(--danger); color: white; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; border: none; cursor: pointer; margin-bottom: 20px; }
-        .order-card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
+        input { background: transparent; border: 1px solid var(--accent); color: white; border-radius: 8px; padding: 5px; width: 60px; }
     </style>
 </head>
 <body>
 <div class="container">
-    <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
+    <div class="header">
         <h1>Centrum Dowodzenia 🍋</h1>
-        <span id="conn-status">● SYSTEM OFFLINE</span>
+        <span id="status">● SYSTEM ONLINE</span>
     </div>
 
     <div class="box-grid">
         <div class="box">
-            <span class="label">Utarg</span>
-            <span class="val" id="rev-display">0.00 zł</span>
-            <input type="number" id="worker-count" value="2" min="1" oninput="calculateSplit()" style="width: 50px;">
-            <span class="sub-val" id="split-display">Na głowę: 0.00 zł</span>
+            <small>UTARG</small>
+            <span class="val" id="rev">0.00 zł</span>
+            <input type="number" id="workers" value="1" oninput="calc()"> <small id="split">Na głowę: 0 zł</small>
         </div>
         <div class="box">
-            <span class="label">Magazyn</span>
-            <span class="val" id="cups-display">0</span>
-            <input type="number" id="cups-input" placeholder="Sztuki" style="width: 80px;">
-            <button class="btn-action" onclick="setCups()">USTAW</button>
+            <small>MAGAZYN</small>
+            <span class="val" id="cups">0</span>
+            <input type="number" id="cups-in"> <button class="btn-pos" style="padding:5px 10px;" onclick="setCups()">USTAW</button>
         </div>
     </div>
 
@@ -46,73 +42,65 @@
 
     <div class="pos-container">
         <h3>🛒 Szybka Sprzedaż</h3>
-        <div id="admin-cart-items" style="margin-bottom:10px; opacity:0.7;">Koszyk pusty</div>
+        <div id="cart" class="cart-preview" onclick="clearCart()">Koszyk jest pusty (kliknij by wyczyścić)</div>
         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
-            <button class="btn-pos" onclick="addToCart('Zwykła', 5)">+ Zwykła (5zł)</button>
-            <button class="btn-pos" onclick="addToCart('Pomarańcz', 7)">+ Pomarańcz (7zł)</button>
+            <button class="btn-pos" onclick="add('Zwykła', 5)">+ Zwykła (5zł)</button>
+            <button class="btn-pos" onclick="add('Pomarańcz', 7)">+ Pomarańcz (7zł)</button>
         </div>
-        <button class="btn-pos" style="background:var(--success); color:white; width:100%;" onclick="finalizeSale('Gotówka')">FINALIZUJ GOTÓWKĄ</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn-pos" style="background:var(--success); color:white; flex:2;" onclick="sale('Gotówka')">FINALIZUJ GOTÓWKĄ</button>
+            <button class="btn-pos" style="background:#3b82f6; color:white; flex:1;" onclick="sale('BLIK')">BLIK</button>
+        </div>
     </div>
-
-    <div id="order-list-container"></div>
 </div>
 
 <script>
     const API = "https://api.lemoniada.com.pl";
-    let utargGlobal = 0;
-    let adminCart = [];
+    let utarg = 0; let cart = [];
 
-    function calculateSplit() {
-        const count = parseInt(document.getElementById('worker-count').value) || 1;
-        document.getElementById('split-display').innerText = `Na głowę: ${(utargGlobal / count).toFixed(2)} zł`;
+    async function refresh() {
+        const r = await fetch(`${API}/api/admin/data`);
+        const d = await r.json();
+        utarg = d.utarg;
+        document.getElementById('rev').innerText = d.utarg.toFixed(2) + " zł";
+        document.getElementById('cups').innerText = d.kubeczki;
+        calc();
     }
 
-    async function refreshData() {
-        try {
-            const r = await fetch(`${API}/api/admin/data`);
-            const d = await r.json();
-            document.getElementById('conn-status').innerText = "● SYSTEM ONLINE";
-            document.getElementById('conn-status').style.color = "#10b981";
-            utargGlobal = d.utarg;
-            document.getElementById('rev-display').innerText = d.utarg.toFixed(2) + " zł";
-            document.getElementById('cups-display').innerText = d.kubeczki;
-            calculateSplit();
+    function calc() {
+        const w = document.getElementById('workers').value || 1;
+        document.getElementById('split').innerText = `Na głowę: ${(utarg/w).toFixed(2)} zł`;
+    }
 
-            document.getElementById('order-list-container').innerHTML = d.zamowienia.filter(o => o.status !== 'zrealizowane').map(o => `
-                <div class="order-card">
-                    <div><b>#${o.id} | ${o.produkty}</b><br>${o.cena_total} zł</div>
-                    <button class="btn-action" style="background:var(--success); color:white" onclick="changeStatus(${o.id},'zrealizowane')">ZAKOŃCZ</button>
-                </div>
-            `).join('');
-        } catch (e) { document.getElementById('conn-status').innerText = "● BŁĄD"; }
+    function add(n, c) {
+        let i = cart.find(x => x.nazwa === n);
+        if(i) i.sztuk++; else cart.push({nazwa:n, cena:c, sztuk:1});
+        render();
+    }
+    function render() {
+        document.getElementById('cart').innerText = cart.length ? cart.map(x => `${x.nazwa} x${x.sztuk}`).join(', ') : "Koszyk jest pusty";
+    }
+    function clearCart() { cart = []; render(); }
+
+    async function sale(p) {
+        if(!cart.length) return;
+        await fetch(`${API}/api/zamow`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ koszyk: cart, kod: '', platnosc: p }) });
+        clearCart(); refresh();
     }
 
     async function setCups() {
-        const val = document.getElementById('cups-input').value;
-        await fetch(`${API}/api/admin/set-kubeczki`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ ilosc: val }) });
-        refreshData();
-    }
-
-    function addToCart(n, c) {
-        let i = adminCart.find(x => x.nazwa === n);
-        if(i) i.sztuk++; else adminCart.push({nazwa:n, cena:c, sztuk:1});
-        document.getElementById('admin-cart-items').innerText = adminCart.map(x => `${x.nazwa} x${x.sztuk}`).join(', ');
-    }
-
-    async function finalizeSale(p) {
-        if(adminCart.length === 0) return;
-        await fetch(`${API}/api/zamow`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc: p }) });
-        adminCart = []; document.getElementById('admin-cart-items').innerText = "Koszyk pusty";
-        refreshData();
+        const v = document.getElementById('cups-in').value;
+        await fetch(`${API}/api/admin/set-kubeczki`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ ilosc: v }) });
+        refresh();
     }
 
     async function endDay() {
         if(!confirm("Reset?")) return;
-        await fetch(`${API}/api/admin/reset`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ workers: document.getElementById('worker-count').value }) });
-        refreshData();
+        await fetch(`${API}/api/admin/reset`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ workers: document.getElementById('workers').value }) });
+        refresh();
     }
 
-    setInterval(refreshData, 5000); refreshData();
+    setInterval(refresh, 5000); refresh();
 </script>
 </body>
 </html>
