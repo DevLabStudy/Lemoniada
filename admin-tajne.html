@@ -3,66 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Dashboard 🍋</title>
+    <title>Admin Lemoniada 🍋</title>
     <style>
         :root { --primary: #FFD600; --success: #2ecc71; --bg: #0f172a; --card: #1e293b; --text: #f8fafc; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; }
+        .container { max-width: 1100px; margin: auto; }
 
-        /* Statystyki na górze */
-        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 30px; }
+        /* Statystyki */
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 25px; }
         .stat-card { background: var(--card); padding: 20px; border-radius: 20px; text-align: center; border: 1px solid rgba(255,255,255,0.1); }
-        .stat-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
-        .stat-label { font-size: 0.8rem; opacity: 0.7; text-transform: uppercase; }
+        .stat-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+
+        /* Szybka Sprzedaż */
+        .pos-section { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 30px; border: 2px solid var(--primary); }
+        .pos-grid { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+        select, input[type="number"] { background: #0f172a; color: white; border: 1px solid #334155; padding: 10px; border-radius: 8px; }
+        .btn-add-stac { background: var(--primary); color: #000; border: none; padding: 10px 20px; border-radius: 8px; font-weight: bold; cursor: pointer; }
 
         /* Lista zamówień */
-        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; }
+        .orders-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 15px; }
         .order-card { background: var(--card); border-radius: 16px; padding: 15px; border-left: 5px solid var(--primary); position: relative; }
         .order-id { position: absolute; top: 15px; right: 15px; font-size: 0.8rem; opacity: 0.5; }
-        .order-title { font-size: 1.1rem; font-weight: 700; margin-bottom: 5px; }
-        .order-info { font-size: 0.9rem; margin-bottom: 15px; opacity: 0.9; }
+        .status-tag { font-size: 0.7rem; padding: 2px 8px; border-radius: 5px; background: rgba(255,255,255,0.1); }
 
-        /* Przyciski statusów */
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-        button { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
+        /* Przyciski */
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
+        .btn { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.8rem; transition: 0.2s; }
         .btn-work { background: #334155; color: white; }
         .btn-ready { background: #f59e0b; color: white; }
-        .btn-done { background: var(--success); color: white; grid-column: span 2; margin-top: 5px; }
-        button:hover { opacity: 0.8; transform: translateY(-2px); }
+        .btn-done { background: var(--success); color: white; grid-column: span 2; }
 
-        /* Kalkulator */
-        .calc-section { background: var(--card); padding: 20px; border-radius: 20px; margin-top: 40px; border: 1px dashed rgba(255,255,255,0.2); }
-        input { background: #0f172a; border: 1px solid #334155; color: white; padding: 10px; border-radius: 8px; width: 60px; text-align: center; font-size: 1.1rem; }
-        .split-result { color: var(--success); font-weight: 800; font-size: 1.2rem; }
+        .calc-box { background: var(--card); padding: 20px; border-radius: 20px; margin-top: 30px; border: 1px dashed #334155; }
     </style>
 </head>
 <body>
 
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h1 style="margin:0;">Dashboard 🍋</h1>
-        <div id="clock" style="opacity: 0.5;"></div>
+        <h1>Admin Panel 🍋</h1>
+        <div id="status-dot" style="color: #2ecc71;">● System Online</div>
     </div>
 
     <div class="stats-grid">
         <div class="stat-card">
-            <div class="stat-label">Całkowity Utarg</div>
             <div class="stat-value" id="total-revenue">0.00 zł</div>
+            <div style="font-size: 0.8rem; opacity: 0.6;">ZAROBEK CAŁKOWITY</div>
         </div>
         <div class="stat-card">
-            <div class="stat-label">Aktywne zamówienia</div>
             <div class="stat-value" id="active-count">0</div>
+            <div style="font-size: 0.8rem; opacity: 0.6;">W REALIZACJI</div>
         </div>
     </div>
 
-    <h2 style="font-size: 1rem; opacity: 0.6; margin-bottom: 15px;">AKTYWNE ZAMÓWIENIA</h2>
+    <div class="pos-section">
+        <h3 style="margin-top:0;">➕ Szybka sprzedaż (Stacjonarnie)</h3>
+        <div class="pos-grid">
+            <select id="stac-item">
+                <option value="Zwykła" data-price="5">🟡 Zwykła (5 zł)</option>
+                <option value="Pomarańcz" data-price="7">🟠 Pomarańczowa (7 zł)</option>
+            </select>
+            <input type="number" id="stac-qty" value="1" min="1" style="width: 60px;">
+            <select id="stac-pay">
+                <option value="Gotówka">💵 Gotówka</option>
+                <option value="BLIK">📲 BLIK</option>
+            </select>
+            <button class="btn-add-stac" onclick="addStationary()">DODAJ ZAMÓWIENIE</button>
+        </div>
+    </div>
+
+    <h2>Aktywne Zamówienia</h2>
     <div id="orders-list" class="orders-grid">
         </div>
 
-    <div class="calc-section">
-        <h3>💰 Rozliczenie pracowników</h3>
-        <p>Podziel utarg na <input type="number" id="emp-count" value="1" oninput="calcSplit()"> osoby/osób.</p>
-        <div class="split-result">Dla każdego: <span id="split-value">0.00</span> zł</div>
+    <div class="calc-box">
+        <h3>💰 Rozliczenie Zmiany</h3>
+        Liczba pracowników: <input type="number" id="emp-count" value="1" oninput="calculateSplit()" style="width:50px;">
+        <span style="margin-left: 20px;">Dla każdego: <b id="split-val" style="color:var(--success)">0.00</b> zł</span>
     </div>
 </div>
 
@@ -70,57 +86,85 @@
     const API = "https://api.lemoniada.com.pl";
     let currentRevenue = 0;
 
-    async function fetchData() {
+    // 1. Pobieranie danych
+    async function loadData() {
         try {
-            const r = await fetch(`${API}/api/admin/data`);
-            const d = await r.json();
+            const res = await fetch(`${API}/api/admin/data`);
+            const data = await res.json();
 
-            currentRevenue = d.utarg;
-            document.getElementById('total-revenue').innerText = d.utarg.toFixed(2) + " zł";
-            document.getElementById('active-count').innerText = d.zamowienia.length;
+            currentRevenue = data.utarg;
+            document.getElementById('total-revenue').innerText = data.utarg.toFixed(2) + " zł";
+
+            const activeOrders = data.zamowienia.filter(o => o.status !== 'zrealizowane');
+            document.getElementById('active-count').innerText = activeOrders.length;
 
             let html = '';
-            d.zamowienia.reverse().forEach(o => {
-                const statusClass = o.status === 'gotowe' ? 'style="border-left-color:#f59e0b"' : '';
+            activeOrders.forEach(o => {
                 html += `
-                    <div class="order-card" ${statusClass}>
+                    <div class="order-card" style="border-left-color: ${o.status === 'gotowe' ? '#f59e0b' : '#FFD600'}">
                         <div class="order-id">#${o.id}</div>
-                        <div class="order-title">${o.produkt}</div>
+                        <div class="order-title">${o.produkty}</div>
                         <div class="order-info">
-                            💵 ${o.cena} zł | ${o.platnosc}<br>
-                            🕒 ${o.data.split(',')[1]}
+                            <b>${o.cena_total} zł</b> | ${o.platnosc}<br>
+                            <span class="status-tag">${o.status.toUpperCase()}</span> | ${o.data.split(',')[1]}
                         </div>
                         <div class="actions">
-                            <button class="btn-work" onclick="updateStatus('${o.id}', 'w realizacji')">🔨 Robię</button>
-                            <button class="btn-ready" onclick="updateStatus('${o.id}', 'gotowe')">🔔 GOTOWE</button>
-                            <button class="btn-done" onclick="updateStatus('${o.id}', 'zrealizowane')">✅ ZREALIZOWANE</button>
+                            <button class="btn btn-work" onclick="updateStatus('${o.id}', 'w realizacji')">🔨 Robię</button>
+                            <button class="btn btn-ready" onclick="updateStatus('${o.id}', 'gotowe')">🔔 GOTOWE</button>
+                            <button class="btn btn-done" onclick="updateStatus('${o.id}', 'zrealizowane')">✅ ZREALIZOWANE (Kasa)</button>
                         </div>
                     </div>
                 `;
             });
-            document.getElementById('orders-list').innerHTML = html || '<p style="opacity:0.5">Brak zamówień...</p>';
-            calcSplit();
-        } catch(e) { console.error("Błąd połączenia z API"); }
+            document.getElementById('orders-list').innerHTML = html || '<p style="opacity:0.5">Brak zamówień do wyświetlenia.</p>';
+            calculateSplit();
+        } catch (e) {
+            document.getElementById('status-dot').style.color = 'red';
+            document.getElementById('status-dot').innerText = '● Błąd połączenia';
+        }
     }
 
+    // 2. Szybka sprzedaż stacjonarna
+    async function addStationary() {
+        const item = document.getElementById('stac-item');
+        const nazwa = item.value;
+        const cena = parseFloat(item.options[item.selectedIndex].dataset.price);
+        const sztuk = parseInt(document.getElementById('stac-qty').value);
+        const platnosc = document.getElementById('stac-pay').value;
+
+        const koszyk = [{ nazwa, cena, sztuk }];
+
+        const res = await fetch(`${API}/api/zamow`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ koszyk, kod: '', platnosc })
+        });
+
+        if(res.ok) {
+            alert("Dodano zamówienie stacjonarne!");
+            loadData();
+        }
+    }
+
+    // 3. Zmiana statusu
     async function updateStatus(id, status) {
         await fetch(`${API}/api/admin/status`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ id, status })
         });
-        fetchData();
+        loadData();
     }
 
-    function calcSplit() {
+    // 4. Kalkulator
+    function calculateSplit() {
         const count = document.getElementById('emp-count').value || 1;
-        document.getElementById('split-value').innerText = (currentRevenue / count).toFixed(2);
+        document.getElementById('split-val').innerText = (currentRevenue / count).toFixed(2);
     }
 
-    // Zegar i odświeżanie
-    setInterval(() => { document.getElementById('clock').innerText = new Date().toLocaleTimeString(); }, 1000);
-    setInterval(fetchData, 4000);
-    fetchData();
+    // Odświeżanie co 4 sekundy
+    setInterval(loadData, 4000);
+    loadData();
 </script>
 
 </body>

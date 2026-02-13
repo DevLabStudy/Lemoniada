@@ -3,123 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade Bar</title>
+    <title>Lemonade Shop 🍋</title>
     <style>
-        :root { --yellow: #FFD600; --dark: #1A1A1A; --gray: #F5F5F5; }
-        body { font-family: 'Inter', sans-serif; background: var(--gray); margin: 0; padding: 20px; color: var(--dark); }
-        .app { max-width: 400px; margin: auto; }
-        .card { background: white; border-radius: 24px; padding: 24px; box-shadow: 0 8px 24px rgba(0,0,0,0.05); margin-bottom: 16px; border: 1px solid rgba(0,0,0,0.05); }
-        h1 { font-size: 28px; font-weight: 800; margin: 0 0 8px 0; }
-        .product { display: flex; align-items: center; justify-content: space-between; padding: 16px; background: var(--gray); border-radius: 16px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; border: 2px solid transparent; }
-        .product:active { transform: scale(0.98); border-color: var(--yellow); }
-        .btn-main { background: var(--yellow); border: none; width: 100%; padding: 18px; border-radius: 16px; font-weight: 700; font-size: 16px; cursor: pointer; margin-top: 12px; }
-        .promo-section { display: flex; gap: 8px; margin-top: 16px; }
-        input { flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #DDD; }
-        .blik-option { padding: 16px; border: 1px solid #DDD; border-radius: 12px; margin-top: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .pulsate { animation: pulse 1.5s infinite; color: #FF6D00; font-weight: 800; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        :root { --yellow: #FFD600; --bg: #F8F9FA; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
+        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
+        .product-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
+        .cart-item { display: flex; justify-content: space-between; background: #fffde7; padding: 10px; border-radius: 10px; margin-bottom: 5px; font-size: 14px; }
+        .btn-add { background: var(--yellow); border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
+        .btn-pay { background: #000; color: #fff; width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; }
         .hidden { display: none; }
+        .pulsate { animation: pulse 1s infinite; color: #e67e22; font-weight: bold; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-    <div class="app">
-        <div id="step-1">
-            <div class="card">
-                <h1>Lemonade Bar 🍋</h1>
-                <p>Wybierz orzeźwienie na dziś:</p>
-                <div class="product" onclick="setProduct('Zwykła', 5)">
-                    <span>🟡 Zwykła Lemoniada</span><b>5.00 zł</b>
-                </div>
-                <div class="product" onclick="setProduct('Pomarańcz', 7)">
-                    <span>🟠 Pomarańczowa</span><b>7.00 zł</b>
-                </div>
-                <div class="promo-section">
-                    <input type="text" id="promo-input" placeholder="Kod rabatowy">
-                    <button onclick="luckyDraw()" style="border:none; background:white; cursor:pointer;">🍀</button>
-                </div>
-            </div>
-        </div>
 
-        <div id="step-2" class="hidden">
-            <div class="card">
-                <h1>Płatność 💳</h1>
-                <p>Wybrałeś: <b id="summary-name"></b></p>
-                <button class="btn-main" onclick="pay('Gotówka')">💵 Zapłacę Gotówką</button>
-                <p style="margin-top: 20px; font-size: 12px; color: #888;">LUB PRZELEW BLIK:</p>
-                <div class="blik-option" onclick="copyBlik('668078310')"><span>📞 668 078 310</span> 📋</div>
-                <div class="blik-option" onclick="copyBlik('537282634')"><span>📞 537 282 634</span> 📋</div>
-                <button class="btn-main" style="background:#000; color:white; margin-top:16px;" onclick="pay('BLIK')">Potwierdzam przelew</button>
-            </div>
+<div id="view-shop">
+    <div class="card">
+        <h1>Lemonade Bar 🍋</h1>
+        <div class="product-row">
+            <span>🟡 Zwykła (5 zł)</span>
+            <button class="btn-add" onclick="addToCart('Zwykła', 5)">Dodaj</button>
         </div>
-
-        <div id="step-3" class="hidden">
-            <div class="card" style="text-align: center;">
-                <p>Twoje zamówienie</p>
-                <h1 id="order-id">#---</h1>
-                <div id="status-msg" style="margin: 24px 0; font-size: 18px;">Przyjęte do kuchni...</div>
-            </div>
+        <div class="product-row">
+            <span>🟠 Pomarańcz (7 zł)</span>
+            <button class="btn-add" onclick="addToCart('Pomarańcz', 7)">Dodaj</button>
         </div>
     </div>
 
-    <script>
-        const API = "https://api.lemoniada.com.pl";
-        let orderData = { produkt: '', cena: 0 };
+    <div class="card" id="cart-container">
+        <h3>Twój Koszyk</h3>
+        <div id="cart-list">Koszyk jest pusty</div>
+        <hr>
+        <div style="display:flex; justify-content:space-between; font-weight:bold;">
+            <span>Suma:</span> <span id="cart-total">0.00</span> zł
+        </div>
+        <input type="text" id="promo-input" placeholder="Kod rabatowy" style="width:70%; margin-top:10px; padding:5px;">
+        <button onclick="luckyDraw()">🍀</button>
+        <button class="btn-pay" onclick="goToPayment()">PRZEJDŹ DO PŁATNOŚCI</button>
+    </div>
+</div>
 
-        function setProduct(name, price) {
-            orderData.produkt = name; orderData.cena = price;
-            document.getElementById('summary-name').innerText = name + " (" + price + "zł)";
-            document.getElementById('step-1').classList.add('hidden');
-            document.getElementById('step-2').classList.remove('hidden');
+<div id="view-pay" class="hidden">
+    <div class="card">
+        <h2>Wybierz płatność</h2>
+        <button class="btn-pay" style="background:#27ae60" onclick="order('Gotówka')">💵 Gotówka przy odbiorze</button>
+        <p>LUB BLIK NA NUMER:</p>
+        <div onclick="copy('668078310')" style="background:#eee; padding:10px; border-radius:10px; cursor:pointer; margin-bottom:5px;">📋 668 078 310</div>
+        <div onclick="copy('537282634')" style="background:#eee; padding:10px; border-radius:10px; cursor:pointer;">📋 537 282 634</div>
+        <button class="btn-pay" onclick="order('BLIK')">POTWIERDZAM PRZELEW</button>
+    </div>
+</div>
+
+<div id="view-status" class="hidden">
+    <div class="card" style="text-align:center;">
+        <p>Zamówienie</p>
+        <h1 id="order-id">#---</h1>
+        <div id="status-msg" style="margin:20px 0;">Oczekiwanie...</div>
+    </div>
+</div>
+
+<script>
+    let cart = [];
+    const API = "https://api.lemoniada.com.pl";
+
+    function addToCart(nazwa, cena) {
+        let item = cart.find(i => i.nazwa === nazwa);
+        if(item) item.sztuk++;
+        else cart.push({nazwa, cena, sztuk: 1});
+        renderCart();
+    }
+
+    function updateSztuk(nazwa, delta) {
+        let item = cart.find(i => i.nazwa === nazwa);
+        if(item) {
+            item.sztuk += delta;
+            if(item.sztuk <= 0) cart = cart.filter(i => i.nazwa !== nazwa);
         }
+        renderCart();
+    }
 
-        function luckyDraw() {
-            if(localStorage.getItem('draw')) return alert("Już losowałeś!");
-            const wins = ["WYGRANA10", "WYGRANA15", "WYGRANA20", "BRAK"];
-            const res = wins[Math.floor(Math.random()*wins.length)];
-            if(res !== "BRAK") {
-                document.getElementById('promo-input').value = res;
-                alert("GRATULACJE! Twój kod: " + res);
-            } else alert("Nic tym razem!");
-            localStorage.setItem('draw', '1');
-        }
+    function renderCart() {
+        const list = document.getElementById('cart-list');
+        if(cart.length === 0) { list.innerHTML = "Koszyk jest pusty"; return; }
+        let html = '';
+        let total = 0;
+        cart.forEach(i => {
+            total += i.cena * i.sztuk;
+            html += `<div class="cart-item">
+                <span>${i.nazwa} (x${i.sztuk})</span>
+                <div>
+                    <button onclick="updateSztuk('${i.nazwa}', -1)">-</button>
+                    <button onclick="updateSztuk('${i.nazwa}', 1)">+</button>
+                </div>
+            </div>`;
+        });
+        list.innerHTML = html;
+        document.getElementById('cart-total').innerText = total.toFixed(2);
+    }
 
-        function copyBlik(nr) {
-            navigator.clipboard.writeText(nr);
-            alert("Skopiowano numer!");
-        }
+    function goToPayment() {
+        if(cart.length === 0) return alert("Koszyk jest pusty!");
+        document.getElementById('view-shop').classList.add('hidden');
+        document.getElementById('view-pay').classList.remove('hidden');
+    }
 
-        async function pay(method) {
-            const kod = document.getElementById('promo-input').value;
-            const res = await fetch(`${API}/api/zamow`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({...orderData, platnosc: method, kod})
-            });
-            const d = await res.json();
-            trackStatus(d.id);
-        }
+    async function order(platnosc) {
+        const kod = document.getElementById('promo-input').value;
+        const res = await fetch(`${API}/api/zamow`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ koszyk: cart, kod, platnosc })
+        });
+        const d = await res.json();
+        showStatus(d.id);
+    }
 
-        function trackStatus(id) {
-            document.getElementById('step-2').classList.add('hidden');
-            document.getElementById('step-3').classList.remove('hidden');
-            document.getElementById('order-id').innerText = "#" + id;
+    function showStatus(id) {
+        document.getElementById('view-pay').classList.add('hidden');
+        document.getElementById('view-status').classList.remove('hidden');
+        document.getElementById('order-id').innerText = "#" + id;
+        setInterval(async () => {
+            const r = await fetch(`${API}/api/status/${id}`);
+            const d = await r.json();
+            const m = document.getElementById('status-msg');
+            m.innerText = d.status.toUpperCase();
+            if(d.status === 'gotowe') { m.className = 'pulsate'; m.innerText = "ODBIERZ ZAMÓWIENIE! 🍋"; }
+            if(d.status === 'zrealizowane') location.reload();
+        }, 3000);
+    }
 
-            const check = setInterval(async () => {
-                const r = await fetch(`${API}/api/status/${id}`);
-                const d = await r.json();
-                const msg = document.getElementById('status-msg');
-                msg.innerText = d.status.toUpperCase();
-
-                if(d.status === 'gotowe') {
-                    msg.classList.add('pulsate');
-                    msg.innerText = "ODBIERZ ZAMÓWIENIE! 🍋";
-                }
-                if(d.status === 'zrealizowane') {
-                    clearInterval(check);
-                    setTimeout(() => location.reload(), 4000);
-                }
-            }, 3000);
-        }
-    </script>
+    function copy(n) { navigator.clipboard.writeText(n); alert("Skopiowano!"); }
+    function luckyDraw() {
+        const codes = ["WYGRANA10", "WYGRANA15", "WYGRANA20"];
+        document.getElementById('promo-input').value = codes[Math.floor(Math.random()*codes.length)];
+        alert("Wylosowano kod!");
+    }
+</script>
 </body>
 </html>
