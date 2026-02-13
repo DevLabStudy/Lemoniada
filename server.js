@@ -13,35 +13,48 @@ const db = new sqlite3.Database('./lemoniada.db');
 db.serialize(() => {
     db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id TEXT, produkty TEXT, cena_total REAL, platnosc TEXT, status TEXT, data TEXT, kod TEXT)`);
     db.run(`CREATE TABLE IF NOT EXISTS ustawienia (klucz TEXT PRIMARY KEY, wartosc REAL)`);
-    db.run(`INSERT OR IGNORE INTO ustawienia VALUES ('utarg', 0), ('kubeczki', 0)`);
+    // Inicjalizacja podstawowych wartości
+    db.run(`INSERT OR IGNORE INTO ustawienia VALUES ('utarg', 0)`);
+    db.run(`INSERT OR IGNORE INTO ustawienia VALUES ('kubeczki', 0)`);
 });
 
-// Klient pobiera stan magazynu
+// API: Pobieranie info o kubeczkach
 app.get('/api/info', (req, res) => {
     db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'kubeczki'`, (err, row) => {
         res.json({ kubeczki: row ? row.wartosc : 0 });
     });
 });
 
-// ADMIN ustawia zapas (NAPRAWIONE)
+// API: ADMIN - Ustawianie kubeczków (WERSJA PANCERNA)
 app.post('/api/admin/set-kubeczki', (req, res) => {
     const ilosc = parseInt(req.body.ilosc);
-    if (isNaN(ilosc)) return res.status(400).json({ error: "Błędna liczba" });
+    console.log(`[SERWER] Otrzymano żądanie ustawienia kubeczków na: ${ilosc}`);
 
-    db.run(`UPDATE ustawienia SET wartosc = ? WHERE klucz = 'kubeczki'`, [ilosc], (err) => {
-        if (err) return res.status(500).json({ success: false });
-        console.log(`[MAGAZYN] Zaktualizowano stan na: ${ilosc}`);
-        res.json({ success: true });
+    if (isNaN(ilosc)) {
+        return res.status(400).json({ error: "To nie jest liczba" });
+    }
+
+    // INSERT OR REPLACE zadziała nawet jeśli wiersz nie istnieje
+    db.run(`INSERT OR REPLACE INTO ustawienia (klucz, wartosc) VALUES ('kubeczki', ?)`, [ilosc], function(err) {
+        if (err) {
+            console.error("[BŁĄD SQL]", err.message);
+            return res.status(500).json({ success: false });
+        }
+        console.log(`[MAGAZYN] Pomyślnie ustawiono stan na: ${ilosc}`);
+        res.json({ success: true, count: ilosc });
     });
 });
 
-// Składanie zamówienia (z odejmowaniem kubeczków)
+// API: Składanie zamówienia
 app.post('/api/zamow', (req, res) => {
     const { koszyk, kod, platnosc } = req.body;
     const sztukRazem = koszyk.reduce((a, b) => a + b.sztuk, 0);
 
     db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'kubeczki'`, (err, row) => {
-        if (!row || row.wartosc < sztukRazem) return res.status(400).json({ error: "Brak kubeczków!" });
+        const aktualneKubeczki = row ? row.wartosc : 0;
+        if (aktualneKubeczki < sztukRazem) {
+            return res.status(400).json({ error: "Brak kubeczków! Zostało: " + aktualneKubeczki });
+        }
 
         const id = Math.floor(100 + Math.random() * 899).toString();
         const data = new Date().toLocaleString("pl-PL");
@@ -58,7 +71,7 @@ app.post('/api/zamow', (req, res) => {
     });
 });
 
-// Pobieranie danych dla Admina
+// API: Pobieranie danych dla Admina
 app.get('/api/admin/data', (req, res) => {
     db.all(`SELECT * FROM zamowienia ORDER BY rowid DESC LIMIT 30`, (err, rows) => {
         db.get(`SELECT wartosc FROM ustawienia WHERE klucz = 'utarg'`, (err, rev) => {
@@ -69,6 +82,7 @@ app.get('/api/admin/data', (req, res) => {
     });
 });
 
+// API: Status
 app.post('/api/admin/status', (req, res) => {
     const { id, status } = req.body;
     db.get(`SELECT * FROM zamowienia WHERE id = ?`, [id], (err, row) => {
@@ -83,4 +97,4 @@ app.get('/api/status/:id', (req, res) => {
     db.get(`SELECT status FROM zamowienia WHERE id = ?`, [req.params.id], (err, row) => res.json(row || {status:'brak'}));
 });
 
-app.listen(8443, '0.0.0.0', () => console.log("🍋 SERWER LEMONIADY GOTOWY NA PORTCIE 8443"));
+app.listen(8443, '0.0.0.0', () => console.log("--- SYSTEM ONLINE (8443) ---"));
