@@ -3,154 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada 🍋</title>
+    <title>Lemoniada u Tobika 🍋</title>
     <style>
-        :root { --main: #FFD600; --grad: linear-gradient(135deg, #FFD600 0%, #FF9100 100%); }
-        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
-        .app-container { width: 100%; max-width: 450px; background: #fff; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 20px; position: relative; }
-        .header { background: var(--grad); margin: -20px -20px 20px -20px; padding: 40px 20px; border-radius: 0 0 30px 30px; color: white; text-align: center; }
-        .cups-badge { background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 12px; }
-        .card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
-        .prod-btn { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 15px; background: #fafafa; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
-        .prod-btn:hover { border-color: var(--main); background: #fffdf0; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 12px; margin-bottom: 8px; }
-        .qty-btn { background: var(--main); border: none; width: 30px; height: 30px; border-radius: 8px; font-weight: bold; cursor: pointer; }
-        .btn-pay { background: var(--grad); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: bold; font-size: 16px; box-shadow: 0 10px 20px rgba(255, 145, 0, 0.3); margin-top: 10px; cursor: pointer; }
-        .hidden { display: none; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; }
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
+
+        .status-bar { background: var(--card); padding: 10px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #334155; }
+        .cups-count { color: var(--primary); font-weight: 900; font-size: 1.2rem; }
+
+        .menu-grid { display: grid; gap: 15px; max-width: 500px; margin: auto; }
+        .item { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+
+        .btn-add { background: var(--primary); border: none; padding: 10px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
+
+        .cart-box { background: var(--primary); color: #000; padding: 20px; border-radius: 25px; margin-top: 30px; position: sticky; bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .btn-order { background: #000; color: #fff; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: 900; margin-top: 10px; cursor: pointer; }
+
+        input#promo-code { background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; margin-bottom: 10px; width: 80%; text-align: center; font-weight: bold; }
     </style>
 </head>
 <body>
-    <div class="app-container">
-        <div class="header">
-            <h1>Lemonade Bar 🍋</h1>
-            <span class="cups-badge">Dostępne kubeczki: <b id="display-cups">...</b></span>
-        </div>
 
-        <div id="view-home">
-            <div class="card">
-                <h3>Wybierz smaki:</h3>
-                <div class="prod-btn" onclick="addToCart('Zwykła', 5)">
-                    <span>🟡 Zwykła (5 zł)</span> <b>➕</b>
-                </div>
-                <div class="prod-btn" onclick="addToCart('Pomarańcz', 7)">
-                    <span>🟠 Pomarańczowa (7 zł)</span> <b>➕</b>
-                </div>
-            </div>
+    <h1>Lemoniada 🍋</h1>
 
-            <div class="card" id="cart-box">
-                <h3>Twój Koszyk</h3>
-                <div id="cart-list">Pusto tu...</div>
-                <hr style="opacity: 0.1; margin: 15px 0;">
-                <div style="display:flex; justify-content:space-between; font-weight:800; font-size: 20px;">
-                    <span>Suma:</span> <span id="cart-total">0.00</span> zł
-                </div>
-                <input type="text" id="promo" placeholder="Kod rabatowy" style="width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box;">
-                <button class="btn-pay" onclick="showPayment()">PRZEJDŹ DO PŁATNOŚCI</button>
-            </div>
-        </div>
+    <div class="status-bar">
+        Dostępne kubeczki: <span class="cups-count" id="cups-display">--</span>
+    </div>
 
-        <div id="view-payment" class="hidden">
-            <div class="card">
-                <button onclick="location.reload()" style="border:none; background:none; cursor:pointer;">⬅ Powrót</button>
-                <h2>Jak płacisz?</h2>
-                <button class="btn-pay" style="background: #2ecc71" onclick="submitOrder('Gotówka')">💵 Gotówka</button>
-                <div style="text-align:center; margin: 20px 0; color: #888;">--- LUB BLIK ---</div>
-                <div class="prod-btn" onclick="copy('668078310')"><span>📞 668 078 310</span> 📋</div>
-                <div class="prod-btn" onclick="copy('537282634')"><span>📞 537 282 634</span> 📋</div>
-                <button class="btn-pay" style="background: #000" onclick="submitOrder('BLIK')">Potwierdzam przelew</button>
-            </div>
+    <div class="menu-grid">
+        <div class="item">
+            <div><b>Klasyczna</b><br><small>5.00 zł</small></div>
+            <button class="btn-add" onclick="addToCart('Zwykła', 5)">DODAJ</button>
         </div>
+        <div class="item">
+            <div><b>Pomarańczowa</b><br><small>7.00 zł</small></div>
+            <button class="btn-add" onclick="addToCart('Pomarańcz', 7)">DODAJ</button>
+        </div>
+    </div>
 
-        <div id="view-status" class="hidden">
-            <div class="card" style="text-align: center; padding: 40px 20px;">
-                <p>Twoje zamówienie</p>
-                <h1 id="order-id" style="font-size: 50px; margin: 10px 0;">#---</h1>
-                <div id="status-msg" style="font-size: 20px; font-weight: bold; color: var(--main);">Przyjęte...</div>
-            </div>
-        </div>
+    <div id="cart-ui" class="cart-box" style="display: none;">
+        <h3 style="margin: 0 0 10px 0;">Twoje zamówienie:</h3>
+        <div id="cart-items" style="margin-bottom: 10px; font-weight: bold;"></div>
+
+        <input type="text" id="promo-code" placeholder="KOD RABATOWY">
+
+        <div style="font-size: 0.8rem; margin-bottom: 10px;">Płatność przy odbiorze (Gotówka/BLIK)</div>
+        <button class="btn-order" onclick="sendOrder()">ZAMÓW I ZAPŁAĆ NA MIEJSCU</button>
     </div>
 
     <script>
         const API = "https://api.lemoniada.com.pl";
         let cart = [];
-        let maxCups = 0;
 
-        async function getInfo() {
-            const r = await fetch(`${API}/api/info`);
-            const d = await r.json();
-            maxCups = d.kubeczki;
-            document.getElementById('display-cups').innerText = maxCups;
-        }
+        // 1. SYNCHRONIZACJA KUBECZKÓW
+        async function updateStock() {
+            try {
+                const r = await fetch(`${API}/api/zapas`);
+                const d = await r.json();
+                document.getElementById('cups-display').innerText = d.kubeczki;
 
-        function addToCart(nazwa, cena) {
-            let totalInCart = cart.reduce((a, b) => a + b.sztuk, 0);
-            if(totalInCart >= maxCups) return alert("Brak wolnych kubeczków!");
-
-            let item = cart.find(i => i.nazwa === nazwa);
-            if(item) item.sztuk++; else cart.push({nazwa, cena, sztuk: 1});
-            render();
-        }
-
-        function changeQty(nazwa, val) {
-            let item = cart.find(i => i.nazwa === nazwa);
-            if(item) {
-                if(val > 0 && cart.reduce((a, b) => a + b.sztuk, 0) >= maxCups) return alert("Nie ma więcej kubeczków!");
-                item.sztuk += val;
-                if(item.sztuk <= 0) cart = cart.filter(i => i.nazwa !== nazwa);
+                // Jeśli brak kubeczków, zablokuj przyciski
+                const btns = document.querySelectorAll('.btn-add');
+                btns.forEach(b => b.disabled = d.kubeczki <= 0);
+            } catch (e) {
+                console.error("Błąd połączenia z serwerem");
             }
-            render();
         }
 
-        function render() {
-            const list = document.getElementById('cart-list');
-            let html = ''; let total = 0;
-            cart.forEach(i => {
-                total += i.cena * i.sztuk;
-                html += `<div class="cart-item">
-                    <span>${i.nazwa}</span>
-                    <div>
-                        <button class="qty-btn" onclick="changeQty('${i.nazwa}', -1)">-</button>
-                        <span style="margin: 0 10px">${i.sztuk}</span>
-                        <button class="qty-btn" onclick="changeQty('${i.nazwa}', 1)">+</button>
-                    </div>
-                </div>`;
-            });
-            list.innerHTML = html || "Koszyk jest pusty";
-            document.getElementById('cart-total').innerText = total.toFixed(2);
+        // 2. OBSŁUGA KOSZYKA
+        function addToCart(nazwa, cena) {
+            let item = cart.find(x => x.nazwa === nazwa);
+            if(item) item.sztuk++;
+            else cart.push({nazwa, cena, sztuk: 1});
+
+            renderCart();
         }
 
-        function showPayment() {
-            if(cart.length === 0) return alert("Koszyk jest pusty!");
-            document.getElementById('view-home').classList.add('hidden');
-            document.getElementById('view-payment').classList.remove('hidden');
+        function renderCart() {
+            const ui = document.getElementById('cart-ui');
+            const list = document.getElementById('cart-items');
+
+            if(cart.length > 0) {
+                ui.style.display = "block";
+                list.innerText = cart.map(x => `${x.nazwa} x${x.sztuk}`).join(', ');
+            } else {
+                ui.style.display = "none";
+            }
         }
 
-        async function submitOrder(platnosc) {
-            const kod = document.getElementById('promo').value;
+        // 3. WYSYŁANIE ZAMÓWIENIA
+        async function sendOrder() {
+            const kod = document.getElementById('promo-code').value;
+
             const res = await fetch(`${API}/api/zamow`, {
                 method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ koszyk: cart, kod, platnosc })
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    koszyk: cart,
+                    kod: kod,
+                    platnosc: "Odbiór osobisty"
+                })
             });
-            const d = await res.json();
-            if(d.error) return alert(d.error);
-            startStatus(d.id);
+
+            if(res.ok) {
+                const data = await res.json();
+                alert(`Zamówienie przyjęte! Numer: #${data.id}\nZapraszamy do stoiska!`);
+                cart = [];
+                document.getElementById('promo-code').value = "";
+                renderCart();
+                updateStock();
+            } else {
+                const err = await res.json();
+                alert("Błąd: " + (err.error || "Nie udało się złożyć zamówienia"));
+            }
         }
 
-        function startStatus(id) {
-            document.getElementById('view-payment').classList.add('hidden');
-            document.getElementById('view-status').classList.remove('hidden');
-            document.getElementById('order-id').innerText = "#" + id;
-            setInterval(async () => {
-                const r = await fetch(`${API}/api/status/${id}`);
-                const d = await r.json();
-                document.getElementById('status-msg').innerText = d.status.toUpperCase();
-                if(d.status === 'zrealizowane') location.reload();
-            }, 3000);
-        }
-
-        function copy(t) { navigator.clipboard.writeText(t); alert("Skopiowano numer!"); }
-        getInfo(); setInterval(getInfo, 10000);
+        // Odświeżanie zapasu co 5 sekund
+        setInterval(updateStock, 5000);
+        updateStock();
     </script>
 </body>
 </html>

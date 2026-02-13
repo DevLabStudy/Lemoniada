@@ -16,8 +16,11 @@ db.serialize(() => {
     db.run("INSERT OR IGNORE INTO zapas (id, kubeczki) VALUES (1, 0)");
 });
 
+// Endpoint dla klienta - sprawdzanie zapasów
 app.get('/api/zapas', (req, res) => {
-    db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, row) => res.json({ kubeczki: row ? row.kubeczki : 0 }));
+    db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, row) => {
+        res.json({ kubeczki: row ? row.kubeczki : 0 });
+    });
 });
 
 app.post('/api/zamow', (req, res) => {
@@ -30,23 +33,39 @@ app.post('/api/zamow', (req, res) => {
         let produktyStr = koszyk.map(i => `${i.nazwa} x${i.sztuk}`).join(", ");
         let dataStr = new Date().toLocaleString('pl-PL');
 
+        // WAŻNE: Wstawiamy do bazy i DOPIERO POTEM do Google
         db.run("INSERT INTO zamowienia (produkty, cena_total, platnosc, data, kod, status) VALUES (?, ?, ?, ?, ?, 'nowe')",
             [produktyStr, cena, platnosc, dataStr, kod || "BRAK"], function(err) {
+                if (err) return res.status(500).json({error: err.message});
+
+                const orderID = this.lastID; // To teraz nie będzie undefined
                 db.run("UPDATE zapas SET kubeczki = kubeczki - ? WHERE id = 1", [sztuk]);
-                // Poprawiona kolejność dla Google Sheets
+
+                // Wysyłka do Google z poprawnym ID
                 axios.post(GOOGLE_URL, {
-                    id: this.lastID, data: dataStr, produkty: produktyStr, suma: cena, platnosc: platnosc, kod: kod || "BRAK"
-                }).catch(e => console.log("Błąd Sheets"));
-                res.json({ success: true, id: this.lastID });
+                    id: orderID,
+                    data: dataStr,
+                    produkty: produktyStr,
+                    suma: cena,
+                    platnosc: platnosc,
+                    kod: kod || "BRAK"
+                }).catch(e => console.log("Błąd Google Sheets"));
+
+                res.json({ success: true, id: orderID });
             });
     });
 });
 
 app.get('/api/admin/data', (req, res) => {
     db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, zapas) => {
-        db.all("SELECT * FROM zamowienia ORDER BY id DESC", (err, rows) => {
-            let utarg = rows ? rows.reduce((a, b) => a + b.cena_total, 0) : 0;
-            res.json({ kubeczki: zapas ? zapas.kubeczki : 0, zamowienia: rows || [], utarg: utarg });
+        db.all("SELECT * FROM zamowienia WHERE status != 'zrealizowane' ORDER BY id DESC", (err, rows) => {
+            db.get("SELECT SUM(cena_total) as total FROM zamowienia", (err, sumRow) => {
+                res.json({
+                    kubeczki: zapas ? zapas.kubeczki : 0,
+                    zamowienia: rows || [],
+                    utarg: sumRow.total || 0
+                });
+            });
         });
     });
 });
@@ -55,15 +74,19 @@ app.post('/api/admin/set-kubeczki', (req, res) => {
     db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [parseInt(req.body.ilosc)], () => res.json({success: true}));
 });
 
+app.post('/api/admin/status', (req, res) => {
+    db.run("UPDATE zamowienia SET status = ? WHERE id = ?", [req.body.status, req.body.id], () => res.json({success:true}));
+});
+
 app.post('/api/admin/reset', (req, res) => {
     const { workers } = req.body;
-    db.all("SELECT cena_total FROM zamowienia", (err, rows) => {
-        let total = rows ? rows.reduce((a, b) => a + b.cena_total, 0) : 0;
+    db.get("SELECT SUM(cena_total) as total FROM zamowienia", (err, row) => {
+        let total = row.total || 0;
         axios.post(GOOGLE_URL, { type: "END_DAY", totalRev: total, workers: workers, data: new Date().toLocaleDateString() });
-        db.serialize(() => {
-            db.run("DELETE FROM zamowienia");
-            db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'");
-            res.json({ success: true });
+        db.run("DELETE FROM zamowienia", () => {
+            db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => {
+                res.json({ success: true });
+            });
         });
     });
 });
