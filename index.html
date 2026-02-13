@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Świeża Lemoniada</title>
+    <title>LemonIada</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; padding: 15px; display: flex; justify-content: center; margin: 0; }
         .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
@@ -15,10 +15,10 @@
         .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
         .input-field { width: 90%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; margin: 10px 0; font-size: 16px; }
 
-        /* MODAL BLIK */
-        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.4); z-index: 2000; width: 85%; max-width: 320px; }
-        .modal-btn { background: #3498db; color: white; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
-        .overlay-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1999; }
+        .pay-option { text-align: left; background: #f9f9f9; padding: 12px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #ddd; cursor: pointer; transition: 0.2s; }
+        .pay-option:hover { background: #f1f1f1; border-color: #2ecc71; }
+        .pay-option input { margin-right: 10px; }
+
         .overlay-msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
@@ -26,17 +26,8 @@
 
 <div id="closed" class="overlay-msg"><h1>⚠️ PRZERWA</h1><p id="msg"></p></div>
 
-<div id="blik-overlay" class="overlay-bg"></div>
-<div id="blik-modal" class="modal">
-    <h3 style="margin-top:0">Wybierz numer do BLIK:</h3>
-    <p style="font-size:12px; color:#666;">Numer zostanie skopiowany automatycznie.</p>
-    <button class="modal-btn" onclick="copyBlik('668 078 310')">668 078 310 (Osoba 1)</button>
-    <button class="modal-btn" onclick="copyBlik('537 282 634')">537 282 634 (Osoba 2)</button>
-    <button class="btn" style="background:#ccc; margin-top:10px;" onclick="closeBlikModal()">Anuluj</button>
-</div>
-
 <div class="app">
-    <h2 style="margin-bottom:5px;">🍋 Orzeźwienie u [Imię]</h2>
+    <h2 style="margin-bottom:5px;">🍋 LemonIada</h2>
     <p style="font-size:12px; color:#777; margin-top:0;">Dostępne kubki: <b id="c-left">0</b></p>
 
     <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
@@ -46,28 +37,38 @@
         <h4>🎡 KOŁO FORTUNY</h4>
         <div id="promo-status">Zdobądź rabat do -20%!</div>
         <button id="wheel-btn" class="btn" style="background:#9b59b6; margin-top:10px;" onclick="spinWheel()">LOSUJ</button>
-        <input type="text" id="promo-input" class="input-field" placeholder="Kod rabatowy..." style="margin-top:15px;">
+        <input type="text" id="promo-input" class="input-field" placeholder="Wpisz kod tutaj...">
         <button class="btn" style="background:#34495e; width:100%" onclick="checkCode()">AKTYWUJ KOD</button>
     </div>
 
     <div id="cart" style="display:none; border-top: 2px solid #eee; padding-top:15px;">
         <div id="cart-list"></div>
-        <input type="number" id="phone-input" class="input-field" placeholder="Twój numer telefonu..." required>
+        <input type="number" id="phone-input" class="input-field" placeholder="Twój numer telefonu (dla nas)..." required>
         <h2 style="color:#27ae60">Suma: <span id="total">0</span> zł</h2>
 
-        <div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px;">
-            <b>Płatność:</b><br>
-            <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka</label><br>
-            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK (Numer do schowka)</label>
-        </div><br>
+        <div style="text-align:left; margin-bottom: 15px;">
+            <b>Wybierz metodę płatności:</b><br><br>
 
-        <button class="btn" style="width:100%; padding:18px;" onclick="send()">ZAMAWIAM</button>
+            <label class="pay-option">
+                <input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka przy odbiorze
+            </label>
+
+            <label class="pay-option">
+                <input type="radio" name="p" value="BLIK: 668 078 310"> 📱 BLIK: 668 078 310
+            </label>
+
+            <label class="pay-option">
+                <input type="radio" name="p" value="BLIK: 537 282 634"> 📱 BLIK: 537 282 634
+            </label>
+        </div>
+
+        <button class="btn" style="width:100%; padding:18px;" onclick="handleOrder()">ZAMAWIAM</button>
     </div>
     <div id="st"></div>
 </div>
 
 <script>
-    const API = "LINK_Z_CLOUDFLARE";
+    const API = "LINK_Z_CLOUDFLARE"; // TUTAJ WKLEJ SWÓJ LINK
     let cart = [];
     let aktualnyRabat = 0;
 
@@ -107,34 +108,29 @@
         const v = document.getElementById('promo-input').value.toUpperCase().trim();
         const saved = localStorage.getItem('promoCode');
         if(v === saved || ["FB10", "CHAMPION"].includes(v)) {
-            aktualnyRabat = v === "FB10" ? 10 : (v === "CHAMPION" ? 15 : parseInt(v.replace("WYGRANA","")));
+            aktualnyRabat = (v === "FB10") ? 10 : (v === "CHAMPION" ? 15 : parseInt(v.replace("WYGRANA","")));
             alert("Rabat aktywowany!");
             updateUI();
         } else { alert("Kod nieprawidłowy"); }
     }
 
-    // --- LOGIKA BLIK ---
-    function openBlikModal() {
-        document.getElementById('blik-overlay').style.display = 'block';
-        document.getElementById('blik-modal').style.display = 'block';
-    }
-    function closeBlikModal() {
-        document.getElementById('blik-overlay').style.display = 'none';
-        document.getElementById('blik-modal').style.display = 'none';
-    }
-    function copyBlik(numer) {
-        navigator.clipboard.writeText(numer.replace(/\s/g, '')).then(() => {
-            alert("Skopiowano numer: " + numer + "\nWklej go w aplikacji banku!");
-            closeBlikModal();
-            finalSend("BLIK");
-        });
-    }
-
-    function send() {
+    // --- OBSŁUGA ZAMÓWIENIA I KOPIOWANIA ---
+    function handleOrder() {
         const tel = document.getElementById('phone-input').value;
-        if(tel.length < 9) return alert("Podaj poprawny numer telefonu!");
-        const met = document.querySelector('input[name="p"]:checked').value;
-        if(met === "BLIK") openBlikModal(); else finalSend("Gotówka");
+        if(tel.length < 9) return alert("Podaj swój numer telefonu!");
+
+        const wybrano = document.querySelector('input[name="p"]:checked').value;
+
+        if(wybrano.includes("BLIK")) {
+            // Wyciąganie numeru z tekstu "BLIK: 668 078 310"
+            const nrDoKopiowania = wybrano.split(": ")[1].replace(/\s/g, '');
+            navigator.clipboard.writeText(nrDoKopiowania).then(() => {
+                alert("Numer BLIK " + nrDoKopiowania + " skopiowany! Wklej go w aplikacji banku po złożeniu zamówienia.");
+                finalSend(wybrano);
+            });
+        } else {
+            finalSend("Gotówka");
+        }
     }
 
     function finalSend(metoda) {
@@ -149,7 +145,7 @@
                 telefon: document.getElementById('phone-input').value
             })
         }).then(r => r.json()).then(d => {
-            alert("Zamówienie wysłane!");
+            alert("Zamówienie przyjęte do realizacji!");
             cart = []; updateUI(); track(d.id);
         });
     }
