@@ -32,7 +32,7 @@
 <div id="list"></div>
 
 <script>
-    const API = "PODSTAW_TU_LINK_Z_CLOUDFLARE";
+    const API = https://bacterial-concept-scripting-expired.trycloudflare.com  ;
     function sell(n, p) { fetch(`${API}/zamow`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produkty:n, suma:p.toFixed(2), platnosc:"Gotówka", kod:"STACJA"})}).then(load); }
 
     function setK() {
