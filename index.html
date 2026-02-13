@@ -2,64 +2,199 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada u Tobika 🍋</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lemoniada 🍋</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --success: #10b981; }
-        body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; padding: 20px; }
-        .item { background: var(--card); padding: 20px; border-radius: 20px; margin: 10px auto; max-width: 400px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
-        .btn-add { background: var(--primary); border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
-        .cart-box { background: var(--primary); color: #000; padding: 20px; border-radius: 20px; margin-top: 20px; }
+        :root {
+            --bg: #0f172a;
+            --card: #1e293b;
+            --primary: #FFD600;
+            --success: #10b981;
+            --accent: #38bdf8;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
-        /* Styl Pola Kodu */
-        input#promo-code { width: 90%; padding: 12px; border-radius: 10px; border: 2px solid #000; margin: 10px 0; font-weight: bold; text-align: center; background: white; color: black; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: white;
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
 
-        /* Ekran Statusu */
-        .status-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:9999; }
-        .status-card { background: var(--card); padding: 40px; border-radius: 30px; border: 4px solid var(--primary); width: 85%; transition: 0.3s; }
-        .big-num { font-size: 5rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
+        /* Menu */
+        .container { width: 100%; max-width: 500px; }
 
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0.7); } 70% { box-shadow: 0 0 0 30px rgba(255, 214, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0); } }
+        .item {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #334155;
+        }
+
+        .btn-add {
+            background: var(--primary);
+            border: none;
+            padding: 15px 25px;
+            border-radius: 15px;
+            font-weight: 900;
+            font-size: 1rem;
+            color: #000;
+        }
+
+        /* Koszyk */
+        .cart-box {
+            background: var(--primary);
+            color: #000;
+            padding: 20px;
+            border-radius: 28px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        input#promo-code {
+            width: 100%;
+            padding: 15px;
+            border-radius: 12px;
+            border: 2px solid rgba(0,0,0,0.1);
+            margin: 10px 0;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            background: white;
+        }
+
+        .btn-luck {
+            background: #000;
+            color: #fff;
+            border: none;
+            width: 100%;
+            padding: 10px;
+            border-radius: 10px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        /* WIELKIE PRZYCISKI PŁATNOŚCI */
+        .payment-btns {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .btn-pay {
+            height: 70px; /* Wysokie pod kciuk */
+            border: none;
+            border-radius: 18px;
+            font-weight: 900;
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        /* BLIK Modal */
+        .modal {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: rgba(0,0,0,0.95); display:none; flex-direction:column;
+            align-items:center; justify-content:center; z-index: 10000; padding: 20px;
+        }
+        .blik-card {
+            background: var(--card); padding: 30px; border-radius: 30px;
+            width: 100%; text-align: center; border: 2px solid var(--accent);
+        }
+        .blik-num {
+            background: #000; padding: 20px; border-radius: 15px;
+            margin: 15px 0; color: var(--primary); font-size: 1.5rem;
+            font-weight: 900; border: 1px solid #333;
+        }
+
+        /* EKRAM STATUSU (Overlay) */
+        .status-overlay {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: var(--bg); display:none; flex-direction:column;
+            align-items:center; justify-content:center; z-index:9999;
+        }
+        .big-num { font-size: 6rem; font-weight: 900; color: var(--primary); margin: 0; }
         .ready { animation: pulse 1.5s infinite; border-color: var(--success) !important; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
+            70% { transform: scale(1.05); box-shadow: 0 0 0 40px rgba(16, 185, 129, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+        }
     </style>
 </head>
 <body>
 
-    <h1>🍋 Lemoniada 🍋</h1>
-    <p>Dostępne kubki: <span id="cups">--</span></p>
+    <div class="container">
+        <h1 style="margin-bottom: 0;">LEMONIADA 🍋</h1>
+        <p style="opacity: 0.6; margin-top: 5px;">Kubeczki: <span id="cups">--</span></p>
 
-    <div class="item">
-        <span>Klasyczna (5zł)</span>
-        <button class="btn-add" onclick="add('Zwykła', 5)">DODAJ</button>
-    </div>
-    <div class="item">
-        <span>Pomarańcza (7zł)</span>
-        <button class="btn-add" onclick="add('Pomarańcz', 7)">DODAJ</button>
+        <div class="item">
+            <div style="text-align: left;"><b>KLASYCZNA</b><br><small>5.00 zł</small></div>
+            <button class="btn-add" onclick="add('Zwykła', 5)">DODAJ</button>
+        </div>
+
+        <div class="item">
+            <div style="text-align: left;"><b>POMARAŃCZ</b><br><small>7.00 zł</small></div>
+            <button class="btn-add" onclick="add('Pomarańcz', 7)">DODAJ</button>
+        </div>
+
+        <div id="cart-ui" class="cart-box" style="display:none">
+            <div id="cart-list" style="margin-bottom:10px; font-weight: 800;"></div>
+
+            <button class="btn-luck" onclick="spinLuck()">🎰 LOSUJ RABAT</button>
+            <input type="text" id="promo-code" placeholder="KOD RABATOWY" oninput="render()">
+
+            <div id="price-display" style="font-size: 1.5rem; font-weight: 900;"></div>
+
+            <div class="payment-btns">
+                <button class="btn-pay" style="background:#000; color:#fff;" onclick="sendOrder('Gotówka')">GOTÓWKA</button>
+                <button class="btn-pay" style="background:#3b82f6; color:#fff;" onclick="openBlik()">BLIK (NUMER)</button>
+            </div>
+        </div>
     </div>
 
-    <div id="cart-ui" class="cart-box" style="display:none">
-        <div id="cart-list" style="margin-bottom:10px"></div>
-        <input type="text" id="promo-code" placeholder="KOD RABATOWY">
-        <button onclick="sendOrder()" style="background:#000; color:#fff; width:100%; padding:15px; border-radius:10px; border:none; font-weight:bold;">ZAMÓW</button>
+    <div id="blik-modal" class="modal">
+        <div class="blik-card">
+            <h2 style="color:white; margin-top:0">Wybierz numer:</h2>
+            <div class="blik-num" onclick="copyBlik('668078310')">668 078 310</div>
+            <div class="blik-num" onclick="copyBlik('537282634')">537 282 634</div>
+            <p style="color:white; opacity:0.6; font-size:0.8rem">Kliknięcie kopiuje numer</p>
+            <button onclick="closeBlik()" style="background:none; border:none; color:#ef4444; font-weight:bold; margin-top:10px;">ANULUJ</button>
+        </div>
     </div>
 
     <div id="status-screen" class="status-overlay">
-        <div id="status-card" class="status-card">
-            <div style="font-weight:bold; opacity:0.6">NUMER ZAMÓWIENIA</div>
+        <div id="status-card" style="background:var(--card); padding:40px; border-radius:35px; width:90%; border:4px solid var(--primary); text-align:center;">
+            <div style="font-weight:bold; opacity:0.5; letter-spacing:2px">TWOJE ZAMÓWIENIE</div>
             <div id="big-id" class="big-num">#--</div>
-            <div id="status-text" style="font-size:1.5rem; font-weight:bold">PRZYJĘTE</div>
-            <p id="status-msg">Czekaj na informację tutaj...</p>
+            <div id="status-text" style="font-size:1.8rem; font-weight:900; margin-top:10px;">PRZYJĘTE</div>
+            <p id="status-msg" style="margin-top:20px; font-weight:bold; opacity:0.7">Czekaj na informację...</p>
         </div>
     </div>
 
     <script>
         const API = "https://api.lemoniada.com.pl";
         let cart = [];
+        const discounts = { 'FB10': 0.10, 'CHAMPION': 0.15, 'LEMON20': 0.20 };
 
         async function updateStock() {
-            const r = await fetch(API + "/api/zapas");
-            const d = await r.json();
-            document.getElementById('cups').innerText = d.kubeczki;
+            try {
+                const r = await fetch(API + "/api/zapas");
+                const d = await r.json();
+                document.getElementById('cups').innerText = d.kubeczki;
+            } catch(e) {}
         }
 
         function add(n, c) {
@@ -70,51 +205,91 @@
 
         function remove(n) {
             let i = cart.findIndex(x => x.nazwa === n);
-            if(i > -1) {
-                if(cart[i].sztuk > 1) cart[i].sztuk--; else cart.splice(i, 1);
-            }
+            if(i > -1) { if(cart[i].sztuk > 1) cart[i].sztuk--; else cart.splice(i, 1); }
             render();
         }
 
         function render() {
             const ui = document.getElementById('cart-ui');
             const list = document.getElementById('cart-list');
+            const priceTag = document.getElementById('price-display');
             ui.style.display = cart.length ? 'block' : 'none';
-            list.innerHTML = cart.map(x => `<div onclick="remove('${x.nazwa}')" style="margin-bottom:5px">${x.nazwa} x${x.sztuk} (Usuń ❌)</div>`).join('');
+
+            list.innerHTML = cart.map(x => `<div onclick="remove('${x.nazwa}')" style="padding:8px; border-bottom:1px solid rgba(0,0,0,0.1)">${x.nazwa} x${x.sztuk} ❌</div>`).join('');
+
+            let total = cart.reduce((a, b) => a + (b.cena * b.sztuk), 0);
+            const code = document.getElementById('promo-code').value.toUpperCase();
+            if(discounts[code]) {
+                total = total * (1 - discounts[code]);
+                priceTag.innerText = "DO ZAPŁATY: " + total.toFixed(2) + " zł";
+            } else {
+                priceTag.innerText = total.toFixed(2) + " zł";
+            }
         }
 
-        async function sendOrder() {
+        function spinLuck() {
+            const keys = Object.keys(discounts);
+            const win = keys[Math.floor(Math.random() * keys.length)];
+            document.getElementById('promo-code').value = win;
+            render();
+            alert("🎰 WYGRANA! Kod: " + win);
+        }
+
+        function openBlik() { document.getElementById('blik-modal').style.display = 'flex'; }
+        function closeBlik() { document.getElementById('blik-modal').style.display = 'none'; }
+
+        function copyBlik(num) {
+            navigator.clipboard.writeText(num).then(() => {
+                alert("Skopiowano: " + num + "\nWyślij przelew i kliknij OK");
+                closeBlik();
+                sendOrder('BLIK');
+            });
+        }
+
+        async function sendOrder(method) {
             const res = await fetch(API + "/api/zamow", {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ koszyk: cart, kod: document.getElementById('promo-code').value, platnosc: "Gotówka/Blik" })
+                body: JSON.stringify({
+                    koszyk: cart,
+                    kod: document.getElementById('promo-code').value || 'BRAK',
+                    platnosc: method
+                })
             });
             const data = await res.json();
-            if(data.success) {
-                cart = []; render();
-                startTracking(data.id);
-            }
+            if(data.success) { cart = []; render(); startTracking(data.id); }
         }
 
         function startTracking(id) {
             document.getElementById('status-screen').style.display = 'flex';
             document.getElementById('big-id').innerText = '#' + id;
             const check = setInterval(async () => {
-                const r = await fetch(`${API}/api/status/${id}`);
-                const d = await r.json();
-                const card = document.getElementById('status-card');
-                const st = document.getElementById('status-text');
+                try {
+                    const r = await fetch(`${API}/api/status/${id}`);
+                    const d = await r.json();
+                    const st = document.getElementById('status-text');
+                    const card = document.getElementById('status-card');
 
-                if(d.status === 'w realizacji') { st.innerText = "W REALIZACJI..."; st.style.color = "#38bdf8"; }
-                if(d.status === 'gotowe') {
-                    st.innerText = "ODBIERZ!"; card.classList.add('ready');
-                    document.getElementById('status-msg').innerText = "ZAPRASZAMY DO STOISKA!";
-                }
-                if(d.status === 'zrealizowane') { clearInterval(check); location.reload(); }
+                    if(d.status === 'w realizacji') {
+                        st.innerText = "W REALIZACJI...";
+                        st.style.color = "#38bdf8";
+                    }
+                    if(d.status === 'gotowe') {
+                        st.innerText = "ODBIERZ!";
+                        st.style.color = "#10b981";
+                        card.classList.add('ready');
+                        document.getElementById('status-msg').innerText = "ZAPRASZAMY DO STOISKA!";
+                    }
+                    if(d.status === 'zrealizowane') {
+                        clearInterval(check);
+                        location.reload();
+                    }
+                } catch(e) {}
             }, 3000);
         }
 
-        setInterval(updateStock, 5000); updateStock();
+        setInterval(updateStock, 5000);
+        updateStock();
     </script>
 </body>
 </html>
