@@ -3,68 +3,109 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada u TobiK 🍋</title>
+    <title>Lemoniada 🍋</title>
     <style>
-        :root { --main: #fbc02d; --bg: #fffde7; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 4px solid var(--main); }
-        .flavor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .flavor-btn { border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer; }
-        .flavor-btn.active { border-color: var(--main); background: #fffde7; }
-        .price-label { font-weight: bold; font-size: 1.2rem; color: #2ecc71; }
-        button.order-btn { width: 100%; background: var(--main); border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .lucky-btn { background: #eee; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-top: 15px; }
+        .hidden { display: none; }
+        .pulsate { animation: pulse 1s infinite; color: #d35400; font-weight: bold; font-size: 1.5rem; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        .btn-num { background: #eee; padding: 10px; margin: 5px; cursor: pointer; border-radius: 5px; border: 1px solid #ccc; }
+        .order-card { border: 2px solid #f1c40f; padding: 20px; border-radius: 15px; text-align: center; }
     </style>
 </head>
-<body>
-    <div class="card">
+<body style="font-family: sans-serif; padding: 20px; text-align: center; background: #fffde7;">
+
+    <div id="view-menu">
         <h1>Lemonade Bar 🍋</h1>
-        <div class="flavor-grid">
-            <div class="flavor-btn active" id="btn-zwykla" onclick="select('zwykla', 5)">
-                <span>🟡</span><br><b>Zwykła</b><br><span class="price-label">5 zł</span>
-            </div>
-            <div class="flavor-btn" id="btn-pomaranczowa" onclick="select('pomaranczowa', 7)">
-                <span>🟠</span><br><b>Pomarańcz</b><br><span class="price-label">7 zł</span>
-            </div>
-        </div>
+        <button onclick="wybierz('zwykla', 5)">Zwykła (5 zł)</button>
+        <button onclick="wybierz('pomaranczowa', 7)">Pomarańcz (7 zł)</button>
+        <br><br>
+        <input type="text" id="kod-input" placeholder="Masz kod rabatowy?">
+        <button onclick="losujKod()">🍀 Losuj kod</button>
+    </div>
 
-        <button class="order-btn" onclick="zamow()">ZAMÓW I ZAPŁAĆ</button>
+    <div id="view-payment" class="hidden">
+        <h2>Wybierz formę płatności</h2>
+        <button onclick="finalizuj('gotówka')">💵 Gotówka</button>
+        <button onclick="pokazBlik()">📲 BLIK</button>
+    </div>
 
-        <input type="text" id="kod" placeholder="KOD RABATOWY" style="width:100%; padding:10px; margin-top:20px; text-align:center;">
-        <button class="lucky-btn" onclick="losujKod()">🍀 Losuj kod rabatowy</button>
+    <div id="view-blik" class="hidden">
+        <h3>Kliknij numer, aby skopiować:</h3>
+        <div class="btn-num" onclick="copy('668078310')">668 078 310</div>
+        <div class="btn-num" onclick="copy('537282634')">537 282 634</div>
+        <p>Po wykonaniu przelewu kliknij:</p>
+        <button onclick="finalizuj('blik')">POTWIERDZAM PRZELEW</button>
+    </div>
+
+    <div id="view-status" class="hidden order-card">
+        <h2>Twoje zamówienie: #<span id="order-no"></span></h2>
+        <div id="status-text" style="font-size: 1.2rem; margin: 20px;">Czekamy na potwierdzenie...</div>
     </div>
 
     <script>
         const API = "https://api.lemoniada.com.pl";
-        let wybranySmak = 'zwykla';
+        let currentOrder = { rodzaj: '', cena: 0 };
 
-        function select(smak) {
-            wybranySmak = smak;
-            document.querySelectorAll('.flavor-btn').forEach(b => b.classList.remove('active'));
-            document.getElementById('btn-' + smak).classList.add('active');
+        function wybierz(r, c) {
+            currentOrder = { rodzaj: r, cena: c };
+            document.getElementById('view-menu').classList.add('hidden');
+            document.getElementById('view-payment').classList.remove('hidden');
         }
 
         function losujKod() {
-            const kody = ["CHAMPION", "FB10", "LEMON20", "BRAK"];
+            const used = localStorage.getItem('used_win_code');
+            if(used) return alert("Już losowałeś kod!");
+
+            const kody = ["WYGRANA10", "WYGRANA15", "WYGRANA20", "BRAK"];
             const wylosowany = kody[Math.floor(Math.random() * kody.length)];
-            if(wylosowany === "BRAK") {
-                alert("Niestety, spróbuj innym razem! 🍋");
-            } else {
-                alert("Gratulacje! Twój kod to: " + wylosowany);
-                document.getElementById('kod').value = wylosowany;
-            }
+
+            if(wylosowany !== "BRAK") {
+                alert("Wygrałeś: " + wylosowany);
+                document.getElementById('kod-input').value = wylosowany;
+                localStorage.setItem('used_win_code', 'true');
+            } else { alert("Nic tym razem 🍋"); }
         }
 
-        async function zamow() {
-            const kod = document.getElementById('kod').value.trim();
+        function copy(nr) {
+            navigator.clipboard.writeText(nr);
+            alert("Skopiowano numer: " + nr);
+        }
+
+        function pokazBlik() {
+            document.getElementById('view-payment').classList.add('hidden');
+            document.getElementById('view-blik').classList.remove('hidden');
+        }
+
+        async function finalizuj(typ) {
+            const kod = document.getElementById('kod-input').value;
             const res = await fetch(`${API}/api/zamow`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ rodzaj: wybranySmak, ilosc: 1, kod: kod })
+                body: JSON.stringify({ ...currentOrder, kod, platnosc: typ })
             });
             const d = await res.json();
-            if(d.success) alert(`🍋 Sukces! Zapłacono: ${d.log.cena} zł`);
-            else alert(d.error);
+            startStatusCheck(d.orderId);
+        }
+
+        function startStatusCheck(id) {
+            document.querySelectorAll('div').forEach(d => d.classList.add('hidden'));
+            document.getElementById('view-status').classList.remove('hidden');
+            document.getElementById('order-no').innerText = id;
+
+            const interval = setInterval(async () => {
+                const r = await fetch(`${API}/api/status/${id}`);
+                const d = await r.json();
+                const st = document.getElementById('status-text');
+
+                st.innerText = "Status: " + d.status.toUpperCase();
+                st.className = (d.status === 'gotowe') ? 'pulsate' : '';
+                if(d.status === 'gotowe') st.innerText = "MOŻESZ PODEJŚĆ I ODEBRAĆ ZAMÓWIENIE! 🍋";
+
+                if(d.status === 'zrealizowane') {
+                    clearInterval(interval);
+                    setTimeout(() => location.reload(), 3000);
+                }
+            }, 3000);
         }
     </script>
 </body>
