@@ -3,159 +3,248 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LemonIada - Zamów</title>
+    <title>Lemoniada u TobiK - System Zamówień</title>
     <style>
-        :root { --main: #f1c40f; --green: #2ecc71; --red: #e74c3c; --blue: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--main); text-align: center; padding: 15px; margin: 0; }
-        .app { max-width: 450px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); min-height: 85vh; }
-        .card { background: #fdfdfd; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #eee; }
-        .btn { background: var(--green); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 17px; }
-        .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #27ae60; }
-        #cart { display: none; margin-top: 20px; border-top: 2px solid #eee; padding-top: 15px; }
-        .cart-item { display: flex; justify-content: space-between; padding: 10px; background: #f9f9f9; border-radius: 10px; margin-bottom: 5px; }
-        #success { display: none; padding: 20px; }
-        .status-badge { background: var(--blue); color: white; padding: 10px 20px; border-radius: 20px; font-weight: bold; margin: 15px 0; display: inline-block; }
+        :root {
+            --primary-color: #fbc02d;
+            --secondary-color: #fff176;
+            --accent-color: #f57f17;
+            --text-dark: #333;
+            --white: #ffffff;
+        }
+
+        body {
+            background-color: #fffde7;
+            background-image: radial-gradient(#fff9c4 20%, transparent 20%), radial-gradient(#fff9c4 20%, transparent 20%);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .main-container {
+            background: var(--white);
+            width: 95%;
+            max-width: 450px;
+            border-radius: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+            overflow: hidden;
+            border: 4px solid var(--primary-color);
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        .header-section {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            padding: 40px 20px;
+            text-align: center;
+            position: relative;
+        }
+
+        .header-section h1 {
+            margin: 0;
+            font-size: 2.2rem;
+            color: var(--text-dark);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .status-badge {
+            background: var(--white);
+            display: inline-block;
+            padding: 8px 20px;
+            border-radius: 50px;
+            margin-top: 15px;
+            font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .order-content {
+            padding: 30px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 1rem;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 8px rgba(251, 192, 45, 0.4);
+        }
+
+        .btn-order {
+            background: var(--primary-color);
+            color: var(--text-dark);
+            border: none;
+            width: 100%;
+            padding: 18px;
+            font-size: 1.2rem;
+            font-weight: 800;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: 0.3s;
+            text-transform: uppercase;
+        }
+
+        .btn-order:hover {
+            background: var(--accent-color);
+            color: white;
+            transform: scale(1.03);
+        }
+
+        .footer-info {
+            background: #f9f9f9;
+            padding: 15px;
+            font-size: 0.85rem;
+            color: #888;
+            border-top: 1px solid #eee;
+        }
+
+        /* Sekcja powiadomień */
+        #notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 10px;
+            display: none;
+            z-index: 1000;
+            color: white;
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
 
-<div class="app">
-    <h1>🍋 LemonIada</h1>
-    <div id="k-status" style="margin-bottom:15px; font-weight:bold;">Łączenie...</div>
+    <div id="notification"></div>
 
-    <div id="main-ui">
-        <div class="card">
-            <h3>Klasyczna 🍋 5zł</h3>
-            <button class="btn" onclick="dodaj('Klasyczna', 5)">DODAJ</button>
-        </div>
-        <div class="card">
-            <h3>Pomarańczowa 🍊 7zł</h3>
-            <button class="btn" onclick="dodaj('Pomarańczowa', 7)">DODAJ</button>
-        </div>
-
-        <div style="background:#fef9e7; padding:15px; border-radius:20px; border:1px dashed #f39c12;">
-            <p id="p-msg">🎟️ Masz kod rabatowy?</p>
-            <button id="w-btn" class="btn" style="background:#9b59b6; box-shadow:0 4px 0 #8e44ad;" onclick="losuj()">LOSUJ RABAT</button>
-            <div style="display:flex; gap:5px; margin-top:10px;">
-                <input type="text" id="p-in" placeholder="Kod..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
-                <button class="btn" style="width:60px; margin:0; background:#34495e; box-shadow:0 4px 0 #2c3e50" onclick="sprawdz()">OK</button>
+    <div class="main-container">
+        <div class="header-section">
+            <h1>Lemonade 🍋</h1>
+            <div class="status-badge">
+                Stan: <span id="kubki-count">--</span> szt.
             </div>
         </div>
 
-        <div id="cart">
-            <h3>🛒 Koszyk:</h3>
-            <div id="cart-list"></div>
-            <h2>Suma: <span id="total">0.00</span> zł</h2>
-            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 GOTÓWKA</button>
-            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">📱 BLIK</button>
-
-            <div id="blik-p" style="display:none; margin-top:10px; background:#e3f2fd; padding:10px; border-radius:15px;">
-                <p>Kliknij numer, aby skopiować i zamówić:</p>
-                <button class="btn" style="background:var(--blue);" onclick="copyB('668078310')">668 078 310</button>
-                <button class="btn" style="background:var(--blue);" onclick="copyB('537282634')">537 282 634</button>
+        <div class="order-content">
+            <div class="input-group">
+                <label>Kto przygotowuje?</label>
+                <select id="pracownik-select">
+                    <option value="TobiK">TobiK</option>
+                    <option value="Pracownik2">Pracownik 2</option>
+                </select>
             </div>
+
+            <div class="input-group">
+                <label>Kod promocyjny (FB10, CHAMPION, LEMON20)</label>
+                <input type="text" id="kod-promo" placeholder="Wpisz kod tutaj...">
+            </div>
+
+            <div class="input-group">
+                <label>Ilość kubków</label>
+                <input type="number" id="ilosc-zamow" value="1" min="1">
+            </div>
+
+            <button class="btn-order" onclick="zrealizujZamowienie()">Kupuję za 5,00 zł / szt.</button>
+        </div>
+
+        <div class="footer-info">
+            Obsługiwane przez: api.lemoniada.com.pl<br>
+            Wszystkie dane są zapisywane w Google Sheets
         </div>
     </div>
 
-    <div id="success">
-        <h2 id="s-title">PRZYJĘTE! ✅</h2>
-        <div id="cur-status" class="status-badge">W KOLEJCE</div>
-        <h1 id="o-num" style="font-size:80px; margin:15px 0;">#?</h1>
-        <p>Gdy status zmieni się na <b>GOTOWE</b>, zapraszamy do odbioru!</p>
-        <button class="btn" onclick="location.reload()">POWRÓT</button>
-    </div>
-</div>
+    <script>
+        const API_BASE = "https://api.lemoniada.com.pl";
 
-<script>
-    const API = "https://api.lemoniada.com.pl";
-    let koszyk = [];
-    let stanLokalny = 50; // Zapas na wypadek błędu API
-    let rabat = 0;
-    const dzis = new Date().toLocaleDateString();
-
-    function refreshStock() {
-        fetch(`${API}/stan-magazynu`)
-            .then(r => r.json())
-            .then(d => {
-                stanLokalny = d.kubki;
-                document.getElementById('k-status').innerText = "Dostępne kubki: " + stanLokalny;
-                odswiez();
-            })
-            .catch(() => {
-                document.getElementById('k-status').innerText = "Tryb Sprzedaży (API Offline)";
-                document.getElementById('k-status').style.color = "orange";
-            });
-    }
-
-    function dodaj(n, p) {
-        if(koszyk.length < stanLokalny) {
-            koszyk.push({n, p});
-            odswiez();
-        } else {
-            alert("Brak wolnych kubków!");
+        function showNotify(msg, color) {
+            const n = document.getElementById('notification');
+            n.innerText = msg;
+            n.style.backgroundColor = color;
+            n.style.display = 'block';
+            setTimeout(() => n.style.display = 'none', 4000);
         }
-    }
 
-    function odswiez() {
-        const cartDiv = document.getElementById('cart');
-        const listDiv = document.getElementById('cart-list');
-        cartDiv.style.display = koszyk.length ? 'block' : 'none';
-        listDiv.innerHTML = koszyk.map((i, idx) => `
-            <div class="cart-item">
-                <span>${i.n} - ${i.p}zł</span>
-                <button onclick="koszyk.splice(${idx},1); odswiez();" style="color:red; border:none; background:none; cursor:pointer;">USUŃ</button>
-            </div>
-        `).join('');
-        let s = koszyk.reduce((a, b) => a + b.p, 0) * (1 - rabat/100);
-        document.getElementById('total').innerText = s.toFixed(2);
-    }
+        async function odswiezStan() {
+            try {
+                const res = await fetch(`${API_BASE}/api/status`);
+                if (!res.ok) throw new Error("Problem z API");
+                const data = await res.json();
+                document.getElementById('kubki-count').innerText = data.magazyn.kubki;
 
-    function losuj() {
-        if(localStorage.getItem('los') === dzis) return alert("Już dzisiaj losowałeś!");
-        const r = [5, 10, 15, 20][Math.floor(Math.random()*4)];
-        localStorage.setItem('kod', "RABAT"+r); localStorage.setItem('los', dzis);
-        document.getElementById('p-msg').innerHTML = "TWÓJ KOD: <b>RABAT"+r+"</b>";
-        document.getElementById('w-btn').style.display = 'none';
-    }
+                // Alert jeśli mało towaru
+                if(data.magazyn.kubki < 10) {
+                    document.getElementById('kubki-count').style.color = 'red';
+                }
+            } catch(e) {
+                console.error("Błąd pobierania stanu:", e);
+                showNotify("Błąd połączenia z serwerem!", "#e74c3c");
+            }
+        }
 
-    function sprawdz() {
-        const v = document.getElementById('p-in').value.toUpperCase();
-        if(v === localStorage.getItem('kod') || v === "LEMON10") {
-            rabat = v === "LEMON10" ? 10 : parseInt(v.replace("RABAT",""));
-            alert("Rabat naliczony!"); odswiez();
-        } else { alert("Zły kod"); }
-    }
+        async function zrealizujZamowienie() {
+            const btn = document.querySelector('.btn-order');
+            const payload = {
+                ilosc: parseInt(document.getElementById('ilosc-zamow').value),
+                cenaBazowa: 5,
+                kod: document.getElementById('kod-promo').value.trim(),
+                pracownik: document.getElementById('pracownik-select').value
+            };
 
-    async function copyB(n) {
-        try { await navigator.clipboard.writeText(n); alert("Numer skopiowany!"); } catch(e){}
-        zamow("BLIK ("+n+")");
-    }
+            btn.disabled = true;
+            btn.innerText = "ŁĄCZENIE Z SERWEREM...";
 
-    function zamow(metoda) {
-        const p = koszyk.map(i => i.n).join(", ");
-        const s = document.getElementById('total').innerText;
+            try {
+                const response = await fetch(`${API_BASE}/api/zamow`, {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify(payload)
+                });
 
-        // Natychmiastowe przełączenie widoku
-        document.getElementById('main-ui').style.display = 'none';
-        document.getElementById('success').style.display = 'block';
+                const result = await response.json();
 
-        fetch(`${API}/zamow`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty: p, suma: s, platnosc: metoda, kod: localStorage.getItem('kod') || "BRAK" })
-        })
-            .then(r => r.json())
-            .then(d => {
-                document.getElementById('o-num').innerText = "#" + d.id;
-            })
-            .catch(() => {
-                document.getElementById('cur-status').innerText = "WYSŁANO (API LAG)";
-                document.getElementById('o-num').innerText = "OK";
-            });
-    }
+                if(result.success) {
+                    showNotify(`Złożono zamówienie! Cena: ${result.log.cena} zł`, "#2ecc71");
+                    document.getElementById('kod-promo').value = "";
+                } else {
+                    showNotify("Błąd: " + result.error, "#e67e22");
+                }
+            } catch(e) {
+                showNotify("Serwer nie odpowiada!", "#c0392b");
+            } finally {
+                btn.disabled = false;
+                btn.innerText = "Kupuję za 5,00 zł / szt.";
+                odswiezStan();
+            }
+        }
 
-    setInterval(refreshStock, 5000);
-    window.onload = refreshStock;
-</script>
+        // Inicjalizacja
+        odswiezStan();
+        // Auto-odświeżanie co 30 sekund
+        setInterval(odswiezStan, 30000);
+    </script>
 </body>
 </html>

@@ -1,58 +1,73 @@
 const express = require('express');
-const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
-const app = express();
+const fs = require('fs');
+const axios = require('axios'); // Musisz zainstalować: npm install axios
 
-// Pełna konfiguracja CORS dla domeny pl
+const app = express();
 app.use(cors());
 app.use(express.json());
 
-const db = new sqlite3.Database('./lemoniada.db');
-
-db.serialize(() => {
-    db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-        id INTEGER PRIMARY KEY AUTOINCREMENT, 
-        produkty TEXT, 
-        suma TEXT, 
-        platnosc TEXT, 
-        godzina TEXT, 
-        kod_rabatowy TEXT, 
-        status TEXT DEFAULT 'PRZYJĘTE'
-    )`);
-});
-
-let stanKubkow = 50; // Domyślny stan
-
-app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
-
-app.post('/ustaw-kubki', (req, res) => {
-    stanKubkow = parseInt(req.body.ilosc, 10) || 0;
-    res.json({ success: true, stan: stanKubkow });
-});
-
-app.post('/zamow', (req, res) => {
-    const { produkty, suma, platnosc, kod } = req.body;
-    const godzina = new Date().toLocaleTimeString('pl-PL');
-
-    db.run('INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)',
-        [produkty, suma, platnosc, godzina, kod], function(err) {
-            if (err) return res.status(500).json({ error: "BŁĄD BAZY" });
-
-            // Zmniejszamy stan przy zamówieniu
-            const ilosc = produkty.split(', ').length;
-            stanKubkow = Math.max(0, stanKubkow - ilosc);
-
-            res.json({ id: this.lastID });
-        });
-});
-
-app.get('/list-zamowienia', (req, res) => {
-    db.all('SELECT * FROM zamowienia ORDER BY id DESC LIMIT 30', [], (err, rows) => res.json(rows || []));
-});
-
-app.post('/update-status', (req, res) => {
-    db.run('UPDATE zamowienia SET status = ? WHERE id = ?', [req.body.nowyStatus, req.body.id], () => res.json({ success: true }));
-});
-
 const PORT = 8443;
-app.listen(PORT, '0.0.0.0', () => console.log(`🚀 Serwer LemonIada na porcie ${PORT}`));
+const DB_FILE = 'lemoniada.json';
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwi35h7ewGcZsOmGod7dsoJk7MGuZ_Xa_kGcrbogO0ytiOEn_CJfXElaOTEmaGECW-3/exec';
+
+// --- TWOJE TAJNE KODY ---
+const DISCOUNTS = {
+    "FB10": 0.10,
+    "CHAMPION": 0.15,
+    "LEMON20": 0.20
+};
+
+// --- BAZA DANYCH ---
+let data = { kubki: 100, zamowienia: [], zarobki: { pracownik1: 0, pracownik2: 0 } };
+if (fs.existsSync(DB_FILE)) data = JSON.parse(fs.readFileSync(DB_FILE));
+
+function saveData() {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2));
+}
+
+// --- ENDPOINTY ---
+
+// 1. Pobieranie stanu
+app.get('/stan-magazynu', (req, res) => res.json(data));
+
+// 2. Zamówienie
+app.post('/zamow', async (req, res) => {
+    const { kod, ilosc, cenaBazowa, pracownik } = req.body;
+    if (data.kubki < ilosc) return res.status(400).json({ error: "Brak kubków!" });
+
+    let znizka = DISCOUNTS[kod.toUpperCase()] || 0;
+    let cenaPoZnizce = (cenaBazowa * ilosc) * (1 - znizka);
+
+    data.kubki -= ilosc;
+    const noweZamowienie = {
+        data: new Date().toLocaleString(),
+        ilosc,
+        cena: cenaPoZnizce,
+        kod: kod || "BRAK",
+        pracownik: pracownik || "Nieznany"
+    };
+
+    data.zamowienia.push(noweZamowienie);
+    saveData();
+
+    // WYSYŁKA DO GOOGLE SHEETS
+    try {
+        await axios.post(GOOGLE_SCRIPT_URL, noweZamowienie);
+    } catch (e) {
+        console.log("Błąd Google Sheets (prawdopodobnie CORS w Google Script, ale dane mogły dojść)");
+    }
+
+    res.json({ success: true, cena: cenaPoZnizce, stan: data.kubki });
+});
+
+// 3. Admin - Dodaj kubki
+app.post('/admin/dodaj-kubki', (req, res) => {
+    data.kubki += parseInt(req.body.ilosc);
+    saveData();
+    res.json(data);
+});
+
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Serwer śmiga na https://api.lemoniada.com.pl`);
+});
