@@ -2,208 +2,117 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Lemoniada 🍋</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; --success: #10b981; --danger: #ef4444; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
-
-        /* Dashboard Stats */
         .box-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 25px; }
-        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; position: relative; }
+        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; }
         .val { font-size: 2.5rem; font-weight: 900; color: var(--primary); display: block; }
-        .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; }
         .sub-val { color: var(--success); font-weight: bold; font-size: 1.1rem; margin-top: 5px; display: block; }
-
-        /* Magazyn UI */
-        .mgmt-ui { display: flex; gap: 10px; margin-top: 15px; }
-        input { background: #0f172a; border: 1px solid var(--accent); color: white; padding: 12px; border-radius: 12px; width: 100px; font-size: 1.1rem; outline: none; }
-        .btn-action { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
-        .btn-action:hover { filter: brightness(1.1); transform: translateY(-2px); }
-
-        /* Szybka Sprzedaż (POS) */
+        input { background: #0f172a; border: 1px solid var(--accent); color: white; padding: 12px; border-radius: 12px; outline: none; }
+        .btn-action { background: var(--accent); color: #000; border: none; padding: 12px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
         .pos-container { background: var(--card); border: 2px solid var(--primary); padding: 25px; border-radius: 24px; margin-bottom: 30px; }
-        .admin-cart-preview { background: rgba(0,0,0,0.3); padding: 15px; border-radius: 15px; margin-bottom: 15px; min-height: 50px; border: 1px dashed #334155; }
-        .admin-cart-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding-bottom: 5px; border-bottom: 1px solid #334155; }
-        .btn-del { background: #ef4444; color: white; border: none; width: 28px; height: 28px; border-radius: 8px; cursor: pointer; }
-
-        .pos-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
-        .btn-pos { padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 1rem; }
-        .btn-yellow { background: var(--primary); color: #000; }
-        .btn-green { background: var(--success); color: white; }
-        .btn-blue { background: #3b82f6; color: white; }
-        .btn-end-day { background: var(--danger); color: white; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; border: none; cursor: pointer; margin-bottom: 30px; font-size: 1.1rem; }
-
-        /* Zamówienia */
+        .btn-pos { padding: 15px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; background: var(--primary); }
+        .btn-end { background: var(--danger); color: white; width: 100%; padding: 18px; border-radius: 15px; font-weight: 900; border: none; cursor: pointer; margin-bottom: 20px; }
         .order-card { background: var(--card); padding: 20px; border-radius: 18px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border-left: 6px solid var(--primary); }
-        .order-info b { font-size: 1.2rem; }
     </style>
 </head>
 <body>
-
 <div class="container">
     <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 20px;">
         <h1>Centrum Dowodzenia 🍋</h1>
-        <span id="conn-status" style="color: #ef4444;">● SYSTEM OFFLINE</span>
+        <span id="conn-status">● SYSTEM OFFLINE</span>
     </div>
 
     <div class="box-grid">
         <div class="box">
-            <span class="label">Utarg Dzisiejszy</span>
+            <span class="label">Utarg</span>
             <span class="val" id="rev-display">0.00 zł</span>
-            <div style="margin-top: 10px;">
-                <span class="label">Osób:</span>
-                <input type="number" id="worker-count" value="2" min="1" oninput="calculateSplit()"
-                       style="width: 50px; padding: 5px; background: #0f172a; border: 1px solid var(--accent); color: white; border-radius: 8px; font-size: 0.9rem;">
-                <span class="sub-val" id="split-display">Na głowę: 0.00 zł</span>
-            </div>
+            <input type="number" id="worker-count" value="2" min="1" oninput="calculateSplit()" style="width: 50px;">
+            <span class="sub-val" id="split-display">Na głowę: 0.00 zł</span>
         </div>
         <div class="box">
-            <span class="label">Magazyn (Kubki)</span>
+            <span class="label">Magazyn</span>
             <span class="val" id="cups-display">0</span>
-            <div class="mgmt-ui">
-                <input type="number" id="cups-input" placeholder="Sztuki">
-                <button class="btn-action" onclick="setCups()">USTAW</button>
-            </div>
+            <input type="number" id="cups-input" placeholder="Sztuki" style="width: 80px;">
+            <button class="btn-action" onclick="setCups()">USTAW</button>
         </div>
     </div>
 
-    <button class="btn-end-day" onclick="endDay()">🏁 ZAKOŃCZ DZIEŃ (RESET + ARCHIWUM GOOGLE)</button>
+    <button class="btn-end" onclick="endDay()">🏁 ZAKOŃCZ DZIEŃ</button>
 
     <div class="pos-container">
-        <h3 style="margin-top:0;">🛒 Szybka Sprzedaż (Stacjonarnie)</h3>
-        <div id="admin-cart-items" class="admin-cart-preview">Koszyk jest pusty</div>
-
-        <div class="pos-buttons">
-            <button class="btn-pos btn-yellow" onclick="addToAdminCart('Zwykła', 5)">+ Zwykła (5zł)</button>
-            <button class="btn-pos btn-yellow" onclick="addToAdminCart('Pomarańcz', 7)">+ Pomarańcz (7zł)</button>
+        <h3>🛒 Szybka Sprzedaż</h3>
+        <div id="admin-cart-items" style="margin-bottom:10px; opacity:0.7;">Koszyk pusty</div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:10px;">
+            <button class="btn-pos" onclick="addToCart('Zwykła', 5)">+ Zwykła (5zł)</button>
+            <button class="btn-pos" onclick="addToCart('Pomarańcz', 7)">+ Pomarańcz (7zł)</button>
         </div>
-
-        <div style="display: flex; gap: 10px;">
-            <button class="btn-pos btn-green" style="flex: 2;" onclick="finalizeSale('Gotówka')">FINALIZUJ GOTÓWKĄ</button>
-            <button class="btn-pos btn-blue" style="flex: 1;" onclick="finalizeSale('BLIK')">BLIK</button>
-        </div>
+        <button class="btn-pos" style="background:var(--success); color:white; width:100%;" onclick="finalizeSale('Gotówka')">FINALIZUJ GOTÓWKĄ</button>
     </div>
 
-    <h2>Aktywne Zamówienia</h2>
     <div id="order-list-container"></div>
 </div>
 
 <script>
     const API = "https://api.lemoniada.com.pl";
+    let utargGlobal = 0;
     let adminCart = [];
-    let currentUtarg = 0;
 
     function calculateSplit() {
         const count = parseInt(document.getElementById('worker-count').value) || 1;
-        const split = (currentUtarg / count).toFixed(2);
-        document.getElementById('split-display').innerText = `Na głowę: ${split} zł`;
+        document.getElementById('split-display').innerText = `Na głowę: ${(utargGlobal / count).toFixed(2)} zł`;
     }
 
     async function refreshData() {
         try {
             const r = await fetch(`${API}/api/admin/data`);
             const d = await r.json();
-
             document.getElementById('conn-status').innerText = "● SYSTEM ONLINE";
             document.getElementById('conn-status').style.color = "#10b981";
-
-            currentUtarg = d.utarg;
+            utargGlobal = d.utarg;
             document.getElementById('rev-display').innerText = d.utarg.toFixed(2) + " zł";
             document.getElementById('cups-display').innerText = d.kubeczki;
             calculateSplit();
 
-            let html = '';
-            d.zamowienia.forEach(o => {
-                if(o.status !== 'zrealizowane') {
-                    html += `
-                        <div class="order-card">
-                            <div class="order-info">
-                                <small>ID: #${o.id} | ${o.data}</small><br>
-                                <b>${o.produkty}</b><br>
-                                <span>${o.cena_total} zł (${o.platnosc}) | Kod: ${o.kod || 'Brak'}</span>
-                            </div>
-                            <button class="btn-action" style="background:var(--success); color:#fff;" onclick="changeStatus('${o.id}','zrealizowane')">ZAKOŃCZ</button>
-                        </div>
-                    `;
-                }
-            });
-            document.getElementById('order-list-container').innerHTML = html || "<p style='opacity:0.5; text-align:center;'>Brak nowych zamówień.</p>";
-        } catch (e) {
-            document.getElementById('conn-status').innerText = "● BŁĄD POŁĄCZENIA";
-            document.getElementById('conn-status').style.color = "#ef4444";
-        }
+            document.getElementById('order-list-container').innerHTML = d.zamowienia.filter(o => o.status !== 'zrealizowane').map(o => `
+                <div class="order-card">
+                    <div><b>#${o.id} | ${o.produkty}</b><br>${o.cena_total} zł</div>
+                    <button class="btn-action" style="background:var(--success); color:white" onclick="changeStatus(${o.id},'zrealizowane')">ZAKOŃCZ</button>
+                </div>
+            `).join('');
+        } catch (e) { document.getElementById('conn-status').innerText = "● BŁĄD"; }
     }
 
     async function setCups() {
-        const count = parseInt(document.getElementById('cups-input').value);
-        if (isNaN(count)) return;
-        await fetch(`${API}/api/admin/set-kubeczki`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ilosc: count })
-        });
-        document.getElementById('cups-input').value = "";
+        const val = document.getElementById('cups-input').value;
+        await fetch(`${API}/api/admin/set-kubeczki`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ ilosc: val }) });
         refreshData();
     }
 
-    function addToAdminCart(nazwa, cena) {
-        let item = adminCart.find(i => i.nazwa === nazwa);
-        if (item) item.sztuk++;
-        else adminCart.push({ nazwa, cena, sztuk: 1 });
-        renderAdminCart();
+    function addToCart(n, c) {
+        let i = adminCart.find(x => x.nazwa === n);
+        if(i) i.sztuk++; else adminCart.push({nazwa:n, cena:c, sztuk:1});
+        document.getElementById('admin-cart-items').innerText = adminCart.map(x => `${x.nazwa} x${x.sztuk}`).join(', ');
     }
 
-    function renderAdminCart() {
-        const container = document.getElementById('admin-cart-items');
-        if (adminCart.length === 0) { container.innerText = "Koszyk jest pusty"; return; }
-        container.innerHTML = adminCart.map(i => `
-            <div class="admin-cart-row">
-                <span><b>${i.nazwa}</b> (x${i.sztuk})</span>
-                <button class="btn-del" onclick="removeFromAdminCart('${i.nazwa}')">✕</button>
-            </div>
-        `).join('');
-    }
-
-    function removeFromAdminCart(nazwa) {
-        let item = adminCart.find(i => i.nazwa === nazwa);
-        if (item) { item.sztuk--; if (item.sztuk <= 0) adminCart = adminCart.filter(i => i.nazwa !== nazwa); }
-        renderAdminCart();
-    }
-
-    async function finalizeSale(platnosc) {
-        if (adminCart.length === 0) return alert("Koszyk pusty!");
-        const res = await fetch(`${API}/api/zamow`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc: platnosc })
-        });
-        if (res.ok) { adminCart = []; renderAdminCart(); refreshData(); }
-    }
-
-    async function changeStatus(id, status) {
-        await fetch(`${API}/api/admin/status`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, status })
-        });
+    async function finalizeSale(p) {
+        if(adminCart.length === 0) return;
+        await fetch(`${API}/api/zamow`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc: p }) });
+        adminCart = []; document.getElementById('admin-cart-items').innerText = "Koszyk pusty";
         refreshData();
     }
 
     async function endDay() {
-        const workers = document.getElementById('worker-count').value;
-        if(!confirm("Czy na pewno chcesz zakończyć dzień? Dane zostaną wysłane do Google Sheets, a lista zamówień wyczyszczona.")) return;
-        const res = await fetch(`${API}/api/admin/reset`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ workers: workers })
-        });
-        if(res.ok) { alert("Dzień zakończony!"); refreshData(); }
+        if(!confirm("Reset?")) return;
+        await fetch(`${API}/api/admin/reset`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ workers: document.getElementById('worker-count').value }) });
+        refreshData();
     }
 
-    setInterval(refreshData, 5000);
-    refreshData();
+    setInterval(refreshData, 5000); refreshData();
 </script>
 </body>
 </html>
