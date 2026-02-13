@@ -3,143 +3,154 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemonade Shop 🍋</title>
+    <title>Lemoniada 🍋</title>
     <style>
-        :root { --yellow: #FFD600; --bg: #F8F9FA; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); margin: 0; padding: 15px; }
-        .card { background: white; border-radius: 20px; padding: 20px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 15px; }
-        .product-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        .cart-item { display: flex; justify-content: space-between; background: #fffde7; padding: 10px; border-radius: 10px; margin-bottom: 5px; font-size: 14px; }
-        .btn-add { background: var(--yellow); border: none; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-weight: bold; }
-        .btn-pay { background: #000; color: #fff; width: 100%; padding: 15px; border-radius: 12px; border: none; font-weight: bold; margin-top: 15px; cursor: pointer; }
+        :root { --main: #FFD600; --grad: linear-gradient(135deg, #FFD600 0%, #FF9100 100%); }
+        body { font-family: 'Poppins', sans-serif; background: #f0f2f5; margin: 0; display: flex; justify-content: center; min-height: 100vh; }
+        .app-container { width: 100%; max-width: 450px; background: #fff; min-height: 100vh; box-shadow: 0 0 20px rgba(0,0,0,0.1); padding: 20px; position: relative; }
+        .header { background: var(--grad); margin: -20px -20px 20px -20px; padding: 40px 20px; border-radius: 0 0 30px 30px; color: white; text-align: center; }
+        .cups-badge { background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; font-size: 12px; }
+        .card { background: white; border-radius: 20px; padding: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 15px; border: 1px solid #eee; }
+        .prod-btn { display: flex; justify-content: space-between; align-items: center; padding: 15px; border-radius: 15px; background: #fafafa; margin-bottom: 10px; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .prod-btn:hover { border-color: var(--main); background: #fffdf0; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px; background: #f8f9fa; border-radius: 12px; margin-bottom: 8px; }
+        .qty-btn { background: var(--main); border: none; width: 30px; height: 30px; border-radius: 8px; font-weight: bold; cursor: pointer; }
+        .btn-pay { background: var(--grad); color: white; border: none; width: 100%; padding: 18px; border-radius: 15px; font-weight: bold; font-size: 16px; box-shadow: 0 10px 20px rgba(255, 145, 0, 0.3); margin-top: 10px; cursor: pointer; }
         .hidden { display: none; }
-        .pulsate { animation: pulse 1s infinite; color: #e67e22; font-weight: bold; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
     </style>
 </head>
 <body>
-
-<div id="view-shop">
-    <div class="card">
-        <h1>Lemonade Bar 🍋</h1>
-        <div class="product-row">
-            <span>🟡 Zwykła (5 zł)</span>
-            <button class="btn-add" onclick="addToCart('Zwykła', 5)">Dodaj</button>
+    <div class="app-container">
+        <div class="header">
+            <h1>Lemonade Bar 🍋</h1>
+            <span class="cups-badge">Dostępne kubeczki: <b id="display-cups">...</b></span>
         </div>
-        <div class="product-row">
-            <span>🟠 Pomarańcz (7 zł)</span>
-            <button class="btn-add" onclick="addToCart('Pomarańcz', 7)">Dodaj</button>
-        </div>
-    </div>
 
-    <div class="card" id="cart-container">
-        <h3>Twój Koszyk</h3>
-        <div id="cart-list">Koszyk jest pusty</div>
-        <hr>
-        <div style="display:flex; justify-content:space-between; font-weight:bold;">
-            <span>Suma:</span> <span id="cart-total">0.00</span> zł
-        </div>
-        <input type="text" id="promo-input" placeholder="Kod rabatowy" style="width:70%; margin-top:10px; padding:5px;">
-        <button onclick="luckyDraw()">🍀</button>
-        <button class="btn-pay" onclick="goToPayment()">PRZEJDŹ DO PŁATNOŚCI</button>
-    </div>
-</div>
-
-<div id="view-pay" class="hidden">
-    <div class="card">
-        <h2>Wybierz płatność</h2>
-        <button class="btn-pay" style="background:#27ae60" onclick="order('Gotówka')">💵 Gotówka przy odbiorze</button>
-        <p>LUB BLIK NA NUMER:</p>
-        <div onclick="copy('668078310')" style="background:#eee; padding:10px; border-radius:10px; cursor:pointer; margin-bottom:5px;">📋 668 078 310</div>
-        <div onclick="copy('537282634')" style="background:#eee; padding:10px; border-radius:10px; cursor:pointer;">📋 537 282 634</div>
-        <button class="btn-pay" onclick="order('BLIK')">POTWIERDZAM PRZELEW</button>
-    </div>
-</div>
-
-<div id="view-status" class="hidden">
-    <div class="card" style="text-align:center;">
-        <p>Zamówienie</p>
-        <h1 id="order-id">#---</h1>
-        <div id="status-msg" style="margin:20px 0;">Oczekiwanie...</div>
-    </div>
-</div>
-
-<script>
-    let cart = [];
-    const API = "https://api.lemoniada.com.pl";
-
-    function addToCart(nazwa, cena) {
-        let item = cart.find(i => i.nazwa === nazwa);
-        if(item) item.sztuk++;
-        else cart.push({nazwa, cena, sztuk: 1});
-        renderCart();
-    }
-
-    function updateSztuk(nazwa, delta) {
-        let item = cart.find(i => i.nazwa === nazwa);
-        if(item) {
-            item.sztuk += delta;
-            if(item.sztuk <= 0) cart = cart.filter(i => i.nazwa !== nazwa);
-        }
-        renderCart();
-    }
-
-    function renderCart() {
-        const list = document.getElementById('cart-list');
-        if(cart.length === 0) { list.innerHTML = "Koszyk jest pusty"; return; }
-        let html = '';
-        let total = 0;
-        cart.forEach(i => {
-            total += i.cena * i.sztuk;
-            html += `<div class="cart-item">
-                <span>${i.nazwa} (x${i.sztuk})</span>
-                <div>
-                    <button onclick="updateSztuk('${i.nazwa}', -1)">-</button>
-                    <button onclick="updateSztuk('${i.nazwa}', 1)">+</button>
+        <div id="view-home">
+            <div class="card">
+                <h3>Wybierz smaki:</h3>
+                <div class="prod-btn" onclick="addToCart('Zwykła', 5)">
+                    <span>🟡 Zwykła (5 zł)</span> <b>➕</b>
                 </div>
-            </div>`;
-        });
-        list.innerHTML = html;
-        document.getElementById('cart-total').innerText = total.toFixed(2);
-    }
+                <div class="prod-btn" onclick="addToCart('Pomarańcz', 7)">
+                    <span>🟠 Pomarańczowa (7 zł)</span> <b>➕</b>
+                </div>
+            </div>
 
-    function goToPayment() {
-        if(cart.length === 0) return alert("Koszyk jest pusty!");
-        document.getElementById('view-shop').classList.add('hidden');
-        document.getElementById('view-pay').classList.remove('hidden');
-    }
+            <div class="card" id="cart-box">
+                <h3>Twój Koszyk</h3>
+                <div id="cart-list">Pusto tu...</div>
+                <hr style="opacity: 0.1; margin: 15px 0;">
+                <div style="display:flex; justify-content:space-between; font-weight:800; font-size: 20px;">
+                    <span>Suma:</span> <span id="cart-total">0.00</span> zł
+                </div>
+                <input type="text" id="promo" placeholder="Kod rabatowy" style="width: 100%; padding: 12px; margin-top: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box;">
+                <button class="btn-pay" onclick="showPayment()">PRZEJDŹ DO PŁATNOŚCI</button>
+            </div>
+        </div>
 
-    async function order(platnosc) {
-        const kod = document.getElementById('promo-input').value;
-        const res = await fetch(`${API}/api/zamow`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ koszyk: cart, kod, platnosc })
-        });
-        const d = await res.json();
-        showStatus(d.id);
-    }
+        <div id="view-payment" class="hidden">
+            <div class="card">
+                <button onclick="location.reload()" style="border:none; background:none; cursor:pointer;">⬅ Powrót</button>
+                <h2>Jak płacisz?</h2>
+                <button class="btn-pay" style="background: #2ecc71" onclick="submitOrder('Gotówka')">💵 Gotówka</button>
+                <div style="text-align:center; margin: 20px 0; color: #888;">--- LUB BLIK ---</div>
+                <div class="prod-btn" onclick="copy('668078310')"><span>📞 668 078 310</span> 📋</div>
+                <div class="prod-btn" onclick="copy('537282634')"><span>📞 537 282 634</span> 📋</div>
+                <button class="btn-pay" style="background: #000" onclick="submitOrder('BLIK')">Potwierdzam przelew</button>
+            </div>
+        </div>
 
-    function showStatus(id) {
-        document.getElementById('view-pay').classList.add('hidden');
-        document.getElementById('view-status').classList.remove('hidden');
-        document.getElementById('order-id').innerText = "#" + id;
-        setInterval(async () => {
-            const r = await fetch(`${API}/api/status/${id}`);
+        <div id="view-status" class="hidden">
+            <div class="card" style="text-align: center; padding: 40px 20px;">
+                <p>Twoje zamówienie</p>
+                <h1 id="order-id" style="font-size: 50px; margin: 10px 0;">#---</h1>
+                <div id="status-msg" style="font-size: 20px; font-weight: bold; color: var(--main);">Przyjęte...</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API = "https://api.lemoniada.com.pl";
+        let cart = [];
+        let maxCups = 0;
+
+        async function getInfo() {
+            const r = await fetch(`${API}/api/info`);
             const d = await r.json();
-            const m = document.getElementById('status-msg');
-            m.innerText = d.status.toUpperCase();
-            if(d.status === 'gotowe') { m.className = 'pulsate'; m.innerText = "ODBIERZ ZAMÓWIENIE! 🍋"; }
-            if(d.status === 'zrealizowane') location.reload();
-        }, 3000);
-    }
+            maxCups = d.kubeczki;
+            document.getElementById('display-cups').innerText = maxCups;
+        }
 
-    function copy(n) { navigator.clipboard.writeText(n); alert("Skopiowano!"); }
-    function luckyDraw() {
-        const codes = ["WYGRANA10", "WYGRANA15", "WYGRANA20"];
-        document.getElementById('promo-input').value = codes[Math.floor(Math.random()*codes.length)];
-        alert("Wylosowano kod!");
-    }
-</script>
+        function addToCart(nazwa, cena) {
+            let totalInCart = cart.reduce((a, b) => a + b.sztuk, 0);
+            if(totalInCart >= maxCups) return alert("Brak wolnych kubeczków!");
+
+            let item = cart.find(i => i.nazwa === nazwa);
+            if(item) item.sztuk++; else cart.push({nazwa, cena, sztuk: 1});
+            render();
+        }
+
+        function changeQty(nazwa, val) {
+            let item = cart.find(i => i.nazwa === nazwa);
+            if(item) {
+                if(val > 0 && cart.reduce((a, b) => a + b.sztuk, 0) >= maxCups) return alert("Nie ma więcej kubeczków!");
+                item.sztuk += val;
+                if(item.sztuk <= 0) cart = cart.filter(i => i.nazwa !== nazwa);
+            }
+            render();
+        }
+
+        function render() {
+            const list = document.getElementById('cart-list');
+            let html = ''; let total = 0;
+            cart.forEach(i => {
+                total += i.cena * i.sztuk;
+                html += `<div class="cart-item">
+                    <span>${i.nazwa}</span>
+                    <div>
+                        <button class="qty-btn" onclick="changeQty('${i.nazwa}', -1)">-</button>
+                        <span style="margin: 0 10px">${i.sztuk}</span>
+                        <button class="qty-btn" onclick="changeQty('${i.nazwa}', 1)">+</button>
+                    </div>
+                </div>`;
+            });
+            list.innerHTML = html || "Koszyk jest pusty";
+            document.getElementById('cart-total').innerText = total.toFixed(2);
+        }
+
+        function showPayment() {
+            if(cart.length === 0) return alert("Koszyk jest pusty!");
+            document.getElementById('view-home').classList.add('hidden');
+            document.getElementById('view-payment').classList.remove('hidden');
+        }
+
+        async function submitOrder(platnosc) {
+            const kod = document.getElementById('promo').value;
+            const res = await fetch(`${API}/api/zamow`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ koszyk: cart, kod, platnosc })
+            });
+            const d = await res.json();
+            if(d.error) return alert(d.error);
+            startStatus(d.id);
+        }
+
+        function startStatus(id) {
+            document.getElementById('view-payment').classList.add('hidden');
+            document.getElementById('view-status').classList.remove('hidden');
+            document.getElementById('order-id').innerText = "#" + id;
+            setInterval(async () => {
+                const r = await fetch(`${API}/api/status/${id}`);
+                const d = await r.json();
+                document.getElementById('status-msg').innerText = d.status.toUpperCase();
+                if(d.status === 'zrealizowane') location.reload();
+            }, 3000);
+        }
+
+        function copy(t) { navigator.clipboard.writeText(t); alert("Skopiowano numer!"); }
+        getInfo(); setInterval(getInfo, 10000);
+    </script>
 </body>
 </html>
