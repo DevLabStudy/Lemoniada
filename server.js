@@ -7,18 +7,20 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
+// TWÓJ LINK GOOGLE SHEETS
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
+
 let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  produkty TEXT,
-                                                  suma TEXT,
-                                                  platnosc TEXT,
-                                                  godzina TEXT,
-                                                  kod_rabatowy TEXT,
-                                                  status TEXT DEFAULT 'PRZYJĘTE'
-        )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    kod_rabatowy TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
 let stanKubkow = 10;
 
@@ -36,7 +38,7 @@ function sendToSheets(id, produkty, suma, platnosc, kod) {
             platnosc: platnosc,
             kod: kod || "BRAK"
         })
-    }).catch(e => console.log("Błąd Sheets"));
+    }).catch(e => console.log("Błąd wysyłki do Sheets"));
 }
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
@@ -51,17 +53,23 @@ app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
 
+    // Używamy function(err) zamiast strzałki => aby działało 'this.lastID'
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
-            const lastId = this.lastID;
+            if (err) return res.status(500).json({ error: err.message });
+
+            const lastId = this.lastID; // TO JEST TWÓJ NUMEREK
             stanKubkow--;
+
             sendToSheets(lastId, produkty, suma, platnosc, kod);
-            res.json({ id: lastId });
+            res.json({ id: lastId }); // Wysyłamy ID do klienta
         });
 });
 
 app.get('/list-zamowienia', (req, res) => {
-    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 30`, [], (err, rows) => res.json(rows || []));
+    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 20`, [], (err, rows) => {
+        res.json(rows || []);
+    });
 });
 
 app.post('/update-status', (req, res) => {
@@ -75,4 +83,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 LemonIada Engine ON'));
+app.listen(3000, '0.0.0.0', () => console.log('🍋 Serwer LemonIada Gotowy!'));
