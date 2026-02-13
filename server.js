@@ -6,11 +6,9 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Twoja konfiguracja Google Sheets
 const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 const db = new sqlite3.Database('./lemoniada.db');
 
-// Inicjalizacja bazy danych
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
     id INTEGER PRIMARY KEY AUTOINCREMENT, 
     produkty TEXT, 
@@ -27,68 +25,50 @@ app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 
 app.post('/ustaw-kubki', (req, res) => {
     stanKubkow = parseInt(req.body.ilosc, 10) || 0;
-    console.log(`Zmieniono stan magazynu na: ${stanKubkow}`);
     res.json({ success: true, stan: stanKubkow });
 });
 
 app.get('/zarobki', (req, res) => {
-    db.get(`SELECT SUM(CAST(suma AS REAL)) as total FROM zamowienia`, [], (err, row) => {
-        if (err) return res.status(500).json({ error: err.message });
+    db.get('SELECT SUM(CAST(suma AS REAL)) as total FROM zamowienia', [], (err, row) => {
         res.json({ total: row ? row.total || 0 : 0 });
     });
 });
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
-    const produktyArray = produkty.split(', ');
-    const ilosc = produktyArray.length;
+    const ilosc = produkty.split(', ').length;
 
     if (stanKubkow < ilosc) return res.status(400).json({ error: "BRAK_KUBKOW" });
 
     const godzina = new Date().toLocaleTimeString('pl-PL');
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
+    db.run('INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)',
         [produkty, suma, platnosc, godzina, kod], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-
+            if (err) return res.status(500).json({ error: "BŁĄD BAZY" });
             const lastId = this.lastID;
             stanKubkow -= ilosc;
 
-            // Używamy wbudowanego fetch (Node 18+)
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    data: new Date().toLocaleDateString(),
-                    godzina,
-                    produkty: `[#${lastId}] ${produkty}`,
-                    suma,
-                    platnosc,
-                    kod: kod || "BRAK"
-                })
-            }).catch(e => console.log("Błąd Google Sheets:", e.message));
+                body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
+            }).catch(() => console.log("Błąd Google Sheets"));
 
             res.json({ id: lastId });
         });
 });
 
 app.get('/list-zamowienia', (req, res) => {
-    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 30`, [], (err, rows) => {
-        if (err) return res.status(500).json([]);
-        res.json(rows || []);
-    });
+    db.all('SELECT * FROM zamowienia ORDER BY id DESC LIMIT 30', [], (err, rows) => res.json(rows || []));
 });
 
 app.post('/update-status', (req, res) => {
-    db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [req.body.nowyStatus, req.body.id], (err) => {
-        if (err) return res.status(500).json({ success: false });
-        res.json({ success: true });
-    });
+    db.run('UPDATE zamowienia SET status = ? WHERE id = ?', [req.body.nowyStatus, req.body.id], () => res.json({ success: true }));
 });
 
 app.post('/reset-bazy', (req, res) => {
     db.serialize(() => {
-        db.run(`DELETE FROM zamowienia`);
-        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true }));
+        db.run('DELETE FROM zamowienia');
+        db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => res.json({ success: true }));
     });
 });
 
