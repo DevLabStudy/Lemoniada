@@ -1,23 +1,78 @@
 <!DOCTYPE html>
-<html>
-<head><title>Admin Lemoniada</title></head>
-<body style="font-family: sans-serif; padding: 20px;">
-    <h2>Ustawianie stanu magazynu</h2>
-    <div style="margin-bottom: 20px;">
-        <p>Zwykła: <input type="number" id="val-zwykla"> <button onclick="set('zwykla')">USTAW</button></p>
-        <p>Pomarańcz: <input type="number" id="val-pomaranczowa"> <button onclick="set('pomaranczowa')">USTAW</button></p>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <title>Panel Kontrolny 🍋</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f4f4f4; padding: 20px; text-align: center; }
+        .box { background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); max-width: 500px; margin: 20px auto; }
+        .money { font-size: 3rem; color: #2ecc71; font-weight: bold; margin: 10px 0; }
+        .btn-sell { width: 45%; padding: 15px; margin: 5px; border: none; border-radius: 10px; cursor: pointer; font-weight: bold; color: white; }
+        .zwykla { background: #f1c40f; color: #333; }
+        .pomarancz { background: #e67e22; }
+        input { padding: 10px; width: 80%; border: 1px solid #ddd; border-radius: 8px; margin: 10px 0; text-align: center; }
+        .result-box { background: #e8f5e9; padding: 15px; border-radius: 10px; margin-top: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div class="box">
+        <h2>SUMA ZAROBIONA</h2>
+        <div class="money" id="total-money">0.00 PLN</div>
+        <p>Szybka sprzedaż (stacjonarnie):</p>
+        <button class="btn-sell zwykla" onclick="sprzedaj('Zwykła', 5)">+ Zwykła (5 zł)</button>
+        <button class="btn-sell pomarancz" onclick="sprzedaj('Pomarańcz', 7)">+ Pomarańcz (7 zł)</button>
     </div>
+
+    <div class="box">
+        <h3>PODZIAŁ ZYSKÓW</h3>
+        <label>Ilość pracowników na zmianie:</label><br>
+        <input type="number" id="pracownicy" value="1" oninput="obliczPodzial()">
+        <div class="result-box">
+            Dla każdego: <span id="na-glowe">0.00</span> PLN
+        </div>
+    </div>
+
+    <div class="box">
+        <button onclick="resetujDzien()" style="background: #e74c3c; color: white; border: none; padding: 10px; border-radius: 5px; cursor: pointer;">RESETUJ DZIEŃ / WYCZYŚĆ</button>
+    </div>
+
     <script>
         const API = "https://api.lemoniada.com.pl";
-        async function set(rodzaj) {
-            const ile = document.getElementById('val-' + rodzaj).value;
-            await fetch(`${API}/api/admin/update`, {
+        let aktualnyUtarg = 0;
+
+        async function odswiez() {
+            const r = await fetch(`${API}/api/admin/stats`);
+            const d = await r.json();
+            aktualnyUtarg = d.utarg;
+            document.getElementById('total-money').innerText = d.utarg.toFixed(2) + " PLN";
+            obliczPodzial();
+        }
+
+        async function sprzedaj(rodzaj, cena) {
+            await fetch(`${API}/api/zamow`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ rodzaj: rodzaj, ilosc: ile })
+                body: JSON.stringify({ rodzaj: rodzaj, cena: cena })
             });
-            alert("Zaktualizowano " + rodzaj);
+            odswiez();
         }
+
+        function obliczPodzial() {
+            const ileOsob = document.getElementById('pracownicy').value || 1;
+            const wynik = aktualnyUtarg / ileOsob;
+            document.getElementById('na-glowe').innerText = wynik.toFixed(2);
+        }
+
+        async function resetujDzien() {
+            if(confirm("Czy na pewno chcesz zresetować utarg?")) {
+                await fetch(`${API}/api/admin/reset`, { method: 'POST' });
+                odswiez();
+            }
+        }
+
+        odswiez();
+        setInterval(odswiez, 5000);
     </script>
 </body>
 </html>
