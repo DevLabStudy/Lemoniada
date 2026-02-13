@@ -3,108 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LemonIada - Zamów Online</title>
+    <title>LemonIada - Zamów</title>
     <style>
         :root { --main: #f1c40f; --green: #2ecc71; --red: #e74c3c; --blue: #3498db; --dark: #2c3e50; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--main); text-align: center; padding: 15px; margin: 0; color: var(--dark); }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--main); text-align: center; padding: 15px; margin: 0; }
         .app { max-width: 450px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 15px 35px rgba(0,0,0,0.15); min-height: 85vh; }
-
-        h1 { margin-top: 0; font-size: 2.2em; }
-        .card { background: #fdfdfd; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #eee; transition: 0.3s; }
-        .card:hover { transform: scale(1.02); }
-
-        .btn { background: var(--green); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 17px; transition: 0.2s; }
+        .card { background: #fdfdfd; padding: 18px; border-radius: 20px; margin-bottom: 15px; border: 1px solid #eee; }
+        .btn { background: var(--green); color: white; border: none; padding: 16px; border-radius: 14px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 #27ae60; font-size: 17px; }
         .btn:active { transform: translateY(3px); box-shadow: 0 1px 0 #27ae60; }
         .btn.sold-out { background: #95a5a6 !important; box-shadow: 0 4px 0 #7f8c8d !important; cursor: not-allowed; }
-
         #k-status { font-weight: bold; margin-bottom: 20px; padding: 10px; border-radius: 10px; background: #fff3cd; color: #856404; }
-
         #cart { display: none; margin-top: 20px; border-top: 3px solid #f1f1f1; padding-top: 15px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px 15px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #eee; }
-        .btn-del { color: var(--red); border: none; background: none; font-weight: bold; cursor: pointer; padding: 5px; }
-
-        #blik-p { display: none; padding: 15px; background: #e3f2fd; border-radius: 15px; margin-top: 10px; border: 1px solid var(--blue); }
-
-        #success { display: none; padding: 25px; animation: fadeIn 0.5s; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #f9f9f9; padding: 10px; border-radius: 10px; margin-bottom: 8px; border: 1px solid #eee; }
+        #success { display: none; padding: 25px; }
         .status-badge { background: var(--blue); color: white; padding: 12px 25px; border-radius: 25px; font-size: 18px; font-weight: bold; margin: 20px 0; display: inline-block; }
-        .ready-mode { background: #f0fff4; border: 3px solid var(--green) !important; animation: pulse 1.5s infinite; }
-
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes pulse { 0% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0.4); } 70% { box-shadow: 0 0 0 20px rgba(46, 204, 113, 0); } 100% { box-shadow: 0 0 0 0px rgba(46, 204, 113, 0); } }
     </style>
 </head>
 <body>
 
 <div class="app">
     <h1>🍋 LemonIada</h1>
-    <div id="k-status">Łączenie z serwerem...</div>
+    <div id="k-status">Łączenie...</div>
 
     <div id="main-ui">
         <div class="card">
             <h3>Klasyczna 🍋 5zł</h3>
-            <button class="btn btn-add" id="btn-klasyczna" onclick="dodaj('Klasyczna', 5)">DODAJ DO KOSZYKA</button>
+            <button class="btn btn-add" onclick="dodaj('Klasyczna', 5)">DODAJ</button>
         </div>
         <div class="card">
             <h3>Pomarańczowa 🍊 7zł</h3>
-            <button class="btn btn-add" id="btn-pomarancza" onclick="dodaj('Pomarańczowa', 7)">DODAJ DO KOSZYKA</button>
+            <button class="btn btn-add" onclick="dodaj('Pomarańczowa', 7)">DODAJ</button>
+        </div>
+
+        <div style="background: #fdf2e9; padding: 15px; border-radius: 20px; border: 1px dashed #e67e22; margin-top: 10px;">
+            <p id="p-msg" style="margin:0 0 10px 0; font-weight:bold;">🎟️ Masz kod rabatowy?</p>
+            <button id="w-btn" class="btn" style="background:#9b59b6; box-shadow:0 4px 0 #8e44ad;" onclick="losuj()">LOSUJ RABAT</button>
+            <div style="display:flex; gap:5px; margin-top:10px;">
+                <input type="text" id="p-in" placeholder="Wpisz kod..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
+                <button class="btn" style="width:70px; margin:0; background:#34495e; box-shadow:0 4px 0 #2c3e50" onclick="sprawdzKod()">OK</button>
+            </div>
         </div>
 
         <div id="cart">
             <h3>🛒 Twój Koszyk:</h3>
             <div id="cart-list"></div>
-            <h2 style="margin: 20px 0;">Suma: <span id="total">0.00</span> zł</h2>
+            <h2>Suma: <span id="total">0.00</span> zł</h2>
+            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 GOTÓWKA</button>
+            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">📱 BLIK</button>
 
-            <button class="btn" style="background:#f39c12; box-shadow:0 4px 0 #d35400;" onclick="zamow('Gotówka')">💵 PŁACĘ GOTÓWKĄ</button>
-            <button class="btn" style="background:var(--blue); box-shadow:0 4px 0 #2980b9;" onclick="pokazBlik()">📱 PŁACĘ BLIKIEM</button>
-
-            <div id="blik-p">
-                <p style="margin-top:0;"><b>Skopiuj numer i zrób przelew:</b></p>
+            <div id="blik-p" style="display:none; margin-top:10px; padding:10px; background:#e3f2fd; border-radius:10px;">
+                <p>Kliknij numer, aby skopiować i zamówić:</p>
                 <button class="btn" style="background:var(--blue);" onclick="copyB('668078310')">668 078 310</button>
-                <button class="btn" style="background:var(--blue);" onclick="copyB('537282634')">537 282 634</button>
-                <p style="font-size: 0.85em; color: #555;">Po kliknięciu zamówienie zostanie wysłane automatycznie.</p>
             </div>
         </div>
     </div>
 
     <div id="success">
-        <h2 id="s-title">ZAMÓWIENIE PRZYJĘTE! ✅</h2>
+        <h2>ZAMÓWIENIE PRZYJĘTE! ✅</h2>
         <div id="cur-status" class="status-badge">W KOLEJCE</div>
-        <h1 id="o-num" style="font-size:100px; margin:20px 0; color: var(--dark);">#?</h1>
-        <p style="font-weight:bold; color:var(--red);">⚠️ NIE ZAMYKAJ TEJ STRONY!</p>
-        <p>Poinformujemy Cię tutaj, gdy Twoja lemoniada będzie gotowa.</p>
+        <h1 id="o-num" style="font-size:80px; margin:20px 0;">#?</h1>
+        <p>Gdy status zmieni się na <b>GOTOWE</b>, podejdź do stoiska!</p>
     </div>
 </div>
 
 <script>
-    // Konfiguracja API - port 8443 jest wymagany dla HTTPS przez Cloudflare Proxy
     const API = "https://lemoniada.com.pl:8443";
     let koszyk = [];
     let stanLokalny = 0;
+    let rabat = 0;
+    const dzis = new Date().toLocaleDateString();
 
-    // Pobieranie stanu magazynu
+    // Ładowanie stanu
     function refreshStock() {
         fetch(`${API}/stan-magazynu`)
             .then(r => r.json())
             .then(d => {
                 stanLokalny = d.kubki;
-                const el = document.getElementById('k-status');
-                el.innerText = `Dostępne kubki: ${stanLokalny}`;
-                el.style.background = stanLokalny > 0 ? "#d4edda" : "#f8d7da";
-                el.style.color = stanLokalny > 0 ? "#155724" : "#721c24";
+                document.getElementById('k-status').innerText = "Dostępne kubki: " + stanLokalny;
+                document.getElementById('k-status').style.background = stanLokalny > 0 ? "#d4edda" : "#f8d7da";
                 odswiez();
             })
             .catch(e => {
-                document.getElementById('k-status').innerText = "BŁĄD POŁĄCZENIA Z API";
-                console.error("Błąd API:", e);
+                // TRYB AWARYJNY: Jeśli API nie działa, pozwalamy dodać 10 kubków do testów
+                stanLokalny = 10;
+                document.getElementById('k-status').innerText = "BŁĄD API (Tryb testowy: 10 kubków)";
+                odswiez();
             });
     }
 
-    function dodaj(n, p) {
+    // Losowanie
+    function losuj() {
+        if(localStorage.getItem('ostatnie_losowanie') === dzis) {
+            alert("Już dzisiaj losowałeś!");
+            return;
+        }
+        const mozliwe = [5, 10, 15, 20];
+        const wylosowany = mozliwe[Math.floor(Math.random()*mozliwe.length)];
+        const kod = "RABAT" + wylosowany;
+
+        localStorage.setItem('moj_kod', kod);
+        localStorage.setItem('ostatnie_losowanie', dzis);
+
+        document.getElementById('p-msg').innerHTML = `TWÓJ KOD: <b style="color:#e67e22">${kod}</b> (-${wylosowany}%)`;
+        document.getElementById('w-btn').style.display = 'none';
+        alert("Wylosowałeś " + wylosowany + "% zniżki! Kod: " + kod);
+    }
+
+    function sprawdzKod() {
+        const wpisany = document.getElementById('p-in').value.toUpperCase().trim();
+        const mojKod = localStorage.getItem('moj_kod');
+
+        if(wpisany === mojKod) {
+            rabat = parseInt(wpisany.replace("RABAT", ""));
+            alert("Kod poprawny! Rabat " + rabat + "% naliczony.");
+        } else if(wpisany === "LEMON10") {
+            rabat = 10;
+            alert("Kod promocyjny Lemon10 aktywny!");
+        } else {
+            alert("Niepoprawny kod.");
+            rabat = 0;
+        }
+        odswiez();
+    }
+
+    function dodaj(nazwa, cena) {
         if(koszyk.length < stanLokalny) {
-            koszyk.push({n, p});
+            koszyk.push({nazwa, cena});
             odswiez();
         } else {
-            alert("Brak wolnych kubków!");
+            alert("Brak dostępnych kubków!");
         }
     }
 
@@ -120,101 +147,43 @@
 
         listDiv.innerHTML = koszyk.map((i, idx) => `
             <div class="cart-item">
-                <span><b>${i.n}</b> - ${i.p} zł</span>
-                <button class="btn-del" onclick="usun(${idx})">❌</button>
+                <span>${i.nazwa} - ${i.cena}zł</span>
+                <button onclick="usun(${idx})" style="color:red; border:none; background:none; font-weight:bold;">X</button>
             </div>
         `).join('');
 
-        let suma = koszyk.reduce((a, b) => a + b.p, 0);
+        let suma = koszyk.reduce((a, b) => a + b.cena, 0);
+        if(rabat > 0) suma = suma * (1 - rabat/100);
+
         document.getElementById('total').innerText = suma.toFixed(2);
-
-        document.querySelectorAll('.btn-add').forEach(b => {
-            const soldOut = (koszyk.length >= stanLokalny || stanLokalny === 0);
-            b.classList.toggle('sold-out', soldOut);
-            b.innerText = soldOut ? "BRAK KUBKÓW" : "DODAJ DO KOSZYKA";
-        });
     }
 
-    function pokazBlik() {
-        document.getElementById('blik-p').style.display = 'block';
-    }
-
-    // Funkcja kopiowania z gwarantowanym przejściem do zamówienia
     async function copyB(n) {
         try {
-            if (navigator.clipboard && window.isSecureContext) {
-                await navigator.clipboard.writeText(n);
-                alert("Numer BLIK skopiowany!");
-            } else {
-                const t = document.createElement("textarea");
-                t.value = n; document.body.appendChild(t);
-                t.select(); document.execCommand('copy');
-                document.body.removeChild(t);
-            }
-        } catch (e) {
-            console.warn("Skopiuj numer ręcznie: " + n);
-        } finally {
-            zamow("BLIK (" + n + ")");
-        }
+            await navigator.clipboard.writeText(n);
+            alert("Numer skopiowany!");
+        } catch (e) {}
+        zamow("BLIK (" + n + ")");
     }
 
     function zamow(metoda) {
-        const produktyString = koszyk.map(i => i.n).join(", ");
-        const sumaString = document.getElementById('total').innerText;
+        const produkty = koszyk.map(i => i.nazwa).join(", ");
+        const suma = document.getElementById('total').innerText;
 
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({
-                produkty: produktyString,
-                suma: sumaString,
-                platnosc: metoda
-            })
+            body: JSON.stringify({ produkty, suma, platnosc: metoda, kod: localStorage.getItem('moj_kod') || "BRAK" })
         })
             .then(r => r.json())
             .then(d => {
-                if(d.id) {
-                    pokazSukces(d.id);
-                } else {
-                    alert("Błąd serwera: " + (d.error || "Nieznany błąd"));
-                }
+                document.getElementById('main-ui').style.display = 'none';
+                document.getElementById('success').style.display = 'block';
+                document.getElementById('o-num').innerText = "#" + d.id;
             })
-            .catch(e => alert("Błąd połączenia podczas składania zamówienia."));
+            .catch(() => alert("Błąd połączenia z serwerem."));
     }
 
-    function pokazSukces(id) {
-        document.getElementById('main-ui').style.display = 'none';
-        document.getElementById('success').style.display = 'block';
-        document.getElementById('o-num').innerText = "#" + id;
-
-        // Śledzenie statusu zamówienia co 3 sekundy
-        const interval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`)
-                .then(r => r.json())
-                .then(data => {
-                    const moje = data.find(o => o.id === id);
-                    if(moje) {
-                        const badge = document.getElementById('cur-status');
-                        const box = document.getElementById('success');
-
-                        if(moje.status === "GOTOWE") {
-                            badge.innerText = "ODBIERZ TERAZ! 🍋";
-                            badge.style.background = "#2ecc71";
-                            box.classList.add('ready-mode');
-                            document.getElementById('s-title').innerText = "TWOJA LEMONIADA CZEKA!";
-                        } else if(moje.status === "WYDANE") {
-                            clearInterval(interval);
-                            badge.innerText = "ZAMÓWIENIE WYDANE. DZIĘKUJEMY!";
-                            setTimeout(() => location.reload(), 5000);
-                        } else {
-                            badge.innerText = moje.status;
-                        }
-                    }
-                });
-        }, 3000);
-    }
-
-    // Inicjalizacja
     setInterval(refreshStock, 5000);
     window.onload = refreshStock;
 </script>
