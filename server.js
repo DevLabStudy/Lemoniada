@@ -15,40 +15,27 @@ db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREM
 let stanKubkow = 10;
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
+app.post('/ustaw-kubki', (req, res) => { stanKubkow = parseInt(req.body.ilosc) || 0; res.json({ success: true }); });
 
-app.post('/ustaw-kubki', (req, res) => {
-    stanKubkow = parseInt(req.body.ilosc) || 0;
-    res.json({ success: true });
+// NOWE: Obliczanie zarobków
+app.get('/zarobki', (req, res) => {
+    db.get(`SELECT SUM(CAST(suma AS REAL)) as total FROM zamowienia`, [], (err, row) => {
+        res.json({ total: row ? row.total || 0 : 0 });
+    });
 });
 
 app.post('/zamow', (req, res) => {
-    console.log("Odebrano zamówienie:", req.body); // Sprawdzaj to w konsoli!
     const { produkty, suma, platnosc, kod } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
-
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
-            if (err) {
-                console.log("Błąd bazy:", err);
-                return res.status(500).json({ error: "Błąd bazy" });
-            }
             const lastId = this.lastID;
             stanKubkow--;
-
-            // Wysyłka do Sheets
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    data: new Date().toLocaleDateString(),
-                    godzina: godzina,
-                    produkty: `[#${lastId}] ${produkty}`,
-                    suma: suma,
-                    platnosc: platnosc,
-                    kod: kod || "BRAK"
-                })
-            }).then(() => console.log("Wysłano do Sheets")).catch(e => console.log("Błąd Sheets"));
-
+                body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
+            }).catch(e => console.log("Błąd Sheets"));
             res.json({ id: lastId });
         });
 });
@@ -62,9 +49,7 @@ app.post('/update-status', (req, res) => {
 });
 
 app.post('/reset-bazy', (req, res) => {
-    db.run(`DELETE FROM zamowienia`, () => {
-        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true }));
-    });
+    db.run(`DELETE FROM zamowienia`, () => { db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true })); });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer działa na porcie 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada ON'));
