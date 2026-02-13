@@ -13,12 +13,17 @@ let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREMENT, produkty TEXT, suma TEXT, platnosc TEXT, godzina TEXT, kod_rabatowy TEXT, status TEXT DEFAULT 'PRZYJĘTE')`);
 
-let stanKubkow = 10;
+let stanKubkow = 0; // Startujemy od 0, ustawisz w Adminie
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 
 app.post('/ustaw-kubki', (req, res) => {
-    stanKubkow = parseInt(req.body.ilosc) || 0;
+    const nowaIlosc = parseInt(req.body.ilosc);
+    if (isNaN(nowaIlosc)) {
+        return res.status(400).json({ success: false, error: "To nie jest liczba" });
+    }
+    stanKubkow = nowaIlosc;
+    console.log(`✅ Magazyn zaktualizowany: ${stanKubkow} kubków`);
     res.json({ success: true, stan: stanKubkow });
 });
 
@@ -42,6 +47,7 @@ app.post('/zamow', (req, res) => {
         [produkty, suma, platnosc, godzina, kod], function(err) {
             const lastId = this.lastID;
             stanKubkow -= iloscWZamowieniu;
+            console.log(`📦 Nowe zamówienie #${lastId}. Pozostało kubków: ${stanKubkow}`);
 
             fetch(GOOGLE_URL, {
                 method: 'POST',
@@ -69,4 +75,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada Gotowy!'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada działa na porcie 3000'));

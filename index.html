@@ -9,20 +9,15 @@
         .app { max-width: 450px; margin: auto; background: white; padding: 25px; border-radius: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.2); }
         .btn { background: var(--green); color: white; border: none; padding: 18px; border-radius: 15px; width: 100%; margin: 8px 0; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.2s; box-shadow: 0 5px 0 #27ae60; }
         .btn:active { transform: translateY(3px); box-shadow: 0 2px 0 #27ae60; }
-
-        /* Styl Wyprzedane / Limit */
         .btn.sold-out { background: var(--red) !important; box-shadow: 0 5px 0 #c0392b !important; cursor: not-allowed; }
-
         .card { background: #f9f9f9; border: 2px solid #eee; padding: 15px; border-radius: 20px; margin-bottom: 15px; }
-        .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #eee; }
-        #success { display: none; margin-top: 20px; border: 5px solid var(--green); padding: 30px; border-radius: 25px; background: #fafffa; }
-        .warning { color: #e67e22; font-weight: bold; margin-top: 20px; font-size: 14px; }
+        #success { display: none; border: 5px solid var(--green); padding: 30px; border-radius: 25px; background: #fafffa; }
     </style>
 </head>
 <body>
 <div class="app">
     <h1>🍋 LemonIada</h1>
-    <p id="k-status" style="font-weight:bold; color:#d35400;">Sprawdzanie zapasów...</p>
+    <p id="k-status" style="font-weight:bold; color:#d35400;">Łączenie z serwerem...</p>
 
     <div id="main-ui">
         <div class="card">
@@ -34,65 +29,40 @@
             <button class="btn btn-add" onclick="dodaj('Pomarańczowa', 7)">DODAJ DO KOSZYKA</button>
         </div>
 
-        <div style="background: #fff9e6; padding: 15px; border-radius: 20px; border: 2px dashed #f39c12;">
-            <p id="p-msg" style="margin:0 0 10px 0;">🎡 Masz kod?</p>
-            <button id="w-btn" class="btn" style="background:#9b59b6; box-shadow:0 5px 0 #8e44ad;" onclick="losuj()">LOSUJ RABAT</button>
-            <div style="display:flex; gap:5px;">
-                <input type="text" id="p-in" placeholder="Kod..." style="flex:1; padding:12px; border-radius:10px; border:1px solid #ccc;">
-                <button class="btn" style="width:70px; margin:0; background:#34495e; box-shadow:0 5px 0 #2c3e50" onclick="sprawdz()">OK</button>
-            </div>
-        </div>
-
         <div id="cart" style="display:none; margin-top:20px; border-top: 2px solid #eee; padding-top: 15px;">
             <div id="cart-list"></div>
             <h2>Suma: <span id="total">0</span> zł</h2>
             <button class="btn" style="background:#f39c12; box-shadow:0 5px 0 #d35400;" onclick="zamow('Gotówka')">💵 PŁACĘ GOTÓWKĄ</button>
-            <button class="btn" style="background:#3498db; box-shadow:0 5px 0 #2980b9;" onclick="document.getElementById('blik-p').style.display='block'">📱 PŁACĘ BLIKIEM</button>
-            <div id="blik-p" style="display:none; padding:10px; background:#f0f7ff; border-radius:15px; margin-top:10px;">
-                <button class="btn" style="background:#3498db; margin:5px 0;" onclick="copyB('668078310')">668 078 310</button>
-                <button class="btn" style="background:#3498db; margin:5px 0;" onclick="copyB('537282634')">537 282 634</button>
-            </div>
         </div>
     </div>
 
     <div id="success">
-        <h3 style="color:var(--green)">PRZYJĘTO! ✅</h3>
+        <h3 style="color:var(--green)">ZAMÓWIONO! ✅</h3>
         <p>TWÓJ NUMEREK:</p>
         <h1 id="o-num" style="font-size:80px; margin:10px 0;">#?</h1>
-        <div class="warning">⚠️ NIE ODŚWIEŻAJ STRONY!<br>Zamknie się sama po wydaniu lemoniady.</div>
+        <p>Proszę nie odświeżać strony.</p>
     </div>
 </div>
 
 <script>
-    const API = https://bacterial-concept-scripting-expired.trycloudflare.com  ;
-    let koszyk = []; let rabat = 0; let stanLokalny = 0; let uzytyKod = "";
-    const dzis = new Date().toLocaleDateString();
-    let wykorzystaneDzisiaj = JSON.parse(localStorage.getItem('zuzyte') || "[]");
+    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com" ;
+    let koszyk = []; let stanLokalny = 0;
 
     function dodaj(n, p) {
         if(koszyk.length >= stanLokalny) return;
         koszyk.push({n, p}); odswiez();
     }
-    function usun(idx) { koszyk.splice(idx, 1); odswiez(); }
 
     function odswiez() {
-        const listDiv = document.getElementById('cart-list');
-        document.getElementById('cart').style.display = koszyk.length ? 'block' : 'none';
-        listDiv.innerHTML = koszyk.map((item, idx) => `
-            <div class="cart-item">
-                <span><b>${item.n}</b></span>
-                <span>${item.p}zł <button onclick="usun(${idx})" style="color:red; border:none; background:none; cursor:pointer;">[x]</button></span>
-            </div>
-        `).join('');
+        const cartDiv = document.getElementById('cart');
+        cartDiv.style.display = koszyk.length ? 'block' : 'none';
+        document.getElementById('cart-list').innerHTML = koszyk.map((i, idx) => `<div>${i.n} - ${i.p}zł</div>`).join('');
+        document.getElementById('total').innerText = koszyk.reduce((a, b) => a + b.p, 0);
 
-        let suma = koszyk.reduce((a, b) => a + b.p, 0) * (1 - rabat/100);
-        document.getElementById('total').innerText = suma.toFixed(2);
-
-        // Dynamiczna zmiana przycisków
         document.querySelectorAll('.btn-add').forEach(b => {
             if(koszyk.length >= stanLokalny) {
                 b.classList.add('sold-out');
-                b.innerText = "LIMIT KUBKÓW OSIĄGNIĘTY";
+                b.innerText = "BRAK KUBKÓW";
             } else {
                 b.classList.remove('sold-out');
                 b.innerText = "DODAJ DO KOSZYKA";
@@ -101,51 +71,29 @@
     }
 
     function refreshStock() {
-        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => {
-            stanLokalny = d.kubki;
-            document.getElementById('k-status').innerText = "Pozostało kubków: " + d.kubki;
-            odswiez();
-        });
+        fetch(`${API}/stan-magazynu`)
+            .then(r => r.json())
+            .then(d => {
+                stanLokalny = d.kubki;
+                document.getElementById('k-status').innerText = "Dostępne kubki: " + d.kubki;
+                odswiez();
+            })
+            .catch(() => {
+                document.getElementById('k-status').innerText = "❌ BŁĄD POŁĄCZENIA";
+            });
     }
-
-    function losuj() {
-        if(localStorage.getItem('data_los') === dzis) return alert("Już losowałeś!");
-        const r = [5, 10, 15, 20][Math.floor(Math.random()*4)];
-        localStorage.setItem('kod_los', "WYGRANA"+r); localStorage.setItem('data_los', dzis);
-        document.getElementById('p-msg').innerText = "TWÓJ KOD: WYGRANA"+r;
-        document.getElementById('w-btn').style.display = 'none';
-    }
-
-    function sprawdz() {
-        const v = document.getElementById('p-in').value.toUpperCase().trim();
-        if(wykorzystaneDzisiaj.includes(v)) return alert("Ten kod już zużyłeś!");
-        const stale = {"FB10":10, "LEMON20":20};
-        if(v === localStorage.getItem('kod_los')) { rabat = parseInt(v.replace("WYGRANA","")); uzytyKod = v; alert("Rabat dodany!"); }
-        else if(stale[v]) { rabat = stale[v]; uzytyKod = v; alert("Rabat "+rabat+"%!"); }
-        else { alert("Kod nieprawidłowy"); rabat = 0; uzytyKod = ""; }
-        odswiez();
-    }
-
-    function copyB(n) { navigator.clipboard.writeText(n); alert("Numer skopiowany!"); zamow("BLIK ("+n+")"); }
 
     function zamow(metoda) {
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ produkty: koszyk.map(i=>i.n).join(", "), suma: document.getElementById('total').innerText, platnosc: metoda, kod: uzytyKod || "BRAK" })
+            body: JSON.stringify({ produkty: koszyk.map(i=>i.n).join(", "), suma: document.getElementById('total').innerText, platnosc: metoda })
         }).then(async r => {
-            if(!r.ok) { alert("Brak kubków!"); location.reload(); return; }
             const d = await r.json();
-            if(uzytyKod) { wykorzystaneDzisiaj.push(uzytyKod); localStorage.setItem('zuzyte', JSON.stringify(wykorzystaneDzisiaj)); }
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('success').style.display = 'block';
             document.getElementById('o-num').innerText = "#" + d.id;
-            const i = setInterval(() => {
-                fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-                    const z = data.find(o => o.id === d.id);
-                    if(z && z.status === "WYDANE") { clearInterval(i); setTimeout(() => location.reload(), 3000); }
-                });
-            }, 3000);
+            setTimeout(() => location.reload(), 10000);
         });
     }
 
