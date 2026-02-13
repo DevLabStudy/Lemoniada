@@ -7,41 +7,40 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxdehKUl5o4GN-ErCMTNLXPGy_V4zB17q1nJV5XoRvJT7tAiTPAcBFtsLxIU6I02Q/exec";
+const GOOGLE_SHEET_URL = "TWÓJ_LINK_Z_GOOGLE_APPS_SCRIPT";
 
 let db = new sqlite3.Database('./lemoniada.db');
 
+// Tabela z nową kolumną: telefon
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    produkty TEXT,
-    suma TEXT,
-    platnosc TEXT,
-    godzina TEXT,
-    kod TEXT,
-    status TEXT DEFAULT 'PRZYJĘTE'
-)`);
+                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
+                                                  produkty TEXT,
+                                                  suma TEXT,
+                                                  platnosc TEXT,
+                                                  godzina TEXT,
+                                                  kod TEXT,
+                                                  telefon TEXT,
+                                                  status TEXT DEFAULT 'PRZYJĘTE'
+        )`);
 
 let stanKubkow = 0;
 let statusPrzerwy = false;
 let powodPrzerwy = "";
 
-function sendToSheets(produkty, suma, platnosc, kod) {
+function sendToSheets(produkty, suma, platnosc, kod, telefon) {
     const teraz = new Date();
-    const dataString = teraz.toLocaleDateString('pl-PL');
-    const godzinaString = teraz.toLocaleTimeString('pl-PL');
-    const dzienTygodnia = teraz.toLocaleDateString('pl-PL', { weekday: 'long' });
-
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-            data: dataString,
-            godzina: godzinaString,
-            dzien: dzienTygodnia,
+            data: teraz.toLocaleDateString('pl-PL'),
+            godzina: teraz.toLocaleTimeString('pl-PL'),
+            dzien: teraz.toLocaleDateString('pl-PL', { weekday: 'long' }),
             produkty: produkty,
             suma: suma.includes('zł') ? suma : `${suma} zł`,
             platnosc: platnosc,
-            kod: kod || "BRAK"
+            kod: kod || "BRAK",
+            telefon: telefon || "NIE PODANO"
         })
     }).catch(e => console.log("Błąd Sheets:", e));
 }
@@ -67,26 +66,14 @@ app.post('/ustaw-przerwe', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
-    const { produkty, suma, platnosc, kod } = req.body;
+    const { produkty, suma, platnosc, kod, telefon } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
 
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod) VALUES (?, ?, ?, ?, ?)`,
-        [produkty, suma, platnosc, godzina, kod], function(err) {
-            sendToSheets(produkty, suma, platnosc, kod);
+    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod, telefon) VALUES (?, ?, ?, ?, ?, ?)`,
+        [produkty, suma, platnosc, godzina, kod, telefon], function(err) {
+            sendToSheets(produkty, suma, platnosc, kod, telefon);
             stanKubkow--;
             res.json({ id: this.lastID });
-        });
-});
-
-app.post('/sprzedaz-stacjonarna', (req, res) => {
-    if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
-    const { produkty, suma } = req.body;
-    const godzina = new Date().toLocaleTimeString('pl-PL');
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod, status) VALUES (?, ?, 'Gotówka (Stacjonarna)', ?, 'BRAK', 'WYDANE')`,
-        [produkty, suma, godzina], function(err) {
-            sendToSheets(produkty, suma, 'Gotówka (Stacjonarna)', 'BRAK');
-            stanKubkow--;
-            res.json({ success: true });
         });
 });
 
