@@ -1,4 +1,19 @@
+# Biblioteki Node.js (ważą setki MB, nie wysyłamy ich)
 node_modules/
-lemoniada.db
-.env
+
+# Lokalna baza danych (chcemy, żeby każdy serwer miał swoją własną)
 *.db
+*.db-journal
+
+# Pliki konfiguracyjne WebStorm / IDE
+.idea/
+.vscode/
+
+# Logi błędów
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Pliki systemowe
+.DS_Store
+thumbs.db
