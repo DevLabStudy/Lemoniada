@@ -9,13 +9,13 @@
         .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin: 10px 0; background: #fafafa; }
         .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
-        .btn:active { transform: scale(0.95); }
         .promo-box { background: #fdfdfd; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px dashed #9b59b6; }
         .wheel-btn { background: #9b59b6; margin-bottom: 10px; }
+        .cart-item { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; font-size: 14px; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
         .badge { background: #e74c3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
-        .pay-box { text-align: left; background: #eee; padding: 15px; border-radius: 12px; margin: 15px 0; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
         input[type="text"] { width: 60%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; margin-bottom: 10px; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; padding: 20px;}
     </style>
 </head>
 <body>
@@ -24,145 +24,135 @@
 <div class="app">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
         <h2 style="margin:0">🍋 Orzeźwienie</h2>
-        <span class="badge">Zostało: <b id="c-left">0</b> szt.</span>
+        <span class="badge">Kubki: <b id="c-left">0</b></span>
     </div>
 
-    <div class="card"><h3>Klasyczna 🍋 5.00 zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
-    <div class="card"><h3>Pomarańczowa 🍊 6.50 zł</h3><button class="btn" onclick="add('Pomarańczowa', 6.5)">DODAJ</button></div>
+    <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
+    <div class="card"><h3>Pomarańczowa 🍊 6.50zł</h3><button class="btn" onclick="add('Pomarańczowa', 6.5)">DODAJ</button></div>
 
     <div class="promo-box">
         <h4>🎁 STREFA OKAZJI</h4>
         <button id="wheel-btn" class="btn wheel-btn" onclick="spinWheel()">🎡 LOSUJ RABAT</button>
         <div id="promo-status" style="font-weight:bold; color:#e67e22; margin-bottom:10px;">Graj o rabat do -20%!</div>
-
         <input type="text" id="promo-input" placeholder="Wpisz kod rabatowy...">
-        <button class="btn" style="width:100%; font-size: 14px; background: #34495e;" onclick="checkCode()">ZASTOSUJ KOD</button>
+        <button class="btn" style="width:100%; background: #34495e;" onclick="checkCode()">ZASTOSUJ KOD</button>
     </div>
 
     <div id="cart" style="display:none; border-top: 2px dashed #ccc; padding-top: 15px;">
-        <p id="summary" style="font-weight:bold"></p>
+        <div id="cart-list" style="margin-bottom: 15px;"></div>
         <h2 style="color: #27ae60;">Suma: <span id="total">0</span> zł</h2>
 
-        <div class="pay-box">
+        <div style="text-align: left; background: #eee; padding: 15px; border-radius: 12px; margin-bottom: 15px;">
             <b>Płatność:</b><br><br>
-            <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka przy odbiorze</label><br><br>
-            <label><input type="radio" name="p" value="BLIK"> 📱 Przelew BLIK</label>
+            <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka</label><br><br>
+            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK</label>
         </div>
-        <button class="btn" style="background:#27ae60;" onclick="send()">ZAMAWIAM I PŁACĘ</button>
+        <button class="btn" style="background:#27ae60;" onclick="send()">ZAMAWIAM</button>
     </div>
     <div id="st"></div>
 </div>
 
 <script>
-    // --- KONFIGURACJA ---
-    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com"; // PODMIEŃ NA SWÓJ LINK
-
+    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com"; // PODMIEŃ LINK!
     let cart = [];
     let aktualnyRabat = 0;
     let czyLosowano = false;
     let wylosowanyKod = "";
 
-    // 🎡 KOŁO FORTUNY
+    function add(n, p) {
+        cart.push({ n, p });
+        updateUI();
+    }
+
+    function remove(index) {
+        cart.splice(index, 1);
+        updateUI();
+    }
+
+    function updateUI() {
+        const cartDiv = document.getElementById('cart');
+        const listDiv = document.getElementById('cart-list');
+
+        if (cart.length === 0) {
+            cartDiv.style.display = 'none';
+            return;
+        }
+
+        cartDiv.style.display = 'block';
+        listDiv.innerHTML = cart.map((item, index) => `
+            <div class="cart-item">
+                <span>${item.n} (${item.p.toFixed(2)}zł)</span>
+                <button class="remove-btn" onclick="remove(${index})">×</button>
+            </div>
+        `).join('');
+
+        let sumaBase = cart.reduce((a, b) => a + b.p, 0);
+        let poRabacie = (sumaBase * (1 - aktualnyRabat / 100)).toFixed(2);
+        document.getElementById('total').innerText = poRabacie;
+    }
+
     function spinWheel() {
-        if(czyLosowano) return alert("Już losowałeś przy tym zamówieniu!");
-
-        const opcje = [5, 10, 10, 15, 20];
+        if(czyLosowano) return alert("Już losowałeś!");
+        const opcje = [5, 10, 15, 20];
         const procent = opcje[Math.floor(Math.random() * opcje.length)];
-
         wylosowanyKod = "WYGRANA" + procent;
         czyLosowano = true;
-
-        document.getElementById('promo-status').innerHTML = `
-            Twoja wygrana: <span style="color:#9b59b6; font-size:20px;">-${procent}%</span><br>
-            Wpisz kod: <b style="background:#eee; padding:2px 5px; border-radius:5px;">${wylosowanyKod}</b>
-        `;
+        document.getElementById('promo-status').innerHTML = `Wygrana: -${procent}%! Kod: <b style="background:#eee;">${wylosowanyKod}</b>`;
         document.getElementById('wheel-btn').disabled = true;
-        document.getElementById('wheel-btn').style.opacity = "0.5";
     }
 
-    // ✅ SPRAWDZANIE KODU
     function checkCode() {
-        const wpisanyKod = document.getElementById('promo-input').value.toUpperCase().trim();
-        let znalezionyRabat = 0;
+        const wpisany = document.getElementById('promo-input').value.toUpperCase().trim();
+        if(wpisany === wylosowanyKod || ["FB10", "CHAMPION", "LEMONLUX"].includes(wpisany)) {
+            if(wpisany === "FB10") aktualnyRabat = 10;
+            else if(wpisany === "CHAMPION") aktualnyRabat = 15;
+            else if(wpisany === "LEMONLUX") aktualnyRabat = 20;
+            else aktualnyRabat = parseInt(wylosowanyKod.replace("WYGRANA", ""));
 
-        if(wpisanyKod === wylosowanyKod) {
-            znalezionyRabat = parseInt(wylosowanyKod.replace("WYGRANA", ""));
-        } else if(wpisanyKod === "FB10") {
-            znalezionyRabat = 10;
-        } else if(wpisanyKod === "CHAMPION") {
-            znalezionyRabat = 15;
-        } else if(wpisanyKod === "LEMONLUX") {
-            znalezionyRabat = 20;
-        }
-
-        if(znalezionyRabat > 0) {
-            aktualnyRabat = znalezionyRabat;
-            document.getElementById('promo-status').innerHTML = `<span style="color:#27ae60">✅ KOD PRZYJĘTY: -${aktualnyRabat}%</span>`;
-            updateTotal();
-        } else {
-            alert("Błędny lub nieaktywny kod!");
-        }
-    }
-
-    function add(n,p){
-        cart.push({n,p});
-        document.getElementById('cart').style.display='block';
-        updateTotal();
-    }
-
-    function updateTotal() {
-        let sumaBase = cart.reduce((a,b)=>a+b.p,0);
-        let znizka = sumaBase * (aktualnyRabat / 100);
-        let poRabacie = (sumaBase - znizka).toFixed(2);
-
-        document.getElementById('summary').innerText = "Wybrano: " + cart.map(i=>i.n).join(", ");
-        document.getElementById('total').innerText = poRabacie;
+            document.getElementById('promo-status').innerHTML = `<span style="color:#27ae60">KOD PRZYJĘTY!</span>`;
+            updateUI();
+        } else { alert("Błędny kod!"); }
     }
 
     function send() {
         const method = document.querySelector('input[name="p"]:checked').value;
-        const ostatecznaSuma = document.getElementById('total').innerText;
-
-        const bodyData = {
-            produkty: cart.map(i=>i.n).join(", "),
-            suma: ostatecznaSuma,
-            platnosc: method
-        };
+        const wpisanyKod = document.getElementById('promo-input').value.toUpperCase().trim();
 
         fetch(`${API}/zamow`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body: JSON.stringify(bodyData)
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                produkty: cart.map(i => i.n).join(", "),
+                suma: document.getElementById('total').innerText,
+                platnosc: method,
+                kod: aktualnyRabat > 0 ? wpisanyKod : "BRAK"
+            })
         }).then(r => r.json()).then(d => {
-            alert("Zamówienie przyjęte! Zaraz zaczynamy robić Twoją lemoniadę.");
-            cart=[];
-            document.getElementById('cart').style.display='none';
+            alert("Zamówienie wysłane!");
+            cart = [];
+            updateUI();
             track(d.id);
-        }).catch(err => alert("Błąd połączenia z serwerem!"));
+        });
     }
 
     function track(id) {
         const interval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-                const z = data.find(o=>o.id===id);
-                if(z) {
-                    document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db; background:#ebf5fb">Status: <b>${z.status}</b></div>`;
-                    if(z.status==='WYDANE') {
-                        clearInterval(interval);
-                        setTimeout(() => location.reload(), 3000);
-                    }
+            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+                const z = data.find(o => o.id === id);
+                if (z) {
+                    document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db">Status: <b>${z.status}</b></div>`;
+                    if (z.status === 'WYDANE') { clearInterval(interval); location.reload(); }
                 }
             });
         }, 3000);
     }
 
-    // Monitoring stanu magazynu i przerwy
     setInterval(() => {
-        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => {
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(d => {
             document.getElementById('c-left').innerText = d.kubki;
             document.getElementById('closed').style.display = (d.przerwa || d.kubki <= 0) ? 'flex' : 'none';
             document.getElementById('msg').innerText = d.powod;
-        }).catch(e => console.log("Serwer offline..."));
+        });
     }, 3000);
 </script>
 </body>

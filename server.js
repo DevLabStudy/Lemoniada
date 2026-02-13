@@ -7,36 +7,29 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// --- KONFIGURACJA GOOGLE SHEETS ---
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxdehKUl5o4GN-ErCMTNLXPGy_V4zB17q1nJV5XoRvJT7tAiTPAcBFtsLxIU6I02Q/exec";
 
 let db = new sqlite3.Database('./lemoniada.db');
 
-// Tworzenie tabeli w SQLite (jeśli nie istnieje)
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  produkty TEXT,
-                                                  suma TEXT,
-                                                  platnosc TEXT,
-                                                  godzina TEXT,
-                                                  status TEXT DEFAULT 'PRZYJĘTE'
-        )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    kod TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
 let stanKubkow = 0;
 let statusPrzerwy = false;
 let powodPrzerwy = "";
 
-/**
- * Funkcja wysyłająca rozbudowane dane do Google Sheets
- */
-function sendToSheets(produkty, suma, platnosc) {
+function sendToSheets(produkty, suma, platnosc, kod) {
     const teraz = new Date();
-    const dzienTygodnia = teraz.toLocaleDateString('pl-PL', { weekday: 'long' });
     const dataString = teraz.toLocaleDateString('pl-PL');
     const godzinaString = teraz.toLocaleTimeString('pl-PL');
-
-    // Formatowanie sumy: jeśli jest np. "5.00", zmieni na "5.00 zł"
-    const sumaFormat = suma.toString().includes('zł') ? suma : `${suma} zł`;
+    const dzienTygodnia = teraz.toLocaleDateString('pl-PL', { weekday: 'long' });
 
     fetch(GOOGLE_SHEET_URL, {
         method: 'POST',
@@ -46,12 +39,11 @@ function sendToSheets(produkty, suma, platnosc) {
             godzina: godzinaString,
             dzien: dzienTygodnia,
             produkty: produkty,
-            suma: sumaFormat,
-            platnosc: platnosc
+            suma: suma.includes('zł') ? suma : `${suma} zł`,
+            platnosc: platnosc,
+            kod: kod || "BRAK"
         })
-    })
-        .then(() => console.log(`✅ Zapisano w Sheets: ${produkty} (${sumaFormat})`))
-        .catch(err => console.error("❌ Błąd wysyłki do Sheets:", err));
+    }).catch(e => console.log("Błąd Sheets:", e));
 }
 
 app.get('/stan-magazynu', (req, res) => {
@@ -73,38 +65,26 @@ app.post('/ustaw-przerwe', (req, res) => {
     res.json({ success: true });
 });
 
-// Obsługa zamówień online (ze strony klienta)
 app.post('/zamow', (req, res) => {
     if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
-    const { produkty, suma, platnosc } = req.body;
+    const { produkty, suma, platnosc, kod } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
 
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina) VALUES (?, ?, ?, ?)`,
-        [produkty, suma, platnosc, godzina], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-
-            // Wywołanie wysyłki do Google Sheets
-            sendToSheets(produkty, suma, platnosc);
-
+    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod) VALUES (?, ?, ?, ?, ?)`,
+        [produkty, suma, platnosc, godzina, kod], function(err) {
+            sendToSheets(produkty, suma, platnosc, kod);
             stanKubkow--;
             res.json({ id: this.lastID });
         });
 });
 
-// Obsługa sprzedaży na miejscu (panel admina)
 app.post('/sprzedaz-stacjonarna', (req, res) => {
     if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
     const { produkty, suma } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
-    const platnosc = 'Gotówka (Stacjonarna)';
-
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, status) VALUES (?, ?, ?, ?, 'WYDANE')`,
-        [produkty, suma, platnosc, godzina], function(err) {
-            if (err) return res.status(500).json({ error: err.message });
-
-            // Wywołanie wysyłki do Google Sheets
-            sendToSheets(produkty, suma, platnosc);
-
+    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod, status) VALUES (?, ?, 'Gotówka (Stacjonarna)', ?, 'BRAK', 'WYDANE')`,
+        [produkty, suma, godzina], function(err) {
+            sendToSheets(produkty, suma, 'Gotówka (Stacjonarna)', 'BRAK');
             stanKubkow--;
             res.json({ success: true });
         });
@@ -125,9 +105,4 @@ app.post('/reset-bazy', (req, res) => {
     });
 });
 
-app.listen(3000, '0.0.0.0', () => {
-    console.log('-------------------------------------------');
-    console.log('🚀 SYSTEM LEMONIADY "LUX" ONLINE');
-    console.log('📊 ZINTEGROWANO Z GOOGLE SHEETS');
-    console.log('-------------------------------------------');
-});
+app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADY ONLINE'));
