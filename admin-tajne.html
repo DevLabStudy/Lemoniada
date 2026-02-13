@@ -1,62 +1,64 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <meta charset="UTF-8"><title>Panel Zarządzania - LemonIada</title>
+    <meta charset="UTF-8"><title>Admin - LemonIada</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .money-box { background: #27ae60; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); font-size: 24px; font-weight: bold; }
-        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #455a64; }
-        .btn-admin { border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; color: white; }
-        .btn-green { background: #2ecc71; box-shadow: 0 4px 0 #27ae60; }
-        .btn-orange { background: #e67e22; box-shadow: 0 4px 0 #d35400; }
-        .btn-red { background: #e74c3c; box-shadow: 0 4px 0 #c0392b; }
-        .btn-blue { background: #3498db; box-shadow: 0 4px 0 #2980b9; }
-        .btn-admin:active { transform: translateY(2px); box-shadow: none; }
-
-        .order { background: white; color: #333; padding: 15px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .order b { font-size: 18px; color: #2c3e50; }
-        input { padding: 10px; border-radius: 5px; border: none; width: 60px; font-size: 16px; text-align: center; }
+        .m-box { background: #27ae60; padding: 20px; border-radius: 15px; text-align: center; font-size: 24px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .btn-a { border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; margin: 5px; transition: 0.2s; box-shadow: 0 4px 0 rgba(0,0,0,0.2); }
+        .btn-a:active { transform: translateY(2px); box-shadow: none; }
+        .green { background: #2ecc71; } .orange { background: #e67e22; } .red { background: #e74c3c; } .blue { background: #3498db; }
+        .order { background: white; color: #333; padding: 15px; margin: 10px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+        input { padding: 10px; border-radius: 5px; border: none; width: 80px; font-size: 18px; text-align: center; }
     </style>
 </head>
 <body>
-<div class="money-box">💰 UTARG DNIA: <span id="total-money">0.00</span> zł</div>
+<div class="m-box">💰 UTARG: <span id="total-money">0.00</span> zł</div>
 
 <div class="box">
-    <h3 style="margin-top:0">📦 Stan Magazynu: <span id="k-show" style="color:#f1c40f">0</span> kubków</h3>
-    <input type="number" id="k-in">
-    <button class="btn-admin btn-blue" onclick="setK()">USTAW STAN</button>
-    <button class="btn-admin btn-red" onclick="resetB()" style="float:right">RESET DNIA</button>
+    <h3>📦 Magazyn: <span id="k-show" style="color:#f1c40f">0</span> kubków</h3>
+    <input type="number" id="k-in" placeholder="Ile?">
+    <button class="btn-a blue" onclick="setK()">USTAW STAN</button>
+    <button class="btn-a red" onclick="resetB()" style="float:right">RESET BAZY</button>
 </div>
 
 <div class="box">
-    <h3 style="margin-top:0">⚡ Szybka Sprzedaż Stacjonarna</h3>
-    <button class="btn-admin btn-green" onclick="sell('Klasyczna', 5)" style="margin-right:10px">🍋 KLASYCZNA (5zł)</button>
-    <button class="btn-admin btn-orange" onclick="sell('Pomarańczowa', 7)">🍊 POMARAŃCZOWA (7zł)</button>
+    <h3>⚡ Sprzedaż Stacjonarna</h3>
+    <button class="btn-a green" onclick="sell('Klasyczna', 5)">🍋 KLASYCZNA (5zł)</button>
+    <button class="btn-a orange" onclick="sell('Pomarańczowa', 7)">🍊 POMARAŃCZOWA (7zł)</button>
 </div>
 
 <div id="list"></div>
 
 <script>
-    const API = "ADRES_TWOJEGO_TUNELU"; // ZMIEŃ TO!
-    function sell(n, p) { fetch(`${API}/zamow`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produkty:n, suma:p.toFixed(2), platnosc:"Gotówka (Stacj.)", kod:"STACJA"})}).then(load); }
-    function setK() { fetch(`${API}/ustaw-kubki`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ilosc:document.getElementById('k-in').value})}).then(load); }
+    const API = "PODSTAW_TU_LINK_Z_CLOUDFLARE";
+    function sell(n, p) { fetch(`${API}/zamow`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produkty:n, suma:p.toFixed(2), platnosc:"Gotówka", kod:"STACJA"})}).then(load); }
+
+    function setK() {
+        const val = document.getElementById('k-in').value;
+        if(!val) return;
+        fetch(`${API}/ustaw-kubki`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ilosc:val})})
+            .then(() => { alert("Zaktualizowano!"); load(); });
+    }
+
     function load() {
         fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => { document.getElementById('k-show').innerText = d.kubki; });
         fetch(`${API}/zarobki`).then(r=>r.json()).then(d => document.getElementById('total-money').innerText = d.total.toFixed(2));
         fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
             document.getElementById('list').innerHTML = data.map(z => `
                 <div class="order">
-                    <span><b>#${z.id}</b> | ${z.produkty} (${z.suma}zł) | <small>${z.status}</small></span>
+                    <span><b>#${z.id}</b> | ${z.produkty} | ${z.suma}zł | <b>${z.status}</b></span>
                     <div>
-                        <button class="btn-admin btn-orange" style="padding:5px 10px" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
-                        <button class="btn-admin btn-green" style="padding:5px 10px" onclick="upd(${z.id},'WYDANE')">GOTOWE ✅</button>
+                        <button class="btn-a orange" style="padding:5px" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
+                        <button class="btn-a green" style="padding:5px" onclick="upd(${z.id},'WYDANE')">OK ✅</button>
                     </div>
                 </div>
             `).join('');
         });
     }
     function upd(id, status) { fetch(`${API}/update-status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, nowyStatus:status})}).then(load); }
-    function resetB() { if(confirm("Czy na pewno chcesz zresetować utarg i numerki?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
+    function resetB() { if(confirm("Czyścić wszystko?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
     setInterval(load, 3000); load();
 </script>
 </body>

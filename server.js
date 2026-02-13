@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// PODSTAW TU SWÓJ LINK Z GOOGLE APPS SCRIPT
 const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 let db = new sqlite3.Database('./lemoniada.db');
 
@@ -15,7 +16,11 @@ db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREM
 let stanKubkow = 10;
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
-app.post('/ustaw-kubki', (req, res) => { stanKubkow = parseInt(req.body.ilosc) || 0; res.json({ success: true }); });
+
+app.post('/ustaw-kubki', (req, res) => {
+    stanKubkow = parseInt(req.body.ilosc) || 0;
+    res.json({ success: true, stan: stanKubkow });
+});
 
 app.get('/zarobki', (req, res) => {
     db.get(`SELECT SUM(CAST(suma AS REAL)) as total FROM zamowienia`, [], (err, row) => {
@@ -25,9 +30,8 @@ app.get('/zarobki', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
-
-    // Liczymy ile sztuk jest w zamówieniu (rozdzielone przecinkami)
-    const iloscWZamowieniu = produkty.split(',').length;
+    const produktyArray = produkty.split(', ');
+    const iloscWZamowieniu = produktyArray.length;
 
     if (stanKubkow < iloscWZamowieniu) {
         return res.status(400).json({ error: "BRAK_KUBKOW" });
@@ -37,13 +41,13 @@ app.post('/zamow', (req, res) => {
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
             const lastId = this.lastID;
-            stanKubkow -= iloscWZamowieniu; // Odejmujemy tyle ile faktycznie kupiono
+            stanKubkow -= iloscWZamowieniu;
 
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
-            }).catch(e => console.log("Błąd Sheets"));
+            }).catch(e => console.log("Błąd Google Sheets"));
 
             res.json({ id: lastId });
         });
@@ -58,7 +62,11 @@ app.post('/update-status', (req, res) => {
 });
 
 app.post('/reset-bazy', (req, res) => {
-    db.run(`DELETE FROM zamowienia`, () => { db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true })); });
+    db.run(`DELETE FROM zamowienia`, () => {
+        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => {
+            res.json({ success: true });
+        });
+    });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 LemonIada Engine Online'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada Gotowy!'));
