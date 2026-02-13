@@ -8,41 +8,37 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; padding: 15px; display: flex; justify-content: center; margin: 0; }
         .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin: 10px 0; background: #fafafa; }
-        .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
+        .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
         .promo-box { background: #fdfdfd; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px dashed #9b59b6; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; }
-        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
 
-        /* MODALE I STATUSY */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.4); z-index: 2000; width: 85%; max-width: 320px; }
         .modal-btn { background: #3498db; color: white; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
         .overlay-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1999; }
-        .overlay-msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
-        #order-number { font-size: 48px; color: #2ecc71; font-weight: bold; margin: 10px 0; }
+        #order-number { font-size: 48px; color: #2ecc71; font-weight: bold; }
     </style>
 </head>
 <body>
 
-<div id="closed" class="overlay-msg"><h1>⚠️ PRZERWA</h1><p id="msg"></p></div>
-
 <div id="blik-overlay" class="overlay-bg"></div>
 <div id="blik-modal" class="modal">
-    <h3 style="margin-top:0">Wybierz numer BLIK:</h3>
+    <h3 style="margin:0 0 15px 0; color:#333">Na który numer BLIK?</h3>
     <button class="modal-btn" onclick="copyBlik('668 078 310')">668 078 310</button>
     <button class="modal-btn" onclick="copyBlik('537 282 634')">537 282 634</button>
     <button class="btn" style="background:#ccc; margin-top:10px;" onclick="closeBlikModal()">Anuluj</button>
 </div>
 
 <div class="app">
-    <h2 style="margin-bottom:5px;">🍋 LemonIada</h2>
-    <p style="font-size:12px; color:#777;">Dostępne kubki: <b id="c-left">0</b></p>
+    <h2>🍋 LemonIada</h2>
+    <p>Dostępne kubki: <b id="c-left">0</b></p>
 
     <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
     <div class="card"><h3>Pomarańczowa 🍊 7.00zł</h3><button class="btn" onclick="add('Pomarańczowa', 7)">DODAJ</button></div>
 
     <div class="promo-box">
         <h4>🎡 KOŁO FORTUNY</h4>
-        <div id="promo-status">Zdobądź rabat do -20%!</div>
+        <div id="promo-status">Zdobądź rabat!</div>
         <button id="wheel-btn" class="btn" style="background:#9b59b6; margin-top:10px;" onclick="spinWheel()">LOSUJ</button>
         <input type="text" id="promo-input" placeholder="Wpisz kod..." style="width:80%; padding:10px; margin-top:10px; border-radius:10px; border:1px solid #ccc;">
         <button class="btn" style="background:#34495e; width:90%; margin-top:10px;" onclick="checkCode()">AKTYWUJ</button>
@@ -54,16 +50,16 @@
         <div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px;">
             <b>Płatność:</b><br>
             <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka</label><br>
-            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK (wybierz numer)</label>
+            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK</label>
         </div><br>
         <button class="btn" style="width:100%; padding:18px;" onclick="send()">ZAMAWIAM</button>
     </div>
 
-    <div id="status-box" style="display:none; margin-top:20px; padding:15px; border:3px solid #2ecc71; border-radius:20px;">
-        <p style="margin:0">TWÓJ NUMEREK:</p>
+    <div id="status-box" style="display:none; margin-top:20px; padding:20px; border:3px solid #2ecc71; border-radius:20px;">
+        <p>TWÓJ NUMEREK:</p>
         <div id="order-number">#0</div>
         <p id="order-status" style="font-weight:bold; color:#3498db">Status: PRZYJĘTE</p>
-        <button class="btn" style="background:#34495e; margin-top:10px; font-size:12px;" onclick="location.reload()">NOWE ZAMÓWIENIE</button>
+        <button class="btn" style="background:#34495e; font-size:12px;" onclick="location.reload()">NOWE ZAMÓWIENIE</button>
     </div>
 </div>
 
@@ -71,43 +67,43 @@
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
     let cart = [];
     let aktualnyRabat = 0;
-    let trackInterval;
 
-    if(localStorage.getItem('promoCode')) {
-        document.getElementById('promo-status').innerHTML = `Twój kod: <b>${localStorage.getItem('promoCode')}</b>`;
-        document.getElementById('wheel-btn').disabled = true;
-        document.getElementById('wheel-btn').style.opacity = "0.5";
-    }
-
-    function add(n, p) { cart.push({n, p}); updateUI(); }
+    function add(n, p) { cart.push({n, p: parseFloat(p)}); updateUI(); }
     function remove(i) { cart.splice(i, 1); updateUI(); }
 
     function updateUI() {
         const cDiv = document.getElementById('cart');
         const lDiv = document.getElementById('cart-list');
         cDiv.style.display = cart.length ? 'block' : 'none';
-        lDiv.innerHTML = cart.map((item, i) => `
-            <div class="cart-item"><span>${item.n}</span><button class="remove-btn" onclick="remove(${i})">×</button></div>`).join('');
-        let suma = cart.reduce((a, b) => a + b.p, 0);
-        document.getElementById('total').innerText = (suma * (1 - aktualnyRabat/100)).toFixed(2);
+        lDiv.innerHTML = cart.map((item, i) => `<div class="cart-item"><span>${item.n}</span><button class="remove-btn" onclick="remove(${i})">×</button></div>`).join('');
+
+        let sumaPodstawowa = cart.reduce((a, b) => a + b.p, 0);
+        let sumaKoncowa = sumaPodstawowa * (1 - aktualnyRabat/100);
+        document.getElementById('total').innerText = sumaKoncowa.toFixed(2);
     }
 
     function spinWheel() {
-        if(localStorage.getItem('promoCode')) return;
         const r = [5, 10, 15, 20][Math.floor(Math.random() * 4)];
-        const kod = "WYGRANA" + r;
-        localStorage.setItem('promoCode', kod);
-        document.getElementById('promo-status').innerHTML = `Wygrana: -${r}%! Kod: <b>${kod}</b>`;
+        localStorage.setItem('promoCode', "WYGRANA" + r);
+        document.getElementById('promo-status').innerHTML = `Wygrana: -${r}%! Kod: <b>WYGRANA${r}</b>`;
         document.getElementById('wheel-btn').disabled = true;
     }
 
     function checkCode() {
         const v = document.getElementById('promo-input').value.toUpperCase().trim();
-        if(v === localStorage.getItem('promoCode') || v === "FB10") {
-            aktualnyRabat = (v === "FB10") ? 10 : parseInt(v.replace("WYGRANA",""));
-            alert("Rabat aktywowany!");
-            updateUI();
-        } else { alert("Kod nieprawidłowy"); }
+        const staleKody = {"FB10": 10, "CHAMPION": 15, "LEMON20": 20};
+
+        if(staleKody[v]) {
+            aktualnyRabat = staleKody[v];
+            alert("Aktywowano rabat " + aktualnyRabat + "%!");
+        } else if(v === localStorage.getItem('promoCode')) {
+            aktualnyRabat = parseInt(v.replace("WYGRANA",""));
+            alert("Aktywowano wygraną " + aktualnyRabat + "%!");
+        } else {
+            alert("Kod nieprawidłowy");
+            aktualnyRabat = 0;
+        }
+        updateUI();
     }
 
     function openBlikModal() {
@@ -119,11 +115,10 @@
         document.getElementById('blik-modal').style.display = 'none';
     }
     function copyBlik(numer) {
-        navigator.clipboard.writeText(numer.replace(/\s/g, '')).then(() => {
-            alert("Numer skopiowany: " + numer + "\nWklej go w aplikacji banku!");
-            closeBlikModal();
-            finalSend("BLIK (" + numer + ")");
-        });
+        navigator.clipboard.writeText(numer.replace(/\s/g, ''));
+        alert("Skopiowano numer: " + numer);
+        closeBlikModal();
+        finalSend("BLIK (" + numer + ")");
     }
 
     function send() {
@@ -142,36 +137,22 @@
                 kod: document.getElementById('promo-input').value || "BRAK"
             })
         }).then(r => r.json()).then(d => {
-            cart = []; updateUI();
             document.getElementById('cart').style.display = 'none';
             document.getElementById('status-box').style.display = 'block';
             document.getElementById('order-number').innerText = "#" + d.id;
-            track(d.id);
+            setInterval(() => {
+                fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+                    const z = data.find(o => o.id === d.id);
+                    if(z) document.getElementById('order-status').innerText = "Status: " + z.status;
+                });
+            }, 3000);
         });
-    }
-
-    function track(id) {
-        if(trackInterval) clearInterval(trackInterval);
-        trackInterval = setInterval(() => {
-            fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-                if(data.length === 0) { location.reload(); return; }
-                const z = data.find(o => o.id === id);
-                if(z) {
-                    document.getElementById('order-status').innerText = "Status: " + z.status;
-                    if(z.status === 'WYDANE') {
-                        document.getElementById('order-status').style.color = "#27ae60";
-                    }
-                }
-            });
-        }, 3000);
     }
 
     setInterval(() => {
         fetch(`${API}/stan-magazynu`).then(r => r.json()).then(d => {
             document.getElementById('c-left').innerText = d.kubki;
-            document.getElementById('closed').style.display = (d.przerwa || d.kubki <= 0) ? 'flex' : 'none';
-            document.getElementById('msg').innerText = d.powod;
-        }).catch(e => console.log("Offline"));
+        });
     }, 4000);
 </script>
 </body>
