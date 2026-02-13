@@ -5,23 +5,29 @@
     <title>Admin - LemonIada</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid #3498db; }
-        .order { background: white; color: #333; padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-        .btn-set { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        .btn-set:hover { background: #27ae60; transform: scale(1.05); }
-        .btn-status { padding: 8px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px; }
+        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
+        .btn-prod { background: #2ecc71; color: white; border: none; padding: 15px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .order { background: white; color: #333; padding: 10px; border-radius: 8px; margin: 5px 0; display: flex; justify-content: space-between; }
+        input { padding: 8px; border-radius: 5px; border: none; width: 60px; }
     </style>
 </head>
 <body>
-
-<h1>🍋 Panel Zarządzania LemonIada</h1>
+<h1>🍋 LemonIada - Panel Dowodzenia</h1>
 
 <div class="box">
-    <h3>📦 Stan Magazynu</h3>
-    <input type="number" id="kubki-val" value="10" style="padding:10px; border-radius:8px; width:60px; font-size:18px;">
-    <button class="btn-set" onclick="setStock()">USTAW LICZBĘ KUBKÓW</button>
-    <button onclick="resetAll()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:8px; float:right; cursor:pointer;">RESTART NUMERKÓW</button>
-    <p id="info" style="color:#2ecc71"></p>
+    <h3>➕ Szybka Sprzedaż Stacjonarna</h3>
+    <div class="grid">
+        <button class="btn-prod" onclick="sell('Klasyczna', 5)">KLASYCZNA (5zł)</button>
+        <button class="btn-prod" onclick="sell('Pomarańczowa', 7)" style="background:#e67e22">POMARAŃCZ (7zł)</button>
+    </div>
+</div>
+
+<div class="box">
+    <h3>📦 Magazyn: <span id="k-count">0</span></h3>
+    <input type="number" id="k-input" value="10">
+    <button onclick="setK()" style="padding:8px; border-radius:5px; cursor:pointer;">USTAW KUBKI</button>
+    <button onclick="resetB()" style="background:#e74c3c; color:white; border:none; padding:8px; border-radius:5px; margin-left:20px;">RESET NUMERKÓW</button>
 </div>
 
 <div id="orders"></div>
@@ -29,31 +35,33 @@
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
 
-    function setStock() {
-        const val = document.getElementById('kubki-val').value;
+    function sell(n, p) {
+        fetch(`${API}/zamow`, {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({produkty: n, suma: p.toFixed(2), platnosc: "Gotówka (Stacj.)", kod: "BRAK"})
+        }).then(() => load());
+    }
+
+    function setK() {
         fetch(`${API}/ustaw-kubki`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ilosc: val})
-        }).then(() => {
-            document.getElementById('info').innerText = "Zaktualizowano stan na: " + val;
-            setTimeout(() => document.getElementById('info').innerText = "", 3000);
-        });
+            body: JSON.stringify({ilosc: document.getElementById('k-input').value})
+        }).then(load);
     }
 
     function load() {
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(d => {
+            document.getElementById('k-count').innerText = d.kubki;
+        });
         fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            const div = document.getElementById('orders');
-            div.innerHTML = data.map(z => `
+            document.getElementById('orders').innerHTML = data.map(z => `
                 <div class="order">
+                    <span><b>#${z.id}</b> ${z.produkty} (${z.suma}zł) - ${z.status}</span>
                     <div>
-                        <b style="font-size:20px;">#${z.id}</b> | ${z.produkty}<br>
-                        <small>${z.godzina} | ${z.platnosc} | <b>${z.suma} zł</b></small>
-                    </div>
-                    <div>
-                        <span style="font-weight:bold">${z.status}</span><br>
-                        <button class="btn-status" style="background:#f1c40f" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
-                        <button class="btn-status" style="background:#2ecc71" onclick="upd(${z.id},'WYDANE')">✅</button>
+                        <button onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
+                        <button onclick="upd(${z.id},'WYDANE')" style="background:#2ecc71; color:white;">✅</button>
                     </div>
                 </div>
             `).join('');
@@ -68,14 +76,8 @@
         }).then(load);
     }
 
-    function resetAll() {
-        if(confirm("Czyścić bazę i numerki od 1?")) {
-            fetch(`${API}/reset-bazy`, {method:'POST'}).then(load);
-        }
-    }
-
-    setInterval(load, 3000);
-    load();
+    function resetB() { if(confirm("Czyścić wszystko?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
+    setInterval(load, 3000); load();
 </script>
 </body>
 </html>
