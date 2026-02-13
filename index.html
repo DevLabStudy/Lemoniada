@@ -3,18 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada Bar</title>
+    <title>Lemoniada Bar LUX</title>
     <style>
-        body { font-family: sans-serif; background: #f1c40f; padding: 15px; display: flex; justify-content: center; margin: 0; }
-        .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); margin-top: 20px; text-align: center; }
+        body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; padding: 15px; display: flex; justify-content: center; margin: 0; }
+        .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin: 10px 0; background: #fafafa; }
         .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
         .btn:active { transform: scale(0.95); }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; text-align: center; }
-        .badge { background: #e74c3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; font-weight: bold; }
+        .promo-box { background: #fdfdfd; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px dashed #9b59b6; }
+        .wheel-btn { background: #9b59b6; margin-bottom: 10px; }
+        .badge { background: #e74c3c; color: white; padding: 6px 12px; border-radius: 20px; font-size: 14px; }
         .pay-box { text-align: left; background: #eee; padding: 15px; border-radius: 12px; margin: 15px 0; }
-        #blik-selection { margin-top: 15px; padding-left: 10px; border-left: 4px solid #2ecc71; }
-        .num-row { margin: 10px 0; display: block; cursor: pointer; font-size: 16px; }
+        input[type="text"] { width: 60%; padding: 10px; border-radius: 10px; border: 1px solid #ccc; margin-right: 5px; }
+        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
@@ -22,92 +23,93 @@
 
 <div class="app">
     <div style="display:flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-        <h2 style="margin:0">🍋 Bar</h2>
+        <h2 style="margin:0">🍋 Bar LUX</h2>
         <span class="badge">Zostało: <b id="c-left">0</b> szt.</span>
     </div>
 
     <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
     <div class="card"><h3>Pomarańczowa 🍊 6.50zł</h3><button class="btn" onclick="add('Pomarańczowa', 6.5)">DODAJ</button></div>
 
-    <div id="cart" style="display:none; border-top: 2px dashed #ccc; padding-top: 15px; margin-top: 20px;">
+    <div class="promo-box">
+        <h4>🎁 STREFA OKAZJI</h4>
+        <button id="wheel-btn" class="btn wheel-btn" onclick="spinWheel()">🎡 LOSUJ RABAT</button>
+        <div id="promo-status" style="font-weight:bold; color:#e67e22; margin-bottom:10px;">Graj o rabat do -20%!</div>
+        <input type="text" id="promo-input" placeholder="Kod z FB...">
+        <button class="btn" style="width:30%; display:inline-block; font-size: 12px;" onclick="checkCode()">UŻYJ</button>
+    </div>
+
+    <div id="cart" style="display:none; border-top: 2px dashed #ccc; padding-top: 15px;">
         <p id="summary" style="font-weight:bold"></p>
-        <h2>Suma: <span id="total">0</span> zł</h2>
+        <h2 style="color: #27ae60;">Do zapłaty: <span id="total">0</span> zł</h2>
 
         <div class="pay-box">
             <b>Płatność:</b><br><br>
-            <label class="num-row"><input type="radio" name="p" value="Gotówka" checked onchange="toggleBlik(false)"> 💵 Gotówka</label>
-            <label class="num-row"><input type="radio" name="p" value="BLIK" onchange="toggleBlik(true)"> 📱 Przelew BLIK</label>
-
-            <div id="blik-selection" style="display:none;">
-                <p style="font-size: 13px; margin-bottom: 8px; color: #555;">Wybierz numer do przelewu:</p>
-                <label class="num-row"><input type="radio" name="blik_num" value="668 078 310" checked> 668 078 310</label>
-                <label class="num-row"><input type="radio" name="blik_num" value="537 282 634"> 537 282 634</label>
-            </div>
+            <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka</label><br><br>
+            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK</label>
         </div>
-        <button class="btn" style="background:#27ae60; width: 100%;" onclick="send()">ZAMAWIAM</button>
+        <button class="btn" style="background:#27ae60;" onclick="send()">ZAMAWIAM</button>
     </div>
     <div id="st"></div>
 </div>
 
 <script>
-    // --- PAMIĘTAJ O AKTUALIZACJI LINKU ---
-    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
-
+    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com"; // TU WKLEJ NOWY LINK Z CLOUDFLARE
     let cart = [];
+    let aktualnyRabat = 0;
+    let czyLosowano = false;
 
-    function toggleBlik(show) {
-        document.getElementById('blik-selection').style.display = show ? 'block' : 'none';
+    function spinWheel() {
+        if(czyLosowano) return alert("Już losowałeś!");
+        const opcje = [0, 5, 5, 10, 10, 15, 20];
+        const wylosowany = opcje[Math.floor(Math.random() * opcje.length)];
+        aktualnyRabat = wylosowany;
+        czyLosowano = true;
+        document.getElementById('promo-status').innerText = `Wylosowano: -${wylosowany}%!`;
+        document.getElementById('wheel-btn').disabled = true;
+        document.getElementById('wheel-btn').style.opacity = "0.5";
+        updateTotal();
+    }
+
+    function checkCode() {
+        const kod = document.getElementById('promo-input').value.toUpperCase();
+        if(kod === "GRUPA_FB" || kod === "CHAMPION") {
+            aktualnyRabat = 10;
+            document.getElementById('promo-status').innerText = "Kod aktywny: -10%";
+            updateTotal();
+        } else { alert("Błędny kod!"); }
     }
 
     function add(n,p){
         cart.push({n,p});
         document.getElementById('cart').style.display='block';
-        document.getElementById('summary').innerText="Wybrano: "+cart.map(i=>i.n).join(", ");
-        document.getElementById('total').innerText=cart.reduce((a,b)=>a+b.p,0).toFixed(2);
+        updateTotal();
     }
 
-    // Niezawodne kopiowanie
-    function copyToClipboard(text) {
-        const el = document.createElement('textarea');
-        el.value = text;
-        document.body.appendChild(el);
-        el.select();
-        document.execCommand('copy');
-        document.body.removeChild(el);
+    function updateTotal() {
+        let sumaBase = cart.reduce((a,b)=>a+b.p,0);
+        let poRabacie = sumaBase * (1 - aktualnyRabat/100);
+        document.getElementById('summary').innerText="Wybrano: "+cart.map(i=>i.n).join(", ");
+        document.getElementById('total').innerText=poRabacie.toFixed(2);
     }
 
     function send() {
         const method = document.querySelector('input[name="p"]:checked').value;
-        let plat = "Gotówka";
-        let numer = "";
-
-        if(method === "BLIK") {
-            numer = document.querySelector('input[name="blik_num"]:checked').value;
-            plat = "BLIK na " + numer;
-            copyToClipboard(numer); // Kopiowanie wybranego numeru
-        }
-
         const bodyData = {
             produkty: cart.map(i=>i.n).join(", "),
             suma: document.getElementById('total').innerText,
-            platnosc: plat
+            platnosc: method
         };
 
         fetch(`${API}/zamow`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify(bodyData)
-        })
-            .then(r => r.json())
-            .then(d => {
-                let info = "Wysłano zamówienie!";
-                if(method === "BLIK") info += "\n\nNumer " + numer + " został skopiowany do schowka!";
-                alert(info);
-                cart=[];
-                document.getElementById('cart').style.display='none';
-                track(d.id);
-            })
-            .catch(err => alert("Błąd! Sprawdź czy serwer działa."));
+        }).then(r => r.json()).then(d => {
+            alert("Zamówienie wysłane!");
+            cart=[];
+            document.getElementById('cart').style.display='none';
+            track(d.id);
+        });
     }
 
     function track(id) {
@@ -116,10 +118,7 @@
                 const z = data.find(o=>o.id===id);
                 if(z) {
                     document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db">Status: <b>${z.status}</b></div>`;
-                    if(z.status==='WYDANE') {
-                        clearInterval(interval);
-                        location.reload();
-                    }
+                    if(z.status==='WYDANE') { clearInterval(interval); location.reload(); }
                 }
             });
         }, 3000);
