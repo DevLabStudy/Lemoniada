@@ -3,47 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada</title>
+    <title>LemonIada - Zamów</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; padding: 10px; display: flex; justify-content: center; margin: 0; }
         .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
-        .btn { background: #2ecc71; color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; margin: 5px 0; transition: 0.2s; }
+        .btn { background: #2ecc71; color: white; border: none; padding: 15px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; margin: 5px 0; font-size: 16px; }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin: 10px 0; background: #fafafa; }
         .promo-box { background: #fdfdfd; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px dashed #9b59b6; }
-        .input-field { width: 80%; padding: 10px; margin: 10px 0; border-radius: 10px; border: 1px solid #ccc; font-size: 16px; }
         #blik-options { display: none; background: #ebf5fb; padding: 15px; border-radius: 15px; margin-top: 10px; border: 2px solid #3498db; }
-        .blik-btn { background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin: 5px 0; font-weight: bold; font-size: 16px; }
+        .blik-btn { background: #3498db; color: white; border: none; padding: 12px; border-radius: 10px; width: 100%; margin: 5px 0; font-weight: bold; }
         #order-success { display: none; border: 4px solid #2ecc71; padding: 20px; border-radius: 20px; margin-top: 20px; }
-        #order-number { font-size: 60px; color: #2ecc71; font-weight: bold; margin: 10px 0; }
+        #order-number { font-size: 65px; color: #2ecc71; font-weight: bold; margin: 5px 0; }
     </style>
 </head>
 <body>
 
 <div class="app">
-    <h2 style="margin-bottom:0;">🍋 Lemoniada</h2>
-    <p id="kubki-status" style="font-size:12px; color:#666;">Dostępne kubki: ...</p>
+    <h2 style="margin-bottom:0;">🍋 LemonIada</h2>
+    <p id="kubki-status" style="font-weight:bold; color:#e67e22;">Ładowanie stanu...</p>
 
-    <div class="card"><h3>Klasyczna 🍋 5zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
-    <div class="card"><h3>Pomarańczowa 🍊 7zł</h3><button class="btn" onclick="add('Pomarańczowa', 7)">DODAJ</button></div>
+    <div class="card"><h3>Klasyczna 🍋 5zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ DO KOSZYKA</button></div>
+    <div class="card"><h3>Pomarańczowa 🍊 7zł</h3><button class="btn" onclick="add('Pomarańczowa', 7)">DODAJ DO KOSZYKA</button></div>
 
     <div class="promo-box">
-        <h4>🎡 KOŁO FORTUNY</h4>
-        <div id="promo-status">Zdobądź rabat!</div>
-        <button id="wheel-btn" class="btn" style="background:#9b59b6;" onclick="spinWheel()">LOSUJ</button>
-        <input type="text" id="promo-input" class="input-field" placeholder="Wpisz kod...">
-        <button class="btn" style="background:#34495e; width:85%" onclick="checkCode()">AKTYWUJ KOD</button>
+        <div id="promo-status">🎡 Masz kod rabatowy?</div>
+        <button id="wheel-btn" class="btn" style="background:#9b59b6; padding:8px;" onclick="spinWheel()">LOSUJ RABAT</button>
+        <input type="text" id="promo-input" placeholder="Wpisz kod..." style="width:80%; padding:10px; margin-top:10px; border-radius:10px; border:1px solid #ccc;">
+        <button class="btn" style="background:#34495e; margin-top:5px;" onclick="checkCode()">AKTYWUJ</button>
     </div>
 
     <div id="cart" style="display:none; margin-top:20px; border-top: 2px solid #eee; padding-top:10px;">
         <div id="cart-list" style="text-align:left; margin-bottom:10px;"></div>
         <h2 style="color:#2c3e50">Suma: <span id="total">0</span> zł</h2>
-
-        <p><b>Wybierz płatność:</b></p>
         <button class="btn" style="background:#f39c12" onclick="orderCash()">💵 Płacę Gotówką</button>
         <button class="btn" style="background:#3498db" onclick="showBlik()">📱 Płacę BLIKiem</button>
 
         <div id="blik-options">
-            <p style="margin:0 0 10px 0; font-size:13px;">Kliknij numer, aby <b>skopiować</b> i zamówić:</p>
+            <p style="margin:0 0 10px 0; font-size:13px;">Kliknij numer, aby <b>skopiować</b>:</p>
             <button class="blik-btn" onclick="orderBlik('668 078 310')">668 078 310</button>
             <button class="blik-btn" onclick="orderBlik('537 282 634')">537 282 634</button>
         </div>
@@ -52,8 +48,8 @@
     <div id="order-success">
         <p style="margin:0">TWÓJ NUMEREK:</p>
         <div id="order-number">#?</div>
-        <p id="order-status" style="font-weight:bold; color:#3498db">Status: PRZYJĘTE</p>
-        <p style="font-size:12px; color:#e67e22" id="blik-reminder"></p>
+        <p id="order-status" style="font-weight:bold; color:#3498db; font-size:20px;">Status: PRZYJĘTE</p>
+        <p id="blik-reminder" style="font-size:12px; color:#666;"></p>
         <button class="btn" style="background:#34495e" onclick="location.reload()">NOWE ZAMÓWIENIE</button>
     </div>
 </div>
@@ -66,57 +62,45 @@
     function add(n, p) { cart.push({n, p: parseFloat(p)}); updateUI(); }
 
     function updateUI() {
-        const cartDiv = document.getElementById('cart');
-        cartDiv.style.display = cart.length ? 'block' : 'none';
+        document.getElementById('cart').style.display = cart.length ? 'block' : 'none';
         document.getElementById('cart-list').innerHTML = cart.map(i => `• ${i.n} (${i.p.toFixed(2)}zł)`).join('<br>');
-        let sumaPodstawowa = cart.reduce((a, b) => a + b.p, 0);
-        let sumaKoncowa = sumaPodstawowa * (1 - aktualnyRabat/100);
-        document.getElementById('total').innerText = sumaKoncowa.toFixed(2);
+        let suma = cart.reduce((a, b) => a + b.p, 0) * (1 - aktualnyRabat/100);
+        document.getElementById('total').innerText = suma.toFixed(2);
     }
 
     function spinWheel() {
         const r = [5, 10, 15, 20][Math.floor(Math.random() * 4)];
         localStorage.setItem('promoCode', "WYGRANA" + r);
-        document.getElementById('promo-status').innerHTML = `Wygrana: -${r}%! Kod: <b>WYGRANA${r}</b>`;
+        document.getElementById('promo-status').innerHTML = `Wygrano: <b>-${r}%</b>! Kod: WYGRANA${r}`;
         document.getElementById('wheel-btn').disabled = true;
     }
 
     function checkCode() {
         const v = document.getElementById('promo-input').value.toUpperCase().trim();
-        const staleKody = {"FB10": 10, "CHAMPION": 15, "LEMON20": 20};
-        if(staleKody[v]) {
-            aktualnyRabat = staleKody[v];
-            alert("Rabat " + aktualnyRabat + "%!");
-        } else if(v === localStorage.getItem('promoCode')) {
-            aktualnyRabat = parseInt(v.replace("WYGRANA",""));
-            alert("Rabat " + aktualnyRabat + "%!");
-        } else { alert("Kod nieprawidłowy"); aktualnyRabat = 0; }
+        const stale = {"FB10": 10, "CHAMPION": 15, "LEMON20": 20};
+        if(stale[v]) aktualnyRabat = stale[v];
+        else if(v === localStorage.getItem('promoCode')) aktualnyRabat = parseInt(v.replace("WYGRANA",""));
+        else { alert("Kod nieprawidłowy"); aktualnyRabat = 0; }
         updateUI();
     }
 
     function showBlik() { document.getElementById('blik-options').style.display = 'block'; }
     function orderCash() { finalSend("Gotówka"); }
-
     function orderBlik(numer) {
-        navigator.clipboard.writeText(numer.replace(/\s/g, '')).then(() => {
-            document.getElementById('blik-reminder').innerText = "Numer " + numer + " skopiowany! Wklej go w aplikacji banku.";
-            finalSend("BLIK (" + numer + ")");
-        });
+        navigator.clipboard.writeText(numer.replace(/\s/g, ''));
+        document.getElementById('blik-reminder').innerText = "Numer " + numer + " skopiowany!";
+        finalSend("BLIK (" + numer + ")");
     }
 
     function finalSend(metoda) {
-        const produktyString = cart.map(i => i.n).join(", ");
-        const cenaString = document.getElementById('total').innerText;
-        const kodString = document.getElementById('promo-input').value || "BRAK";
-
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                produkty: produktyString,
-                suma: cenaString,
+                produkty: cart.map(i => i.n).join(", "),
+                suma: document.getElementById('total').innerText,
                 platnosc: metoda,
-                kod: kodString
+                kod: document.getElementById('promo-input').value || "BRAK"
             })
         })
             .then(r => r.json())
@@ -126,9 +110,8 @@
                     document.getElementById('order-success').style.display = 'block';
                     document.getElementById('order-number').innerText = "#" + d.id;
                     track(d.id);
-                } else { alert("Błąd serwera!"); }
-            })
-            .catch(() => alert("Błąd połączenia!"));
+                }
+            });
     }
 
     function track(id) {
@@ -140,11 +123,13 @@
         }, 3000);
     }
 
-    setInterval(() => {
+    function refreshStock() {
         fetch(`${API}/stan-magazynu`).then(r => r.json()).then(d => {
-            document.getElementById('kubki-status').innerText = "Dostępne kubki: " + d.kubki;
+            document.getElementById('kubki-status').innerText = d.kubki > 0 ? "Dostępne kubki: " + d.kubki : "BRAK KUBKÓW - PRZERWA";
         });
-    }, 4000);
+    }
+    setInterval(refreshStock, 5000);
+    window.onload = refreshStock;
 </script>
 </body>
 </html>

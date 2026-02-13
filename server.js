@@ -7,26 +7,24 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-// TWOJE DANE Z GOOGLE SHEETS
+// TWOJE DANE DO ARKUSZA
 const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 
 let db = new sqlite3.Database('./lemoniada.db');
 
-// Tworzenie tabeli
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  produkty TEXT,
-                                                  suma TEXT,
-                                                  platnosc TEXT,
-                                                  godzina TEXT,
-                                                  kod TEXT,
-                                                  status TEXT DEFAULT 'PRZYJĘTE'
-        )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    kod_rabatowy TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
-let stanKubkow = 0;
-let statusPrzerwy = false;
-let powodPrzerwy = "";
+let stanKubkow = 10; // Startowa ilość
 
+// Wysyłka do Google Sheets
 function sendToSheets(id, produkty, suma, platnosc, kod) {
     const teraz = new Date();
     fetch(GOOGLE_SHEET_URL, {
@@ -41,35 +39,43 @@ function sendToSheets(id, produkty, suma, platnosc, kod) {
             platnosc: platnosc,
             kod: kod || "BRAK"
         })
-    }).catch(e => console.log("Błąd wysyłki do Sheets"));
+    }).catch(e => console.log("Błąd Sheets (prawdopodobnie brak wdrożenia):", e.message));
 }
 
 app.get('/stan-magazynu', (req, res) => {
-    res.json({ kubki: stanKubkow, przerwa: statusPrzerwy || stanKubkow <= 0, powod: powodPrzerwy });
+    res.json({ kubki: stanKubkow });
 });
 
 app.post('/ustaw-kubki', (req, res) => {
-    stanKubkow = parseInt(req.body.ilosc) || 0;
-    res.json({ success: true });
+    const ilosc = parseInt(req.body.ilosc);
+    if (!isNaN(ilosc)) {
+        stanKubkow = ilosc;
+        res.json({ success: true, kubki: stanKubkow });
+    } else {
+        res.status(400).json({ error: "Błędna liczba" });
+    }
 });
 
 app.post('/zamow', (req, res) => {
-    if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków" });
+    if (stanKubkow <= 0) return res.status(400).json({ error: "Brak kubków!" });
+
     const { produkty, suma, platnosc, kod } = req.body;
     const godzina = new Date().toLocaleTimeString('pl-PL');
 
-    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod) VALUES (?, ?, ?, ?, ?)`,
+    db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             const lastId = this.lastID;
-            sendToSheets(lastId, produkty, suma, platnosc, kod);
             stanKubkow--;
+            sendToSheets(lastId, produkty, suma, platnosc, kod);
             res.json({ id: lastId });
         });
 });
 
 app.get('/list-zamowienia', (req, res) => {
-    db.all(`SELECT * FROM zamowienia ORDER BY id DESC`, [], (err, rows) => res.json(rows || []));
+    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 50`, [], (err, rows) => {
+        res.json(rows || []);
+    });
 });
 
 app.post('/update-status', (req, res) => {
@@ -77,14 +83,13 @@ app.post('/update-status', (req, res) => {
     db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [nowyStatus, id], () => res.json({ success: true }));
 });
 
-// TWARDY RESET BAZY I NUMERACJI
 app.post('/reset-bazy', (req, res) => {
     db.serialize(() => {
         db.run(`DELETE FROM zamowienia`);
         db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => {
-            res.json({ success: true, message: "Baza i licznik zresetowane" });
+            res.json({ success: true });
         });
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADA READY NA PORCIE 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('🍋 Serwer LemonIada działa na porcie 3000'));

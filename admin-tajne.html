@@ -2,101 +2,76 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Panel Admina - Lemoniada</title>
+    <title>Admin - LemonIada</title>
     <style>
         body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        input, select { padding: 10px; margin: 5px; border-radius: 5px; border: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 10px; border-bottom: 1px solid #7f8c8d; text-align: left; }
-        .status-btn { padding: 5px 10px; cursor: pointer; border-radius: 5px; border: none; }
-        .btn-reset { background: #e74c3c; color: white; padding: 10px; cursor: pointer; border: none; border-radius: 5px; }
-        .btn-add { background: #27ae60; color: white; font-weight: bold; }
+        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; border-left: 5px solid #3498db; }
+        .order { background: white; color: #333; padding: 15px; border-radius: 10px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
+        .btn-set { background: #2ecc71; color: white; border: none; padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        .btn-set:hover { background: #27ae60; transform: scale(1.05); }
+        .btn-status { padding: 8px; border: none; border-radius: 5px; cursor: pointer; margin-left: 5px; }
     </style>
 </head>
 <body>
 
-<h1>🍋 LemonIada - Zarządzanie</h1>
+<h1>🍋 Panel Zarządzania LemonIada</h1>
 
 <div class="box">
-    <h3>➕ Dodaj zamówienie ręcznie</h3>
-    <input type="text" id="manual-prod" placeholder="Co kupił? (np. Klasyczna)">
-    <input type="number" id="manual-price" placeholder="Cena (np. 5.00)">
-    <select id="manual-pay">
-        <option value="Gotówka">Gotówka</option>
-        <option value="BLIK">BLIK</option>
-    </select>
-    <button class="status-btn btn-add" onclick="addManual()">DODAJ ZAMÓWIENIE</button>
+    <h3>📦 Stan Magazynu</h3>
+    <input type="number" id="kubki-val" value="10" style="padding:10px; border-radius:8px; width:60px; font-size:18px;">
+    <button class="btn-set" onclick="setStock()">USTAW LICZBĘ KUBKÓW</button>
+    <button onclick="resetAll()" style="background:#e74c3c; color:white; border:none; padding:10px; border-radius:8px; float:right; cursor:pointer;">RESTART NUMERKÓW</button>
+    <p id="info" style="color:#2ecc71"></p>
 </div>
 
-<div class="box">
-    <h3>📦 Magazyn i System</h3>
-    Kubki: <input type="number" id="kubki-input" style="width:60px">
-    <button onclick="updateKubki()">Ustaw</button>
-    <button class="btn-reset" onclick="resetBazy()" style="margin-left: 50px;">🔥 TWARDY RESET NUMERKÓW</button>
-</div>
-
-<div class="box">
-    <h3>📋 Lista Zamówień</h3>
-    <div id="lista"></div>
-</div>
+<div id="orders"></div>
 
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
 
-    function addManual() {
-        const prod = document.getElementById('manual-prod').value;
-        const cena = document.getElementById('manual-price').value;
-        const platnosc = document.getElementById('manual-pay').value;
-        if(!prod || !cena) return alert("Wpisz co i za ile!");
-
-        fetch(`${API}/zamow`, {
+    function setStock() {
+        const val = document.getElementById('kubki-val').value;
+        fetch(`${API}/ustaw-kubki`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ produkty: prod, suma: parseFloat(cena).toFixed(2), platnosc: platnosc, kod: "RĘCZNE" })
-        }).then(() => { alert("Dodano!"); load(); });
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ilosc: val})
+        }).then(() => {
+            document.getElementById('info').innerText = "Zaktualizowano stan na: " + val;
+            setTimeout(() => document.getElementById('info').innerText = "", 3000);
+        });
     }
 
     function load() {
         fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
-            let html = `<table><tr><th>Nr</th><th>Produkty</th><th>Suma</th><th>Płatność</th><th>Status</th><th>Akcja</th></tr>`;
-            data.forEach(z => {
-                html += `<tr>
-                    <td><b>#${z.id}</b></td>
-                    <td>${z.produkty}</td>
-                    <td>${z.suma} zł</td>
-                    <td>${z.platnosc}</td>
-                    <td>${z.status}</td>
-                    <td>
-                        <button class="status-btn" style="background:#f1c40f" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
-                        <button class="status-btn" style="background:#2ecc71" onclick="upd(${z.id},'WYDANE')">✅</button>
-                    </td>
-                </tr>`;
-            });
-            document.getElementById('lista').innerHTML = html + `</table>`;
+            const div = document.getElementById('orders');
+            div.innerHTML = data.map(z => `
+                <div class="order">
+                    <div>
+                        <b style="font-size:20px;">#${z.id}</b> | ${z.produkty}<br>
+                        <small>${z.godzina} | ${z.platnosc} | <b>${z.suma} zł</b></small>
+                    </div>
+                    <div>
+                        <span style="font-weight:bold">${z.status}</span><br>
+                        <button class="btn-status" style="background:#f1c40f" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
+                        <button class="btn-status" style="background:#2ecc71" onclick="upd(${z.id},'WYDANE')">✅</button>
+                    </div>
+                </div>
+            `).join('');
         });
     }
 
     function upd(id, status) {
         fetch(`${API}/update-status`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ id, nowyStatus: status })
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({id, nowyStatus: status})
         }).then(load);
     }
 
-    function resetBazy() {
-        if(confirm("Czy na pewno chcesz wyczyścić wszystko i zacząć od numeru 1?")) {
-            fetch(`${API}/reset-bazy`, { method: 'POST' }).then(() => { alert("Zresetowano!"); load(); });
+    function resetAll() {
+        if(confirm("Czyścić bazę i numerki od 1?")) {
+            fetch(`${API}/reset-bazy`, {method:'POST'}).then(load);
         }
-    }
-
-    function updateKubki() {
-        fetch(`${API}/ustaw-kubki`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ilosc: document.getElementById('kubki-input').value })
-        }).then(() => alert("Zaktualizowano kubki"));
     }
 
     setInterval(load, 3000);
