@@ -1,66 +1,42 @@
-<!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>ADMIN 🍋</title>
-    <style>
-        body { font-family: sans-serif; background: #eee; padding: 20px; }
-        .card { background: white; padding: 15px; margin: 10px 0; border-radius: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .utarg-box { font-size: 2rem; font-weight: bold; color: #2ecc71; text-align: center; margin-bottom: 30px; }
-        .status-btn { padding: 8px; margin-right: 5px; cursor: pointer; border: none; border-radius: 5px; }
-        .status-przyjęte { background: #3498db; color: white; }
-        .status-realizacja { background: #f1c40f; }
-        .status-gotowe { background: #e67e22; color: white; }
-        .status-koniec { background: #2ecc71; color: white; }
-    </style>
-</head>
-<body>
-    <h1>Panel Admina Lemoniada 🍋</h1>
-    <div class="card">
-        <h3>SUMA ZAROBIONA:</h3>
-        <div id="utarg" class="utarg-box">0.00 PLN</div>
-    </div>
+<div id="admin-root" style="font-family:sans-serif; padding:20px;">
+    <h1>Utarg: <span id="total">0.00</span> PLN</h1>
+    <div id="list"></div>
+    <hr>
+    <h3>Podział na pracowników</h3>
+    <input type="number" id="count" value="1" oninput="div()"> osób. Dla każdego: <b id="each">0</b> zł
+</div>
 
-    <h3>Aktywne zamówienia:</h3>
-    <div id="lista-zamowien">Wczytywanie...</div>
-
-    <script>
-        const API = "https://api.lemoniada.com.pl";
-
-        async function odswiez() {
-            const r = await fetch(`${API}/api/admin/all`);
-            const db = await r.json();
-
-            document.getElementById('utarg').innerText = db.utarg.toFixed(2) + " PLN";
-
-            let html = '';
-            // Pokazujemy tylko zamówienia, które nie są jeszcze całkowicie zakończone (lub wszystkie)
-            Object.values(db.zamowienia).reverse().forEach(o => {
-                if(o.status === 'zrealizowane') return; // Nie pokazuj zakończonych
-                html += `
-                <div class="card">
-                    <strong>Zamówienie #${o.id}</strong> - ${o.rodzaj} (${o.cena} zł) [${o.platnosc}]<br>
-                    Status: <b>${o.status.toUpperCase()}</b><br><br>
-                    <button class="status-btn status-przyjęte" onclick="update('${o.id}', 'przyjęte')">Przyjmij</button>
-                    <button class="status-btn status-realizacja" onclick="update('${o.id}', 'w realizacji')">W realizacji</button>
-                    <button class="status-btn status-gotowe" onclick="update('${o.id}', 'gotowe')">GOTOWE</button>
-                    <button class="status-btn status-koniec" onclick="update('${o.id}', 'zrealizowane')">ZAKOŃCZ (Dolicz $)</button>
-                </div>`;
-            });
-            document.getElementById('lista-zamowien').innerHTML = html || 'Brak nowych zamówień.';
-        }
-
-        async function update(id, st) {
-            await fetch(`${API}/api/admin/status`, {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ id, nowyStatus: st })
-            });
-            odswiez();
-        }
-
-        setInterval(odswiez, 3000);
-        odswiez();
-    </script>
-</body>
-</html>
+<script>
+    let currentUtarg = 0;
+    async function load() {
+        const r = await fetch('https://api.lemoniada.com.pl/api/admin/all');
+        const d = await r.json();
+        currentUtarg = d.utarg;
+        document.getElementById('total').innerText = d.utarg.toFixed(2);
+        let h = '';
+        Object.values(d.zamowienia).reverse().forEach(o => {
+            if(o.status === 'zrealizowane') return;
+            h += `<div style="border:1px solid #333; padding:10px; margin:5px;">
+                #${o.id} - ${o.rodzaj} (${o.platnosc}) - <b>${o.status}</b><br>
+                <button onclick="st('${o.id}','przyjęte')">Przyjmij</button>
+                <button onclick="st('${o.id}','w realizacji')">W realizacji</button>
+                <button onclick="st('${o.id}','gotowe')">GOTOWE</button>
+                <button onclick="st('${o.id}','zrealizowane')">ZREALIZOWANE ($)</button>
+            </div>`;
+        });
+        document.getElementById('list').innerHTML = h;
+        div();
+    }
+    async function st(id, s) {
+        await fetch('https://api.lemoniada.com.pl/api/admin/status', {
+            method:'POST', headers:{'Content-Type':'application/json'},
+            body: JSON.stringify({id, nowyStatus:s})
+        });
+        load();
+    }
+    function div() {
+        const c = document.getElementById('count').value || 1;
+        document.getElementById('each').innerText = (currentUtarg / c).toFixed(2);
+    }
+    setInterval(load, 4000); load();
+</script>
