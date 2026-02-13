@@ -7,21 +7,21 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const GOOGLE_SHEET_URL = "TWÓJ_LINK_Z_GOOGLE_APPS_SCRIPT";
+// --- KONFIGURACJA ---
+const GOOGLE_SHEET_URL = "TWÓJ_LINK_Z_APPS_SCRIPT";
 
 let db = new sqlite3.Database('./lemoniada.db');
 
-// Tabela z nową kolumną: telefon
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
-                                                  id INTEGER PRIMARY KEY AUTOINCREMENT,
-                                                  produkty TEXT,
-                                                  suma TEXT,
-                                                  platnosc TEXT,
-                                                  godzina TEXT,
-                                                  kod TEXT,
-                                                  telefon TEXT,
-                                                  status TEXT DEFAULT 'PRZYJĘTE'
-        )`);
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    produkty TEXT,
+    suma TEXT,
+    platnosc TEXT,
+    godzina TEXT,
+    kod TEXT,
+    telefon TEXT,
+    status TEXT DEFAULT 'PRZYJĘTE'
+)`);
 
 let stanKubkow = 0;
 let statusPrzerwy = false;
@@ -84,12 +84,6 @@ app.get('/list-zamowienia', (req, res) => {
 app.post('/update-status', (req, res) => {
     const { id, nowyStatus } = req.body;
     db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [nowyStatus, id], () => res.json({ success: true }));
-});
-
-app.post('/reset-bazy', (req, res) => {
-    db.run(`DELETE FROM zamowienia`, () => {
-        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true }));
-    });
 });
 
 app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADY ONLINE'));

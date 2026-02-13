@@ -8,67 +8,86 @@
         body { font-family: 'Segoe UI', sans-serif; background: #f1c40f; padding: 15px; display: flex; justify-content: center; margin: 0; }
         .app { max-width: 400px; width: 100%; background: white; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); text-align: center; }
         .card { border: 1px solid #eee; padding: 15px; border-radius: 15px; margin: 10px 0; background: #fafafa; }
-        .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; }
+        .btn { background: #2ecc71; color: white; border: none; padding: 12px; border-radius: 12px; cursor: pointer; font-weight: bold; width: 100%; font-size: 16px; transition: 0.2s; }
+        .btn:active { transform: scale(0.95); }
         .promo-box { background: #fdfdfd; padding: 15px; border-radius: 15px; margin: 15px 0; border: 2px dashed #9b59b6; }
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; }
-        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; }
+        .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
         .input-field { width: 90%; padding: 12px; border-radius: 10px; border: 1px solid #ccc; margin: 10px 0; font-size: 16px; }
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
+
+        /* MODAL BLIK */
+        .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.4); z-index: 2000; width: 85%; max-width: 320px; }
+        .modal-btn { background: #3498db; color: white; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
+        .overlay-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1999; }
+        .overlay-msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
     </style>
 </head>
 <body>
-<div id="closed" class="overlay"><h1>⚠️ PRZERWA</h1><p id="msg"></p></div>
+
+<div id="closed" class="overlay-msg"><h1>⚠️ PRZERWA</h1><p id="msg"></p></div>
+
+<div id="blik-overlay" class="overlay-bg"></div>
+<div id="blik-modal" class="modal">
+    <h3 style="margin-top:0">Wybierz numer do BLIK:</h3>
+    <p style="font-size:12px; color:#666;">Numer zostanie skopiowany automatycznie.</p>
+    <button class="modal-btn" onclick="copyBlik('668 078 310')">668 078 310 (Osoba 1)</button>
+    <button class="modal-btn" onclick="copyBlik('537 282 634')">537 282 634 (Osoba 2)</button>
+    <button class="btn" style="background:#ccc; margin-top:10px;" onclick="closeBlikModal()">Anuluj</button>
+</div>
 
 <div class="app">
-    <h2 id="top-title">🍋 Lemoniada u [Twoje Imię]</h2>
+    <h2 style="margin-bottom:5px;">🍋 Orzeźwienie u [Imię]</h2>
+    <p style="font-size:12px; color:#777; margin-top:0;">Dostępne kubki: <b id="c-left">0</b></p>
 
-    <div class="card"><h3>Klasyczna 🍋 5zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
-    <div class="card"><h3>Pomarańczowa 🍊 7zł</h3><button class="btn" onclick="add('Pomarańczowa', 7)">DODAJ</button></div>
+    <div class="card"><h3>Klasyczna 🍋 5.00zł</h3><button class="btn" onclick="add('Klasyczna', 5)">DODAJ</button></div>
+    <div class="card"><h3>Pomarańczowa 🍊 7.00zł</h3><button class="btn" onclick="add('Pomarańczowa', 7)">DODAJ</button></div>
 
     <div class="promo-box">
         <h4>🎡 KOŁO FORTUNY</h4>
-        <div id="promo-status">Losuj zniżkę do -20%!</div>
-        <button id="wheel-btn" class="btn" style="background:#9b59b6; margin-top:10px;" onclick="spinWheel()">ZAKRĘĆ</button>
+        <div id="promo-status">Zdobądź rabat do -20%!</div>
+        <button id="wheel-btn" class="btn" style="background:#9b59b6; margin-top:10px;" onclick="spinWheel()">LOSUJ</button>
         <input type="text" id="promo-input" class="input-field" placeholder="Kod rabatowy..." style="margin-top:15px;">
-        <button class="btn" style="background:#34495e; width:100%" onclick="checkCode()">UŻYJ KODU</button>
+        <button class="btn" style="background:#34495e; width:100%" onclick="checkCode()">AKTYWUJ KOD</button>
     </div>
 
     <div id="cart" style="display:none; border-top: 2px solid #eee; padding-top:15px;">
         <div id="cart-list"></div>
         <input type="number" id="phone-input" class="input-field" placeholder="Twój numer telefonu..." required>
         <h2 style="color:#27ae60">Suma: <span id="total">0</span> zł</h2>
-        <p><b>Płatność:</b></p>
-        <input type="radio" name="p" value="Gotówka" checked> Gotówka
-        <input type="radio" name="p" value="BLIK"> BLIK<br><br>
-        <button class="btn" style="width:100%; padding:20px;" onclick="send()">ZAMAWIAM</button>
+
+        <div style="text-align:left; background:#f9f9f9; padding:10px; border-radius:10px;">
+            <b>Płatność:</b><br>
+            <label><input type="radio" name="p" value="Gotówka" checked> 💵 Gotówka</label><br>
+            <label><input type="radio" name="p" value="BLIK"> 📱 BLIK (Numer do schowka)</label>
+        </div><br>
+
+        <button class="btn" style="width:100%; padding:18px;" onclick="send()">ZAMAWIAM</button>
     </div>
     <div id="st"></div>
 </div>
 
 <script>
-    const API = "TWOJA_ADRES_CLOUDFLARE";
+    const API = "LINK_Z_CLOUDFLARE";
     let cart = [];
     let aktualnyRabat = 0;
 
-    // --- BLOKADA OSZUSTWA (LocalStorage) ---
+    // --- ANTY-CHEAT ---
     if(localStorage.getItem('promoCode')) {
-        const savedCode = localStorage.getItem('promoCode');
-        document.getElementById('promo-status').innerHTML = `Twój kod: <b>${savedCode}</b>`;
+        document.getElementById('promo-status').innerHTML = `Twój kod: <b>${localStorage.getItem('promoCode')}</b>`;
         document.getElementById('wheel-btn').disabled = true;
-        document.getElementById('wheel-btn').style.background = "#ccc";
+        document.getElementById('wheel-btn').style.opacity = "0.5";
     }
 
     function add(n, p) { cart.push({n, p}); updateUI(); }
-
-    function remove(index) { cart.splice(index, 1); updateUI(); }
+    function remove(i) { cart.splice(i, 1); updateUI(); }
 
     function updateUI() {
-        const cartDiv = document.getElementById('cart');
-        const listDiv = document.getElementById('cart-list');
-        cartDiv.style.display = cart.length ? 'block' : 'none';
-        listDiv.innerHTML = cart.map((item, i) => `
+        const cDiv = document.getElementById('cart');
+        const lDiv = document.getElementById('cart-list');
+        cDiv.style.display = cart.length ? 'block' : 'none';
+        lDiv.innerHTML = cart.map((item, i) => `
             <div class="cart-item">
-                <span>${item.n}</span>
+                <span>${item.n} (${item.p}zł)</span>
                 <button class="remove-btn" onclick="remove(${i})">×</button>
             </div>`).join('');
         let suma = cart.reduce((a, b) => a + b.p, 0);
@@ -78,39 +97,59 @@
     function spinWheel() {
         if(localStorage.getItem('promoCode')) return;
         const r = [5, 10, 15, 20][Math.floor(Math.random() * 4)];
-        const kod = "RABAT" + r;
+        const kod = "WYGRANA" + r;
         localStorage.setItem('promoCode', kod);
-        document.getElementById('promo-status').innerHTML = `Wylosowałeś: -${r}%! Kod: <b>${kod}</b>`;
+        document.getElementById('promo-status').innerHTML = `Wygrana: -${r}%! Kod: <b>${kod}</b>`;
         document.getElementById('wheel-btn').disabled = true;
-        document.getElementById('wheel-btn').style.background = "#ccc";
     }
 
     function checkCode() {
-        const val = document.getElementById('promo-input').value.toUpperCase().trim();
+        const v = document.getElementById('promo-input').value.toUpperCase().trim();
         const saved = localStorage.getItem('promoCode');
-        if(val === saved || val === "FB10") {
-            aktualnyRabat = val === "FB10" ? 10 : parseInt(val.replace("RABAT", ""));
-            alert("Rabat naliczony!");
+        if(v === saved || ["FB10", "CHAMPION"].includes(v)) {
+            aktualnyRabat = v === "FB10" ? 10 : (v === "CHAMPION" ? 15 : parseInt(v.replace("WYGRANA","")));
+            alert("Rabat aktywowany!");
             updateUI();
-        } else { alert("Błędny kod!"); }
+        } else { alert("Kod nieprawidłowy"); }
+    }
+
+    // --- LOGIKA BLIK ---
+    function openBlikModal() {
+        document.getElementById('blik-overlay').style.display = 'block';
+        document.getElementById('blik-modal').style.display = 'block';
+    }
+    function closeBlikModal() {
+        document.getElementById('blik-overlay').style.display = 'none';
+        document.getElementById('blik-modal').style.display = 'none';
+    }
+    function copyBlik(numer) {
+        navigator.clipboard.writeText(numer.replace(/\s/g, '')).then(() => {
+            alert("Skopiowano numer: " + numer + "\nWklej go w aplikacji banku!");
+            closeBlikModal();
+            finalSend("BLIK");
+        });
     }
 
     function send() {
         const tel = document.getElementById('phone-input').value;
         if(tel.length < 9) return alert("Podaj poprawny numer telefonu!");
+        const met = document.querySelector('input[name="p"]:checked').value;
+        if(met === "BLIK") openBlikModal(); else finalSend("Gotówka");
+    }
 
+    function finalSend(metoda) {
         fetch(`${API}/zamow`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 produkty: cart.map(i => i.n).join(", "),
                 suma: document.getElementById('total').innerText,
-                platnosc: document.querySelector('input[name="p"]:checked').value,
+                platnosc: metoda,
                 kod: document.getElementById('promo-input').value || "BRAK",
-                telefon: tel
+                telefon: document.getElementById('phone-input').value
             })
         }).then(r => r.json()).then(d => {
-            alert("Złożono zamówienie!");
+            alert("Zamówienie wysłane!");
             cart = []; updateUI(); track(d.id);
         });
     }
@@ -119,10 +158,18 @@
         setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
                 const z = data.find(o => o.id === id);
-                if(z) document.getElementById('st').innerHTML = `<div class="card">Status: <b>${z.status}</b></div>`;
+                if(z) document.getElementById('st').innerHTML = `<div class="card" style="border:2px solid #3498db">Status: <b>${z.status}</b></div>`;
             });
         }, 3000);
     }
+
+    setInterval(() => {
+        fetch(`${API}/stan-magazynu`).then(r => r.json()).then(d => {
+            document.getElementById('c-left').innerText = d.kubki;
+            document.getElementById('closed').style.display = (d.przerwa || d.kubki <= 0) ? 'flex' : 'none';
+            document.getElementById('msg').innerText = d.powod;
+        });
+    }, 4000);
 </script>
 </body>
 </html>
