@@ -12,7 +12,7 @@ let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREMENT, produkty TEXT, suma TEXT, platnosc TEXT, godzina TEXT, kod_rabatowy TEXT, status TEXT DEFAULT 'PRZYJĘTE')`);
 
-let stanKubkow = 10;
+let stanKubkow = 0;
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 app.post('/ustaw-kubki', (req, res) => { stanKubkow = parseInt(req.body.ilosc) || 0; res.json({ success: true }); });
