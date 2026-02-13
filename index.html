@@ -5,41 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lemoniada u TobiK 🍋</title>
     <style>
-        :root { --main: #fbc02d; --orange: #ff9800; --bg: #fffde7; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        :root { --main: #fbc02d; --bg: #fffde7; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
         .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 4px solid var(--main); }
-
         .flavor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
-        .flavor-btn { border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; }
-        .flavor-btn.active { border-color: var(--main); background: #fffde7; transform: scale(1.05); }
-        .flavor-btn img { width: 40px; margin-bottom: 5px; }
-
-        .stock-info { font-size: 0.9rem; color: #666; margin-top: 5px; }
-        input { width: 100%; padding: 12px; margin: 20px 0 10px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; box-sizing: border-box; }
-        button.order-btn { width: 100%; background: var(--main); border: none; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
-        .promo-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
+        .flavor-btn { border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer; }
+        .flavor-btn.active { border-color: var(--main); background: #fffde7; }
+        .price-label { font-weight: bold; font-size: 1.2rem; color: #2ecc71; }
+        button.order-btn { width: 100%; background: var(--main); border: none; padding: 18px; border-radius: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .lucky-btn { background: #eee; border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-size: 0.8rem; margin-top: 15px; }
     </style>
 </head>
 <body>
     <div class="card">
         <h1>Lemonade Bar 🍋</h1>
-        <p>Wybierz swój smak:</p>
-
         <div class="flavor-grid">
-            <div class="flavor-btn active" id="btn-zwykla" onclick="select('zwykla')">
-                <span>🟡</span><br><b>Zwykła</b>
-                <div class="stock-info"><span id="stock-zwykla">--</span> szt.</div>
+            <div class="flavor-btn active" id="btn-zwykla" onclick="select('zwykla', 5)">
+                <span>🟡</span><br><b>Zwykła</b><br><span class="price-label">5 zł</span>
             </div>
-            <div class="flavor-btn" id="btn-pomaranczowa" onclick="select('pomaranczowa')">
-                <span>🟠</span><br><b>Pomarańcz</b>
-                <div class="stock-info"><span id="stock-pomaranczowa">--</span> szt.</div>
+            <div class="flavor-btn" id="btn-pomaranczowa" onclick="select('pomaranczowa', 7)">
+                <span>🟠</span><br><b>Pomarańcz</b><br><span class="price-label">7 zł</span>
             </div>
         </div>
 
-        <button class="order-btn" onclick="zamow()">ZAMÓW TERAZ (5 PLN)</button>
+        <button class="order-btn" onclick="zamow()">ZAMÓW I ZAPŁAĆ</button>
 
-        <input type="text" id="kod" placeholder="KOD PROMOCYJNY">
-        <div class="promo-label">Wpisz kod rabatowy powyżej</div>
+        <input type="text" id="kod" placeholder="KOD RABATOWY" style="width:100%; padding:10px; margin-top:20px; text-align:center;">
+        <button class="lucky-btn" onclick="losujKod()">🍀 Losuj kod rabatowy</button>
     </div>
 
     <script>
@@ -52,11 +44,15 @@
             document.getElementById('btn-' + smak).classList.add('active');
         }
 
-        async function odswiez() {
-            const r = await fetch(`${API}/api/status`);
-            const d = await r.json();
-            document.getElementById('stock-zwykla').innerText = d.magazyn.zwykla;
-            document.getElementById('stock-pomaranczowa').innerText = d.magazyn.pomaranczowa;
+        function losujKod() {
+            const kody = ["CHAMPION", "FB10", "LEMON20", "BRAK"];
+            const wylosowany = kody[Math.floor(Math.random() * kody.length)];
+            if(wylosowany === "BRAK") {
+                alert("Niestety, spróbuj innym razem! 🍋");
+            } else {
+                alert("Gratulacje! Twój kod to: " + wylosowany);
+                document.getElementById('kod').value = wylosowany;
+            }
         }
 
         async function zamow() {
@@ -64,17 +60,12 @@
             const res = await fetch(`${API}/api/zamow`, {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ rodzaj: wybranySmak, ilosc: 1, cenaBazowa: 5, kod: kod })
+                body: JSON.stringify({ rodzaj: wybranySmak, ilosc: 1, kod: kod })
             });
             const d = await res.json();
-            if(d.success) {
-                alert(`🍋 Zamówiono lemoniadę ${wybranySmak}!\nCena: ${d.log.cena} zł`);
-                odswiez();
-            } else { alert(d.error); }
+            if(d.success) alert(`🍋 Sukces! Zapłacono: ${d.log.cena} zł`);
+            else alert(d.error);
         }
-
-        odswiez();
-        setInterval(odswiez, 10000);
     </script>
 </body>
 </html>
