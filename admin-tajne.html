@@ -2,164 +2,158 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
-    <title>Centrum Dowodzenia 🍋</title>
+    <title>Admin Dashboard 🍋</title>
     <style>
         :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; }
         body { font-family: 'Inter', sans-serif; background: var(--bg); color: #fff; margin: 0; padding: 20px; }
         .container { max-width: 900px; margin: auto; }
-
-        /* Staty i Magazyn */
-        .header-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
-        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; position: relative; }
+        .box-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 25px; }
+        .box { background: var(--card); padding: 25px; border-radius: 20px; border: 1px solid #334155; }
         .val { font-size: 2.5rem; font-weight: 900; color: var(--primary); display: block; }
-        .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
+        .label { font-size: 0.8rem; text-transform: uppercase; opacity: 0.6; }
 
-        /* Poprawiony przycisk kubeczków */
-        .cups-input-group { display: flex; gap: 8px; margin-top: 15px; }
-        .cups-input-group input { background: #0f172a; border: 1px solid var(--accent); color: white; padding: 10px; border-radius: 10px; width: 80px; font-size: 1.1rem; }
-        .btn-set { background: var(--accent); color: #000; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 800; cursor: pointer; transition: 0.3s; }
-        .btn-set:hover { transform: scale(1.05); filter: brightness(1.1); }
+        .cups-ui { display: flex; gap: 10px; margin-top: 15px; }
+        input { background: #0f172a; border: 1px solid #334155; color: white; padding: 12px; border-radius: 12px; width: 80px; font-size: 1rem; }
 
-        /* Koszyk Admina z usuwaniem */
-        .pos-card { background: var(--card); border: 2px solid var(--primary); padding: 20px; border-radius: 24px; margin-bottom: 30px; }
-        .cart-items-admin { background: rgba(0,0,0,0.2); padding: 15px; border-radius: 12px; margin-bottom: 15px; min-height: 40px; }
-        .admin-cart-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; border-bottom: 1px solid #334155; padding-bottom: 5px; }
-        .btn-del { background: #ef4444; color: white; border: none; width: 24px; height: 24px; border-radius: 6px; cursor: pointer; font-size: 12px; }
-
-        /* Przyciski akcji */
-        .action-btns { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-        .btn-main { padding: 15px; border-radius: 12px; border: none; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn { padding: 12px 20px; border: none; border-radius: 12px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+        .btn-blue { background: var(--accent); color: #000; }
         .btn-yellow { background: var(--primary); color: #000; }
-        .btn-green { background: #10b981; color: white; }
-        .btn-blue { background: #3b82f6; color: white; }
+        .btn-green { background: #10b981; color: #fff; }
+        .btn:active { transform: scale(0.95); }
 
-        .order-card { background: var(--card); padding: 15px; border-radius: 15px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); }
-        #status-top { float: right; font-size: 0.8rem; font-weight: bold; }
+        .pos-card { background: var(--card); border: 2px solid var(--primary); padding: 20px; border-radius: 24px; margin-top: 20px; }
+        .admin-cart-item { display: flex; justify-content: space-between; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 10px; margin-bottom: 5px; }
+
+        .order-card { background: var(--card); padding: 15px; border-radius: 15px; margin-top: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 5px solid var(--primary); }
     </style>
 </head>
 <body>
-
 <div class="container">
-    <div id="status-top" style="color:#ef4444">● SYSTEM ROZŁĄCZONY</div>
-    <h1>Admin Lemoniada 🍋</h1>
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <h1>Admin Control 🍋</h1>
+        <div id="status-tag">Sprawdzanie połączenia...</div>
+    </div>
 
-    <div class="header-grid">
+    <div class="box-grid">
         <div class="box">
-            <span class="label">Aktualny Utarg</span>
-            <span class="val" id="rev-val">0.00 zł</span>
+            <span class="label">Utarg całkowity</span>
+            <span class="val" id="total-rev">0.00 zł</span>
         </div>
         <div class="box">
-            <span class="label">Kubeczki w Magazynie</span>
-            <span class="val" id="cups-val">0</span>
-            <div class="cups-input-group">
-                <input type="number" id="cups-num" placeholder="Ile?">
-                <button class="btn-set" onclick="setCups()">USTAW ZAPAS</button>
+            <span class="label">Kubeczki w zapasie</span>
+            <span class="val" id="cups-count">0</span>
+            <div class="cups-ui">
+                <input type="number" id="cups-input" placeholder="Ile?">
+                <button class="btn btn-blue" onclick="setCups()">USTAW ZAPAS</button>
             </div>
         </div>
     </div>
 
     <div class="pos-card">
-        <h3>🛒 Szybka Sprzedaż Stacjonarna</h3>
-        <div id="admin-cart-list" class="cart-items-admin">Koszyk jest pusty</div>
-
-        <div class="action-btns" style="margin-bottom:15px">
-            <button class="btn-main btn-yellow" onclick="addStac('Zwykła', 5)">+ Zwykła (5zł)</button>
-            <button class="btn-main btn-yellow" onclick="addStac('Pomarańcz', 7)">+ Pomarańcz (7zł)</button>
+        <h3>🛒 Szybka Sprzedaż</h3>
+        <div id="pos-list" style="margin-bottom:15px; opacity:0.8;">Koszyk pusty</div>
+        <div style="display:flex; gap:10px; margin-bottom:15px;">
+            <button class="btn btn-yellow" onclick="addToPos('Zwykła', 5)">+ Zwykła</button>
+            <button class="btn btn-yellow" onclick="addToPos('Pomarańcz', 7)">+ Pomarańcz</button>
         </div>
-
-        <div class="action-btns">
-            <button class="btn-main btn-green" onclick="finalize('Gotówka')">FINALIZUJ GOTÓWKĄ</button>
-            <button class="btn-main btn-blue" onclick="finalize('BLIK')">FINALIZUJ BLIK</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-green" style="flex:1" onclick="finalizePos('Gotówka')">GOTÓWKA</button>
+            <button class="btn btn-blue" style="flex:1; background:#3b82f6; color:#fff;" onclick="finalizePos('BLIK')">BLIK</button>
         </div>
     </div>
 
-    <h2>Aktywne Zamówienia</h2>
-    <div id="order-list"></div>
+    <h2>Aktywne zamówienia</h2>
+    <div id="orders-list"></div>
 </div>
 
 <script>
     const API = "https://api.lemoniada.com.pl";
-    let adminCart = [];
+    let posCart = [];
 
     async function load() {
         try {
             const r = await fetch(`${API}/api/admin/data`);
-            if(!r.ok) throw new Error();
             const d = await r.json();
-
-            document.getElementById('status-top').innerText = "● SYSTEM ONLINE";
-            document.getElementById('status-top').style.color = "#10b981";
-            document.getElementById('rev-val').innerText = d.utarg.toFixed(2) + " zł";
-            document.getElementById('cups-val').innerText = d.kubeczki;
+            document.getElementById('status-tag').innerHTML = "● SYSTEM ONLINE";
+            document.getElementById('status-tag').style.color = "#10b981";
+            document.getElementById('total-rev').innerText = d.utarg.toFixed(2) + " zł";
+            document.getElementById('cups-count').innerText = d.kubeczki;
 
             let html = '';
             d.zamowienia.filter(o => o.status !== 'zrealizowane').forEach(o => {
                 html += `<div class="order-card">
-                    <div><b>#${o.id}</b><br><small>${o.produkty}</small><br><b>${o.cena_total} zł</b> (${o.platnosc})</div>
+                    <div><b>#${o.id}</b><br><small>${o.produkty}</small><br><b>${o.cena_total} zł</b></div>
                     <div>
-                        <button class="btn-main btn-yellow" style="padding:8px" onclick="updateSt('${o.id}','gotowe')">GOTOWE</button>
-                        <button class="btn-main btn-green" style="padding:8px" onclick="updateSt('${o.id}','zrealizowane')">ZAKOŃCZ</button>
+                        <button class="btn btn-yellow" style="padding:8px" onclick="upStatus('${o.id}','gotowe')">GOTOWE</button>
+                        <button class="btn btn-green" style="padding:8px" onclick="upStatus('${o.id}','zrealizowane')">FINISZ</button>
                     </div>
                 </div>`;
             });
-            document.getElementById('order-list').innerHTML = html || "Brak zamówień";
+            document.getElementById('orders-list').innerHTML = html || "Brak zamówień";
         } catch(e) {
-            document.getElementById('status-top').innerText = "● BŁĄD POŁĄCZENIA (Sprawdź terminal!)";
-            document.getElementById('status-top').style.color = "#ef4444";
+            document.getElementById('status-tag').innerHTML = "● ROZŁĄCZONO";
+            document.getElementById('status-tag').style.color = "#ef4444";
         }
     }
 
-    function addStac(nazwa, cena) {
-        let item = adminCart.find(i => i.nazwa === nazwa);
-        if(item) item.sztuk++; else adminCart.push({nazwa, cena, sztuk: 1});
-        renderAdminCart();
+    // FUNKCJA USTAWIANIA KUBECZKÓW (KLUCZOWA POPRAWKA)
+    async function setCups() {
+        const val = document.getElementById('cups-input').value;
+        if(!val) return;
+
+        const res = await fetch(`${API}/api/admin/set-kubeczki`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ilosc: parseInt(val) })
+        });
+
+        if(res.ok) {
+            document.getElementById('cups-count').innerText = val;
+            document.getElementById('cups-input').value = "";
+            alert("Zaktualizowano magazyn!");
+        }
     }
 
-    function removeStac(nazwa) {
-        let item = adminCart.find(i => i.nazwa === nazwa);
+    function addToPos(nazwa, cena) {
+        let item = posCart.find(i => i.nazwa === nazwa);
+        if(item) item.sztuk++; else posCart.push({nazwa, cena, sztuk: 1});
+        renderPos();
+    }
+
+    function removeFromPos(nazwa) {
+        let item = posCart.find(i => i.nazwa === nazwa);
         if(item) {
             item.sztuk--;
-            if(item.sztuk <= 0) adminCart = adminCart.filter(i => i.nazwa !== nazwa);
+            if(item.sztuk <= 0) posCart = posCart.filter(i => i.nazwa !== nazwa);
         }
-        renderAdminCart();
+        renderPos();
     }
 
-    function renderAdminCart() {
-        const list = document.getElementById('admin-cart-list');
-        if(adminCart.length === 0) { list.innerHTML = "Koszyk jest pusty"; return; }
-        list.innerHTML = adminCart.map(i => `
-            <div class="admin-cart-row">
+    function renderPos() {
+        const list = document.getElementById('pos-list');
+        if(posCart.length === 0) { list.innerText = "Koszyk pusty"; return; }
+        list.innerHTML = posCart.map(i => `
+            <div class="admin-cart-item">
                 <span>${i.nazwa} x${i.sztuk}</span>
-                <button class="btn-del" onclick="removeStac('${i.nazwa}')">✕</button>
+                <button onclick="removeFromPos('${i.nazwa}')" style="background:red; color:white; border:none; border-radius:5px; cursor:pointer;">USUŃ</button>
             </div>
         `).join('');
     }
 
-    async function setCups() {
-        const ilosc = document.getElementById('cups-num').value;
-        if(!ilosc) return alert("Wpisz liczbę!");
-        const res = await fetch(`${API}/api/admin/set-kubeczki`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ ilosc: parseInt(ilosc) })
-        });
-        if(res.ok) { alert("Zapas zaktualizowany!"); load(); }
-    }
-
-    async function finalize(platnosc) {
-        if(adminCart.length === 0) return alert("Koszyk jest pusty!");
+    async function finalizePos(platnosc) {
+        if(posCart.length === 0) return;
         await fetch(`${API}/api/zamow`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ koszyk: adminCart, kod: '', platnosc })
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ koszyk: posCart, kod: '', platnosc })
         });
-        adminCart = []; renderAdminCart(); load();
+        posCart = []; renderPos(); load();
     }
 
-    async function updateSt(id, status) {
+    async function upStatus(id, status) {
         await fetch(`${API}/api/admin/status`, {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id, status })
         });
         load();
