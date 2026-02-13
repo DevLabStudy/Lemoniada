@@ -3,248 +3,78 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada u TobiK - System Zamówień</title>
+    <title>Lemoniada u TobiK 🍋</title>
     <style>
-        :root {
-            --primary-color: #fbc02d;
-            --secondary-color: #fff176;
-            --accent-color: #f57f17;
-            --text-dark: #333;
-            --white: #ffffff;
-        }
+        :root { --main: #fbc02d; --orange: #ff9800; --bg: #fffde7; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .card { background: white; padding: 25px; border-radius: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 90%; max-width: 400px; text-align: center; border: 4px solid var(--main); }
 
-        body {
-            background-color: #fffde7;
-            background-image: radial-gradient(#fff9c4 20%, transparent 20%), radial-gradient(#fff9c4 20%, transparent 20%);
-            background-size: 40px 40px;
-            background-position: 0 0, 20px 20px;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
+        .flavor-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin: 20px 0; }
+        .flavor-btn { border: 2px solid #eee; padding: 15px; border-radius: 15px; cursor: pointer; transition: 0.3s; }
+        .flavor-btn.active { border-color: var(--main); background: #fffde7; transform: scale(1.05); }
+        .flavor-btn img { width: 40px; margin-bottom: 5px; }
 
-        .main-container {
-            background: var(--white);
-            width: 95%;
-            max-width: 450px;
-            border-radius: 30px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.15);
-            overflow: hidden;
-            border: 4px solid var(--primary-color);
-            animation: fadeIn 0.8s ease-out;
-        }
-
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-
-        .header-section {
-            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
-            padding: 40px 20px;
-            text-align: center;
-            position: relative;
-        }
-
-        .header-section h1 {
-            margin: 0;
-            font-size: 2.2rem;
-            color: var(--text-dark);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .status-badge {
-            background: var(--white);
-            display: inline-block;
-            padding: 8px 20px;
-            border-radius: 50px;
-            margin-top: 15px;
-            font-weight: bold;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        }
-
-        .order-content {
-            padding: 30px;
-        }
-
-        .input-group {
-            margin-bottom: 20px;
-            text-align: left;
-        }
-
-        .input-group label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: 600;
-            color: #555;
-        }
-
-        .input-group input, .input-group select {
-            width: 100%;
-            padding: 15px;
-            border: 2px solid #eee;
-            border-radius: 12px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-
-        .input-group input:focus {
-            border-color: var(--primary-color);
-            outline: none;
-            box-shadow: 0 0 8px rgba(251, 192, 45, 0.4);
-        }
-
-        .btn-order {
-            background: var(--primary-color);
-            color: var(--text-dark);
-            border: none;
-            width: 100%;
-            padding: 18px;
-            font-size: 1.2rem;
-            font-weight: 800;
-            border-radius: 12px;
-            cursor: pointer;
-            transition: 0.3s;
-            text-transform: uppercase;
-        }
-
-        .btn-order:hover {
-            background: var(--accent-color);
-            color: white;
-            transform: scale(1.03);
-        }
-
-        .footer-info {
-            background: #f9f9f9;
-            padding: 15px;
-            font-size: 0.85rem;
-            color: #888;
-            border-top: 1px solid #eee;
-        }
-
-        /* Sekcja powiadomień */
-        #notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            border-radius: 10px;
-            display: none;
-            z-index: 1000;
-            color: white;
-            font-weight: bold;
-        }
+        .stock-info { font-size: 0.9rem; color: #666; margin-top: 5px; }
+        input { width: 100%; padding: 12px; margin: 20px 0 10px 0; border: 2px solid #eee; border-radius: 10px; text-align: center; box-sizing: border-box; }
+        button.order-btn { width: 100%; background: var(--main); border: none; padding: 18px; border-radius: 12px; font-weight: bold; font-size: 1.1rem; cursor: pointer; }
+        .promo-label { font-size: 0.8rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; }
     </style>
 </head>
 <body>
+    <div class="card">
+        <h1>Lemonade Bar 🍋</h1>
+        <p>Wybierz swój smak:</p>
 
-    <div id="notification"></div>
-
-    <div class="main-container">
-        <div class="header-section">
-            <h1>Lemonade 🍋</h1>
-            <div class="status-badge">
-                Stan: <span id="kubki-count">--</span> szt.
+        <div class="flavor-grid">
+            <div class="flavor-btn active" id="btn-zwykla" onclick="select('zwykla')">
+                <span>🟡</span><br><b>Zwykła</b>
+                <div class="stock-info"><span id="stock-zwykla">--</span> szt.</div>
+            </div>
+            <div class="flavor-btn" id="btn-pomaranczowa" onclick="select('pomaranczowa')">
+                <span>🟠</span><br><b>Pomarańcz</b>
+                <div class="stock-info"><span id="stock-pomaranczowa">--</span> szt.</div>
             </div>
         </div>
 
-        <div class="order-content">
-            <div class="input-group">
-                <label>Kto przygotowuje?</label>
-                <select id="pracownik-select">
-                    <option value="TobiK">TobiK</option>
-                    <option value="Pracownik2">Pracownik 2</option>
-                </select>
-            </div>
+        <button class="order-btn" onclick="zamow()">ZAMÓW TERAZ (5 PLN)</button>
 
-            <div class="input-group">
-                <label>Kod promocyjny (FB10, CHAMPION, LEMON20)</label>
-                <input type="text" id="kod-promo" placeholder="Wpisz kod tutaj...">
-            </div>
-
-            <div class="input-group">
-                <label>Ilość kubków</label>
-                <input type="number" id="ilosc-zamow" value="1" min="1">
-            </div>
-
-            <button class="btn-order" onclick="zrealizujZamowienie()">Kupuję za 5,00 zł / szt.</button>
-        </div>
-
-        <div class="footer-info">
-            Obsługiwane przez: api.lemoniada.com.pl<br>
-            Wszystkie dane są zapisywane w Google Sheets
-        </div>
+        <input type="text" id="kod" placeholder="KOD PROMOCYJNY">
+        <div class="promo-label">Wpisz kod rabatowy powyżej</div>
     </div>
 
     <script>
-        const API_BASE = "https://api.lemoniada.com.pl";
+        const API = "https://api.lemoniada.com.pl";
+        let wybranySmak = 'zwykla';
 
-        function showNotify(msg, color) {
-            const n = document.getElementById('notification');
-            n.innerText = msg;
-            n.style.backgroundColor = color;
-            n.style.display = 'block';
-            setTimeout(() => n.style.display = 'none', 4000);
+        function select(smak) {
+            wybranySmak = smak;
+            document.querySelectorAll('.flavor-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('btn-' + smak).classList.add('active');
         }
 
-        async function odswiezStan() {
-            try {
-                const res = await fetch(`${API_BASE}/api/status`);
-                if (!res.ok) throw new Error("Problem z API");
-                const data = await res.json();
-                document.getElementById('kubki-count').innerText = data.magazyn.kubki;
-
-                // Alert jeśli mało towaru
-                if(data.magazyn.kubki < 10) {
-                    document.getElementById('kubki-count').style.color = 'red';
-                }
-            } catch(e) {
-                console.error("Błąd pobierania stanu:", e);
-                showNotify("Błąd połączenia z serwerem!", "#e74c3c");
-            }
+        async function odswiez() {
+            const r = await fetch(`${API}/api/status`);
+            const d = await r.json();
+            document.getElementById('stock-zwykla').innerText = d.magazyn.zwykla;
+            document.getElementById('stock-pomaranczowa').innerText = d.magazyn.pomaranczowa;
         }
 
-        async function zrealizujZamowienie() {
-            const btn = document.querySelector('.btn-order');
-            const payload = {
-                ilosc: parseInt(document.getElementById('ilosc-zamow').value),
-                cenaBazowa: 5,
-                kod: document.getElementById('kod-promo').value.trim(),
-                pracownik: document.getElementById('pracownik-select').value
-            };
-
-            btn.disabled = true;
-            btn.innerText = "ŁĄCZENIE Z SERWEREM...";
-
-            try {
-                const response = await fetch(`${API_BASE}/api/zamow`, {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify(payload)
-                });
-
-                const result = await response.json();
-
-                if(result.success) {
-                    showNotify(`Złożono zamówienie! Cena: ${result.log.cena} zł`, "#2ecc71");
-                    document.getElementById('kod-promo').value = "";
-                } else {
-                    showNotify("Błąd: " + result.error, "#e67e22");
-                }
-            } catch(e) {
-                showNotify("Serwer nie odpowiada!", "#c0392b");
-            } finally {
-                btn.disabled = false;
-                btn.innerText = "Kupuję za 5,00 zł / szt.";
-                odswiezStan();
-            }
+        async function zamow() {
+            const kod = document.getElementById('kod').value.trim();
+            const res = await fetch(`${API}/api/zamow`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ rodzaj: wybranySmak, ilosc: 1, cenaBazowa: 5, kod: kod })
+            });
+            const d = await res.json();
+            if(d.success) {
+                alert(`🍋 Zamówiono lemoniadę ${wybranySmak}!\nCena: ${d.log.cena} zł`);
+                odswiez();
+            } else { alert(d.error); }
         }
 
-        // Inicjalizacja
-        odswiezStan();
-        // Auto-odświeżanie co 30 sekund
-        setInterval(odswiezStan, 30000);
+        odswiez();
+        setInterval(odswiez, 10000);
     </script>
 </body>
 </html>

@@ -1,97 +1,23 @@
 <!DOCTYPE html>
-<html lang="pl">
-<head>
-    <meta charset="UTF-8">
-    <title>Admin - LemonIada</title>
-    <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; color: white; padding: 15px; }
-        .m-box { background: #27ae60; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
-        .box { background: #34495e; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
-        .btn-a { border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; margin: 3px; }
-        .blue { background: #3498db; } .green { background: #2ecc71; } .orange { background: #e67e22; } .red { background: #e74c3c; }
-        .order { background: white; color: #333; padding: 12px; margin: 8px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 10px solid #eee; }
-        .st-PRZYJĘTE { border-left-color: #95a5a6; }
-        .st-REALIZACJA { border-left-color: #3498db; }
-        .st-GOTOWE { border-left-color: #2ecc71; }
-        input { padding: 10px; border-radius: 5px; border: none; text-align: center; font-size: 16px; }
-        .calc-info { font-size: 14px; margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.2); padding-top: 10px; }
-    </style>
-</head>
-<body>
-<div class="m-box">
-    <div style="font-size: 24px;">💰 UTARG: <span id="total-money">0.00</span> zł</div>
-    <div class="calc-info">
-        👥 Pracowników: <input type="number" id="emp-count" value="1" min="1" oninput="calcPay()" style="width: 60px;">
-        | 💸 Na osobę: <span id="per-person" style="font-weight:bold; color:#f1c40f;">0.00</span> zł
+<html>
+<head><title>Admin Lemoniada</title></head>
+<body style="font-family: sans-serif; padding: 20px;">
+    <h2>Ustawianie stanu magazynu</h2>
+    <div style="margin-bottom: 20px;">
+        <p>Zwykła: <input type="number" id="val-zwykla"> <button onclick="set('zwykla')">USTAW</button></p>
+        <p>Pomarańcz: <input type="number" id="val-pomaranczowa"> <button onclick="set('pomaranczowa')">USTAW</button></p>
     </div>
-</div>
-
-<div class="box">
-    <h3>📦 Magazyn: <span id="k-show" style="color:#f1c40f">0</span> kubków</h3>
-    <input type="number" id="k-in" placeholder="Ile?" style="width:80px;">
-    <button class="btn-a blue" onclick="setK()">USTAW STAN</button>
-    <button class="btn-a red" onclick="resetB()" style="float:right">RESET DNIA</button>
-</div>
-
-<div class="box">
-    <h3>⚡ Sprzedaż Stacjonarna</h3>
-    <button class="btn-a green" onclick="sell('Klasyczna', 5)">🍋 KLASYCZNA (5zł)</button>
-    <button class="btn-a orange" onclick="sell('Pomarańczowa', 7)">🍊 POMARAŃCZOWA (7zł)</button>
-</div>
-
-<div id="list"></div>
-
-<script>
-    const API = "https://api.lemoniada.com.pl";
-    let currentTotal = 0;
-
-    function calcPay() {
-        const count = parseInt(document.getElementById('emp-count').value) || 1;
-        document.getElementById('per-person').innerText = (currentTotal / count).toFixed(2);
-    }
-
-    function sell(n, p) {
-        fetch(`${API}/zamow`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({produkty:n, suma:p.toFixed(2), platnosc:"Gotówka", kod:"STACJA"})
-        }).then(load);
-    }
-
-    function setK() {
-        fetch(`${API}/ustaw-kubki`, {
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ilosc:document.getElementById('k-in').value})
-        }).then(()=> { alert("Ustawiono!"); load(); });
-    }
-
-    function load() {
-        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => document.getElementById('k-show').innerText = d.kubki);
-        fetch(`${API}/zarobki`).then(r=>r.json()).then(d => {
-            currentTotal = d.total;
-            document.getElementById('total-money').innerText = currentTotal.toFixed(2);
-            calcPay();
-        });
-        fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-            document.getElementById('list').innerHTML = data.filter(z => z.status !== "WYDANE").map(z => `
-                <div class="order st-${z.status.replace('W ','')}">
-                    <span><b>#${z.id}</b> | ${z.produkty}<br><small>${z.platnosc} | ${z.status}</small></span>
-                    <div>
-                        <button class="btn-a blue" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
-                        <button class="btn-a green" onclick="upd(${z.id},'GOTOWE')">GOTOWE</button>
-                        <button class="btn-a red" onclick="upd(${z.id},'WYDANE')">WYDANE ✅</button>
-                    </div>
-                </div>
-            `).join('');
-        });
-    }
-
-    function upd(id, status) { fetch(`${API}/update-status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, nowyStatus:status})}).then(load); }
-    function resetB() { if(confirm("Czy na pewno?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
-
-    setInterval(load, 3000);
-    load();
-</script>
+    <script>
+        const API = "https://api.lemoniada.com.pl";
+        async function set(rodzaj) {
+            const ile = document.getElementById('val-' + rodzaj).value;
+            await fetch(`${API}/api/admin/update`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ rodzaj: rodzaj, ilosc: ile })
+            });
+            alert("Zaktualizowano " + rodzaj);
+        }
+    </script>
 </body>
 </html>
