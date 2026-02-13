@@ -7,6 +7,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+// TWÓJ AKTUALNY LINK GOOGLE
 const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycbwUgVLth52_WtbYls9mOo9_x1Ff_mL9Iw-9HYW66y7-oe8agu3QJk7f4_okIoPl_lsS/exec';
 const db = new sqlite3.Database('./lemoniada.db');
 
@@ -33,15 +34,13 @@ app.post('/api/zamow', (req, res) => {
         let produktyStr = koszyk.map(i => `${i.nazwa} x${i.sztuk}`).join(", ");
         let dataStr = new Date().toLocaleString('pl-PL');
 
-        // WAŻNE: Wstawiamy do bazy i DOPIERO POTEM do Google
         db.run("INSERT INTO zamowienia (produkty, cena_total, platnosc, data, kod, status) VALUES (?, ?, ?, ?, ?, 'nowe')",
             [produktyStr, cena, platnosc, dataStr, kod || "BRAK"], function(err) {
                 if (err) return res.status(500).json({error: err.message});
 
-                const orderID = this.lastID; // To teraz nie będzie undefined
+                const orderID = this.lastID;
                 db.run("UPDATE zapas SET kubeczki = kubeczki - ? WHERE id = 1", [sztuk]);
 
-                // Wysyłka do Google z poprawnym ID
                 axios.post(GOOGLE_URL, {
                     id: orderID,
                     data: dataStr,
@@ -49,7 +48,7 @@ app.post('/api/zamow', (req, res) => {
                     suma: cena,
                     platnosc: platnosc,
                     kod: kod || "BRAK"
-                }).catch(e => console.log("Błąd Google Sheets"));
+                }).catch(e => console.log("Błąd Google Sheets (prawdopodobnie brak neta lub zły URL)"));
 
                 res.json({ success: true, id: orderID });
             });
@@ -60,10 +59,13 @@ app.get('/api/admin/data', (req, res) => {
     db.get("SELECT kubeczki FROM zapas WHERE id = 1", (err, zapas) => {
         db.all("SELECT * FROM zamowienia WHERE status != 'zrealizowane' ORDER BY id DESC", (err, rows) => {
             db.get("SELECT SUM(cena_total) as total FROM zamowienia", (err, sumRow) => {
+                // POPRAWKA: Zabezpieczenie przed błędem "Cannot read properties of undefined"
+                const finalUtarg = (sumRow && sumRow.total) ? sumRow.total : 0;
+
                 res.json({
                     kubeczki: zapas ? zapas.kubeczki : 0,
                     zamowienia: rows || [],
-                    utarg: sumRow.total || 0
+                    utarg: finalUtarg
                 });
             });
         });
@@ -71,7 +73,8 @@ app.get('/api/admin/data', (req, res) => {
 });
 
 app.post('/api/admin/set-kubeczki', (req, res) => {
-    db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [parseInt(req.body.ilosc)], () => res.json({success: true}));
+    const ilosc = parseInt(req.body.ilosc) || 0;
+    db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [ilosc], () => res.json({success: true}));
 });
 
 app.post('/api/admin/status', (req, res) => {
@@ -81,9 +84,17 @@ app.post('/api/admin/status', (req, res) => {
 app.post('/api/admin/reset', (req, res) => {
     const { workers } = req.body;
     db.get("SELECT SUM(cena_total) as total FROM zamowienia", (err, row) => {
-        let total = row.total || 0;
-        axios.post(GOOGLE_URL, { type: "END_DAY", totalRev: total, workers: workers, data: new Date().toLocaleDateString() });
-        db.run("DELETE FROM zamowienia", () => {
+        let total = (row && row.total) ? row.total : 0;
+
+        axios.post(GOOGLE_URL, {
+            type: "END_DAY",
+            totalRev: total,
+            workers: workers || 1,
+            data: new Date().toLocaleDateString('pl-PL')
+        }).catch(e => console.log("Błąd resetu Google"));
+
+        db.serialize(() => {
+            db.run("DELETE FROM zamowienia");
             db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => {
                 res.json({ success: true });
             });
@@ -91,4 +102,4 @@ app.post('/api/admin/reset', (req, res) => {
     });
 });
 
-app.listen(8443, () => console.log("Serwer Lemoniady 8443"));
+app.listen(8443, () => console.log("🚀 Serwer Lemoniady śmiga na porcie 8443"));
