@@ -24,7 +24,6 @@
 
         .container { max-width: 800px; margin: auto; }
 
-        /* Statystyki na górze */
         .box-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -42,7 +41,6 @@
         .val { font-size: 2.2rem; font-weight: 900; color: var(--primary); display: block; }
         .label { font-size: 0.75rem; text-transform: uppercase; opacity: 0.6; letter-spacing: 1px; }
 
-        /* Inputy i Przyciski */
         input {
             background: #0f172a;
             border: 1px solid var(--accent);
@@ -54,16 +52,15 @@
         }
 
         .btn-action {
-            background: var(--accent);
             color: #000;
             border: none;
-            padding: 8px 15px;
+            padding: 10px 15px;
             border-radius: 8px;
             font-weight: 800;
             cursor: pointer;
+            transition: 0.2s;
         }
 
-        /* Sekcja Szybkiej Sprzedaży (POS) */
         .pos-container {
             background: var(--card);
             border: 2px solid var(--primary);
@@ -119,16 +116,26 @@
             margin-bottom: 20px;
         }
 
-        /* Lista zamówień */
         .order-card {
             background: var(--card);
-            padding: 15px;
-            border-radius: 15px;
-            margin-bottom: 10px;
+            padding: 20px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            border-left: 8px solid var(--primary);
+        }
+
+        .order-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            border-left: 6px solid var(--primary);
+            margin-bottom: 15px;
+        }
+
+        .order-btns {
+            display: flex;
+            gap: 10px;
         }
 
         #conn-status { font-weight: bold; font-size: 0.9rem; }
@@ -159,7 +166,7 @@
             <span class="val" id="cups-display">0</span>
             <div style="margin-top: 10px; display: flex; gap: 5px;">
                 <input type="number" id="cups-input" placeholder="Sztuki">
-                <button class="btn-action" onclick="setCups()">USTAW</button>
+                <button class="btn-action" style="background: var(--accent)" onclick="setCups()">USTAW</button>
             </div>
         </div>
     </div>
@@ -190,7 +197,6 @@
     let adminCart = [];
     let utargTotal = 0;
 
-    // Pobieranie danych
     async function refreshData() {
         try {
             const r = await fetch(`${API}/api/admin/data`);
@@ -205,15 +211,21 @@
 
             calculateSplit();
 
-            // Renderowanie listy zamówień
             const list = document.getElementById('order-list');
             list.innerHTML = d.zamowienia.map(o => `
                 <div class="order-card">
-                    <div>
-                        <b>#${o.id} - ${o.produkty}</b><br>
-                        <small>${o.cena_total} zł | ${o.platnosc} | ${o.data}</small>
+                    <div class="order-header">
+                        <div>
+                            <b>#${o.id} - ${o.produkty}</b><br>
+                            <small>${o.cena_total} zł | ${o.platnosc} | ${o.data}</small>
+                        </div>
+                        <div style="text-align: right; font-weight: bold; color: var(--primary)">${o.status.toUpperCase()}</div>
                     </div>
-                    <button class="btn-action" style="background:var(--success); color:white" onclick="changeStatus(${o.id}, 'zrealizowane')">ZAKOŃCZ</button>
+                    <div class="order-btns">
+                        <button class="btn-action" style="background: var(--accent); flex: 1;" onclick="changeStatus(${o.id}, 'w realizacji')">W REALIZACJI</button>
+                        <button class="btn-action" style="background: var(--success); flex: 1; color: white;" onclick="changeStatus(${o.id}, 'gotowe')">GOTOWE (PULSUJ)</button>
+                        <button class="btn-action" style="background: var(--danger); flex: 1; color: white;" onclick="changeStatus(${o.id}, 'zrealizowane')">WYDAJ / USUŃ</button>
+                    </div>
                 </div>
             `).join('') || "<p style='opacity:0.5; text-align:center;'>Brak nowych zamówień.</p>";
 
@@ -223,7 +235,6 @@
         }
     }
 
-    // Obsługa koszyka
     function addToCart(nazwa, cena) {
         let item = adminCart.find(i => i.nazwa === nazwa);
         if (item) item.sztuk++;
@@ -234,7 +245,6 @@
     function renderCart() {
         const container = document.getElementById('cart-list');
         if (adminCart.length === 0) { container.innerHTML = "Koszyk jest pusty"; return; }
-
         container.innerHTML = adminCart.map((item, index) => `
             <div class="cart-item">
                 <span><b>${item.nazwa}</b> (x${item.sztuk}) - ${(item.cena * item.sztuk)} zł</span>
@@ -255,16 +265,13 @@
         document.getElementById('split-display').innerText = `Na głowę: ${perPerson} zł`;
     }
 
-    // Akcje API
     async function finalizeSale(platnosc) {
         if (adminCart.length === 0) return alert("Koszyk jest pusty!");
-
         const res = await fetch(`${API}/api/zamow`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ koszyk: adminCart, kod: 'STACJONARNE', platnosc: platnosc })
         });
-
         if (res.ok) {
             adminCart = [];
             renderCart();
@@ -295,7 +302,6 @@
     async function endDay() {
         if (!confirm("Czy na pewno chcesz zakończyć dzień i wyczyścić listę?")) return;
         const workers = document.getElementById('worker-count').value;
-
         await fetch(`${API}/api/admin/reset`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -304,10 +310,8 @@
         refreshData();
     }
 
-    // Start
     setInterval(refreshData, 5000);
     refreshData();
 </script>
-
 </body>
 </html>

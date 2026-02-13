@@ -3,124 +3,118 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lemoniada</title>
+    <title>Lemoniada u Tobika 🍋</title>
     <style>
-        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --accent: #38bdf8; }
-        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; text-align: center; margin: 0; padding: 20px; }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --success: #10b981; }
+        body { font-family: sans-serif; background: var(--bg); color: white; text-align: center; padding: 20px; }
+        .item { background: var(--card); padding: 20px; border-radius: 20px; margin: 10px auto; max-width: 400px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+        .btn-add { background: var(--primary); border: none; padding: 10px; border-radius: 10px; font-weight: bold; cursor: pointer; }
+        .cart-box { background: var(--primary); color: #000; padding: 20px; border-radius: 20px; margin-top: 20px; }
 
-        .status-bar { background: var(--card); padding: 10px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #334155; }
-        .cups-count { color: var(--primary); font-weight: 900; font-size: 1.2rem; }
+        /* Styl Pola Kodu */
+        input#promo-code { width: 90%; padding: 12px; border-radius: 10px; border: 2px solid #000; margin: 10px 0; font-weight: bold; text-align: center; background: white; color: black; }
 
-        .menu-grid { display: grid; gap: 15px; max-width: 500px; margin: auto; }
-        .item { background: var(--card); padding: 20px; border-radius: 20px; border: 1px solid #334155; display: flex; justify-content: space-between; align-items: center; }
+        /* Ekran Statusu */
+        .status-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:9999; }
+        .status-card { background: var(--card); padding: 40px; border-radius: 30px; border: 4px solid var(--primary); width: 85%; transition: 0.3s; }
+        .big-num { font-size: 5rem; font-weight: 900; color: var(--primary); margin: 10px 0; }
 
-        .btn-add { background: var(--primary); border: none; padding: 10px 20px; border-radius: 12px; font-weight: 800; cursor: pointer; }
-
-        .cart-box { background: var(--primary); color: #000; padding: 20px; border-radius: 25px; margin-top: 30px; position: sticky; bottom: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        .btn-order { background: #000; color: #fff; border: none; width: 100%; padding: 15px; border-radius: 15px; font-weight: 900; margin-top: 10px; cursor: pointer; }
-
-        input#promo-code { background: rgba(0,0,0,0.1); border: 1px solid rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; margin-bottom: 10px; width: 80%; text-align: center; font-weight: bold; }
+        @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0.7); } 70% { box-shadow: 0 0 0 30px rgba(255, 214, 0, 0); } 100% { box-shadow: 0 0 0 0 rgba(255, 214, 0, 0); } }
+        .ready { animation: pulse 1.5s infinite; border-color: var(--success) !important; }
     </style>
 </head>
 <body>
 
-    <h1>Lemoniada 🍋</h1>
+    <h1>🍋 Lemoniada 🍋</h1>
+    <p>Dostępne kubki: <span id="cups">--</span></p>
 
-    <div class="status-bar">
-        Dostępne kubeczki: <span class="cups-count" id="cups-display">--</span>
+    <div class="item">
+        <span>Klasyczna (5zł)</span>
+        <button class="btn-add" onclick="add('Zwykła', 5)">DODAJ</button>
+    </div>
+    <div class="item">
+        <span>Pomarańcza (7zł)</span>
+        <button class="btn-add" onclick="add('Pomarańcz', 7)">DODAJ</button>
     </div>
 
-    <div class="menu-grid">
-        <div class="item">
-            <div><b>Klasyczna</b><br><small>5.00 zł</small></div>
-            <button class="btn-add" onclick="addToCart('Zwykła', 5)">DODAJ</button>
-        </div>
-        <div class="item">
-            <div><b>Pomarańczowa</b><br><small>7.00 zł</small></div>
-            <button class="btn-add" onclick="addToCart('Pomarańcz', 7)">DODAJ</button>
-        </div>
-    </div>
-
-    <div id="cart-ui" class="cart-box" style="display: none;">
-        <h3 style="margin: 0 0 10px 0;">Twoje zamówienie:</h3>
-        <div id="cart-items" style="margin-bottom: 10px; font-weight: bold;"></div>
-
+    <div id="cart-ui" class="cart-box" style="display:none">
+        <div id="cart-list" style="margin-bottom:10px"></div>
         <input type="text" id="promo-code" placeholder="KOD RABATOWY">
+        <button onclick="sendOrder()" style="background:#000; color:#fff; width:100%; padding:15px; border-radius:10px; border:none; font-weight:bold;">ZAMÓW</button>
+    </div>
 
-        <div style="font-size: 0.8rem; margin-bottom: 10px;">Płatność przy odbiorze (Gotówka/BLIK)</div>
-        <button class="btn-order" onclick="sendOrder()">ZAMÓW I ZAPŁAĆ NA MIEJSCU</button>
+    <div id="status-screen" class="status-overlay">
+        <div id="status-card" class="status-card">
+            <div style="font-weight:bold; opacity:0.6">NUMER ZAMÓWIENIA</div>
+            <div id="big-id" class="big-num">#--</div>
+            <div id="status-text" style="font-size:1.5rem; font-weight:bold">PRZYJĘTE</div>
+            <p id="status-msg">Czekaj na informację tutaj...</p>
+        </div>
     </div>
 
     <script>
         const API = "https://api.lemoniada.com.pl";
         let cart = [];
 
-        // 1. SYNCHRONIZACJA KUBECZKÓW
         async function updateStock() {
-            try {
-                const r = await fetch(`${API}/api/zapas`);
-                const d = await r.json();
-                document.getElementById('cups-display').innerText = d.kubeczki;
+            const r = await fetch(API + "/api/zapas");
+            const d = await r.json();
+            document.getElementById('cups').innerText = d.kubeczki;
+        }
 
-                // Jeśli brak kubeczków, zablokuj przyciski
-                const btns = document.querySelectorAll('.btn-add');
-                btns.forEach(b => b.disabled = d.kubeczki <= 0);
-            } catch (e) {
-                console.error("Błąd połączenia z serwerem");
+        function add(n, c) {
+            let i = cart.find(x => x.nazwa === n);
+            if(i) i.sztuk++; else cart.push({nazwa:n, cena:c, sztuk:1});
+            render();
+        }
+
+        function remove(n) {
+            let i = cart.findIndex(x => x.nazwa === n);
+            if(i > -1) {
+                if(cart[i].sztuk > 1) cart[i].sztuk--; else cart.splice(i, 1);
             }
+            render();
         }
 
-        // 2. OBSŁUGA KOSZYKA
-        function addToCart(nazwa, cena) {
-            let item = cart.find(x => x.nazwa === nazwa);
-            if(item) item.sztuk++;
-            else cart.push({nazwa, cena, sztuk: 1});
-
-            renderCart();
-        }
-
-        function renderCart() {
+        function render() {
             const ui = document.getElementById('cart-ui');
-            const list = document.getElementById('cart-items');
-
-            if(cart.length > 0) {
-                ui.style.display = "block";
-                list.innerText = cart.map(x => `${x.nazwa} x${x.sztuk}`).join(', ');
-            } else {
-                ui.style.display = "none";
-            }
+            const list = document.getElementById('cart-list');
+            ui.style.display = cart.length ? 'block' : 'none';
+            list.innerHTML = cart.map(x => `<div onclick="remove('${x.nazwa}')" style="margin-bottom:5px">${x.nazwa} x${x.sztuk} (Usuń ❌)</div>`).join('');
         }
 
-        // 3. WYSYŁANIE ZAMÓWIENIA
         async function sendOrder() {
-            const kod = document.getElementById('promo-code').value;
-
-            const res = await fetch(`${API}/api/zamow`, {
+            const res = await fetch(API + "/api/zamow", {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    koszyk: cart,
-                    kod: kod,
-                    platnosc: "Odbiór osobisty"
-                })
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ koszyk: cart, kod: document.getElementById('promo-code').value, platnosc: "Gotówka/Blik" })
             });
-
-            if(res.ok) {
-                const data = await res.json();
-                alert(`Zamówienie przyjęte! Numer: #${data.id}\nZapraszamy do stoiska!`);
-                cart = [];
-                document.getElementById('promo-code').value = "";
-                renderCart();
-                updateStock();
-            } else {
-                const err = await res.json();
-                alert("Błąd: " + (err.error || "Nie udało się złożyć zamówienia"));
+            const data = await res.json();
+            if(data.success) {
+                cart = []; render();
+                startTracking(data.id);
             }
         }
 
-        // Odświeżanie zapasu co 5 sekund
-        setInterval(updateStock, 5000);
-        updateStock();
+        function startTracking(id) {
+            document.getElementById('status-screen').style.display = 'flex';
+            document.getElementById('big-id').innerText = '#' + id;
+            const check = setInterval(async () => {
+                const r = await fetch(`${API}/api/status/${id}`);
+                const d = await r.json();
+                const card = document.getElementById('status-card');
+                const st = document.getElementById('status-text');
+
+                if(d.status === 'w realizacji') { st.innerText = "W REALIZACJI..."; st.style.color = "#38bdf8"; }
+                if(d.status === 'gotowe') {
+                    st.innerText = "ODBIERZ!"; card.classList.add('ready');
+                    document.getElementById('status-msg').innerText = "ZAPRASZAMY DO STOISKA!";
+                }
+                if(d.status === 'zrealizowane') { clearInterval(check); location.reload(); }
+            }, 3000);
+        }
+
+        setInterval(updateStock, 5000); updateStock();
     </script>
 </body>
 </html>
