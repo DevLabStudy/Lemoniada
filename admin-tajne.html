@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html>
+<html lang="pl">
 <head>
-    <meta charset="UTF-8"><title>Admin - LemonIada</title>
+    <meta charset="UTF-8">
+    <title>Admin - LemonIada</title>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #2c3e50; color: white; padding: 15px; }
         .m-box { background: #27ae60; padding: 20px; border-radius: 15px; text-align: center; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
@@ -41,13 +42,12 @@
 <div id="list"></div>
 
 <script>
-    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
+    const API = "https://lemoniada.com.pl";
     let currentTotal = 0;
 
     function calcPay() {
         const count = parseInt(document.getElementById('emp-count').value) || 1;
-        const perPerson = currentTotal / count;
-        document.getElementById('per-person').innerText = perPerson.toFixed(2);
+        document.getElementById('per-person').innerText = (currentTotal / count).toFixed(2);
     }
 
     function sell(n, p) {
@@ -59,12 +59,11 @@
     }
 
     function setK() {
-        const val = document.getElementById('k-in').value;
         fetch(`${API}/ustaw-kubki`, {
             method:'POST',
             headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({ilosc:val})
-        }).then(()=> { alert("Magazyn ustawiony!"); load(); });
+            body:JSON.stringify({ilosc:document.getElementById('k-in').value})
+        }).then(()=> { alert("Ustawiono!"); load(); });
     }
 
     function load() {
@@ -75,7 +74,6 @@
             calcPay();
         });
         fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-            // Pokazujemy tylko zamówienia, które nie zostały jeszcze WYDANE
             document.getElementById('list').innerHTML = data.filter(z => z.status !== "WYDANE").map(z => `
                 <div class="order st-${z.status.replace('W ','')}">
                     <span><b>#${z.id}</b> | ${z.produkty}<br><small>${z.platnosc} | ${z.status}</small></span>
@@ -90,7 +88,7 @@
     }
 
     function upd(id, status) { fetch(`${API}/update-status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, nowyStatus:status})}).then(load); }
-    function resetB() { if(confirm("Czy na pewno chcesz wyczyścić cały utarg i zamówienia?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
+    function resetB() { if(confirm("Czy na pewno?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
 
     setInterval(load, 3000);
     load();

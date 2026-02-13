@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
-    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LemonIada - Zamów</title>
     <style>
         :root { --main: #f1c40f; --green: #2ecc71; --red: #e74c3c; --blue: #3498db; }
@@ -67,33 +68,21 @@
 </div>
 
 <script>
-    const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
+    const API = "https://lemoniada.com.pl";
     let koszyk = []; let rabat = 0; let stanLokalny = 0; let uzytyKod = "";
     const dzis = new Date().toLocaleDateString();
     let zuzyte = JSON.parse(localStorage.getItem('z') || "[]");
 
     function dodaj(n, p) { if(koszyk.length < stanLokalny) { koszyk.push({n, p}); odswiez(); } }
-
-    function usun(idx) {
-        koszyk.splice(idx, 1);
-        odswiez();
-    }
+    function usun(idx) { koszyk.splice(idx, 1); odswiez(); }
 
     function odswiez() {
         const cartDiv = document.getElementById('cart');
         const listDiv = document.getElementById('cart-list');
         cartDiv.style.display = koszyk.length ? 'block' : 'none';
-
-        listDiv.innerHTML = koszyk.map((i, idx) => `
-            <div class="cart-item">
-                <span><b>${i.n}</b> - ${i.p}zł</span>
-                <button class="btn-del" onclick="usun(${idx})">USUŃ</button>
-            </div>
-        `).join('');
-
+        listDiv.innerHTML = koszyk.map((i, idx) => `<div class="cart-item"><span><b>${i.n}</b> - ${i.p}zł</span><button class="btn-del" onclick="usun(${idx})">USUŃ</button></div>`).join('');
         let s = koszyk.reduce((a, b) => a + b.p, 0) * (1 - rabat/100);
         document.getElementById('total').innerText = s.toFixed(2);
-
         document.querySelectorAll('.btn-add').forEach(b => {
             b.classList.toggle('sold-out', koszyk.length >= stanLokalny);
             b.innerText = koszyk.length >= stanLokalny ? "WYPRZEDANE" : "DODAJ";
@@ -126,7 +115,17 @@
         odswiez();
     }
 
-    function copyB(n) { navigator.clipboard.writeText(n); alert("Numer skopiowany!"); zamow("BLIK ("+n+")"); }
+    async function copyB(n) {
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(n);
+            } else {
+                const t = document.createElement("textarea"); t.value = n; document.body.appendChild(t); t.select(); document.execCommand('copy'); document.body.removeChild(t);
+            }
+            alert("Numer skopiowany!");
+        } catch (e) { console.warn("Błąd schowka"); }
+        finally { zamow("BLIK ("+n+")"); }
+    }
 
     function zamow(metoda) {
         fetch(`${API}/zamow`, {
@@ -139,34 +138,19 @@
             document.getElementById('main-ui').style.display = 'none';
             document.getElementById('success').style.display = 'block';
             document.getElementById('o-num').innerText = "#" + d.id;
-
             const i = setInterval(() => {
                 fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
                     const z = data.find(o => o.id === d.id);
                     if(z) {
-                        const badge = document.getElementById('cur-status');
-                        const box = document.getElementById('success');
-
-                        if(z.status === "GOTOWE") {
-                            badge.innerText = "MOŻESZ PODEJŚĆ! 🍋";
-                            badge.style.background = "#2ecc71";
-                            box.classList.add('ready-mode');
-                            document.getElementById('s-title').innerText = "GOTOWE!";
-                        } else {
-                            badge.innerText = z.status;
-                        }
-
-                        if(z.status === "WYDANE") {
-                            clearInterval(i);
-                            badge.innerText = "DZIĘKUJEMY I ZAPRASZAMY PONOWNIE!";
-                            setTimeout(() => location.reload(), 3000);
-                        }
+                        const b = document.getElementById('cur-status'); const box = document.getElementById('success');
+                        if(z.status === "GOTOWE") { b.innerText = "PODEJDŹ! 🍋"; b.style.background = "#2ecc71"; box.classList.add('ready-mode'); document.getElementById('s-title').innerText = "GOTOWE!"; }
+                        else if(z.status === "WYDANE") { clearInterval(i); b.innerText = "DZIĘKUJEMY!"; setTimeout(() => location.reload(), 3000); }
+                        else { b.innerText = z.status; }
                     }
                 });
             }, 3000);
         });
     }
-
     setInterval(refreshStock, 5000);
     window.onload = refreshStock;
 </script>
