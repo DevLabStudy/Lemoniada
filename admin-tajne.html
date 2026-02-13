@@ -3,54 +3,61 @@
 <head>
     <meta charset="UTF-8"><title>Admin - LemonIada</title>
     <style>
-        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 20px; }
-        .box { background: #34495e; padding: 20px; border-radius: 15px; margin-bottom: 20px; }
-        .btn { padding: 10px 20px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; }
-        .blue { background: #3498db; } .green { background: #2ecc71; }
+        body { font-family: sans-serif; background: #2c3e50; color: white; padding: 15px; }
+        .m-box { background: #27ae60; padding: 15px; border-radius: 12px; text-align: center; font-size: 22px; margin-bottom: 15px; }
+        .box { background: #34495e; padding: 15px; border-radius: 12px; margin-bottom: 15px; }
+        .btn-a { border: none; padding: 10px; border-radius: 8px; cursor: pointer; font-weight: bold; color: white; margin: 3px; }
+        .blue { background: #3498db; } .green { background: #2ecc71; } .orange { background: #e67e22; } .red { background: #e74c3c; }
+        .order { background: white; color: #333; padding: 12px; margin: 8px 0; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border-left: 8px solid #eee; }
+        .st-PRZYJĘTE { border-left-color: #95a5a6; }
+        .st-REALIZACJA { border-left-color: #3498db; }
+        .st-GOTOWE { border-left-color: #2ecc71; }
     </style>
 </head>
 <body>
+<div class="m-box">💰 UTARG: <span id="total-money">0.00</span> zł</div>
+
 <div class="box">
-    <h3>📦 Zarządzaj Magazynem</h3>
-    <input type="number" id="k-in" style="padding:10px; width:100px;">
-    <button class="btn blue" onclick="setK()">USTAW STAN KUBKÓW</button>
+    <h3>📦 Magazyn: <span id="k-show" style="color:#f1c40f">0</span></h3>
+    <input type="number" id="k-in" style="padding:8px; width:70px;">
+    <button class="btn-a blue" onclick="setK()">USTAW</button>
+    <button class="btn-a red" onclick="resetB()" style="float:right">RESET</button>
 </div>
+
+<div class="box">
+    <h3>⚡ Sprzedaż Stacjonarna</h3>
+    <button class="btn-a green" onclick="sell('Klasyczna', 5)">🍋 KLASYCZNA (5zł)</button>
+    <button class="btn-a orange" onclick="sell('Pomarańczowa', 7)">🍊 POMARAŃCZOWA (7zł)</button>
+</div>
+
 <div id="list"></div>
 
 <script>
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
 
-    function setK() {
-        const val = document.getElementById('k-in').value;
-        fetch(`${API}/ustaw-kubki`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ilosc: val })
-        })
-            .then(r => r.json())
-            .then(d => { alert("Ustawiono na: " + d.stan); load(); });
-    }
+    function sell(n, p) { fetch(`${API}/zamow`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({produkty:n, suma:p.toFixed(2), platnosc:"Gotówka", kod:"STACJA"})}).then(load); }
+    function setK() { fetch(`${API}/ustaw-kubki`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({ilosc:document.getElementById('k-in').value})}).then(()=> { alert("OK"); load(); }); }
 
     function load() {
+        fetch(`${API}/stan-magazynu`).then(r=>r.json()).then(d => document.getElementById('k-show').innerText = d.kubki);
+        fetch(`${API}/zarobki`).then(r=>r.json()).then(d => document.getElementById('total-money').innerText = d.total.toFixed(2));
         fetch(`${API}/list-zamowienia`).then(r=>r.json()).then(data => {
-            document.getElementById('list').innerHTML = data.map(z => `
-                <div style="background:white; color:black; padding:10px; margin:5px; border-radius:10px;">
-                    #${z.id} | ${z.produkty} | ${z.status}
-                    <button class="btn green" onclick="upd(${z.id},'WYDANE')">WYDAJ</button>
+            document.getElementById('list').innerHTML = data.filter(z => z.status !== "WYDANE").map(z => `
+                <div class="order st-${z.status.replace('W ','')}">
+                    <span><b>#${z.id}</b><br>${z.produkty}<br><small>${z.platnosc} | ${z.status}</small></span>
+                    <div>
+                        <button class="btn-a blue" onclick="upd(${z.id},'W REALIZACJI')">⚙️</button>
+                        <button class="btn-a green" onclick="upd(${z.id},'GOTOWE')">GOTOWE</button>
+                        <button class="btn-a red" onclick="upd(${z.id},'WYDANE')">WYDAJ ✅</button>
+                    </div>
                 </div>
             `).join('');
         });
     }
 
-    function upd(id, status) {
-        fetch(`${API}/update-status`, {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({id, nowyStatus:status})
-        }).then(load);
-    }
-
-    setInterval(load, 3000);
+    function upd(id, status) { fetch(`${API}/update-status`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({id, nowyStatus:status})}).then(load); }
+    function resetB() { if(confirm("Czyścić?")) fetch(`${API}/reset-bazy`, {method:'POST'}).then(load); }
+    setInterval(load, 3000); load();
 </script>
 </body>
 </html>

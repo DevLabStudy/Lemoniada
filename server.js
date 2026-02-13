@@ -7,23 +7,17 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// PODSTAW TU SWÓJ LINK Z GOOGLE APPS SCRIPT
 const GOOGLE_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREMENT, produkty TEXT, suma TEXT, platnosc TEXT, godzina TEXT, kod_rabatowy TEXT, status TEXT DEFAULT 'PRZYJĘTE')`);
 
-let stanKubkow = 0; // Startujemy od 0, ustawisz w Adminie
+let stanKubkow = 0;
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 
 app.post('/ustaw-kubki', (req, res) => {
-    const nowaIlosc = parseInt(req.body.ilosc);
-    if (isNaN(nowaIlosc)) {
-        return res.status(400).json({ success: false, error: "To nie jest liczba" });
-    }
-    stanKubkow = nowaIlosc;
-    console.log(`✅ Magazyn zaktualizowany: ${stanKubkow} kubków`);
+    stanKubkow = parseInt(req.body.ilosc) || 0;
     res.json({ success: true, stan: stanKubkow });
 });
 
@@ -35,32 +29,26 @@ app.get('/zarobki', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
-    const produktyArray = produkty.split(', ');
-    const iloscWZamowieniu = produktyArray.length;
+    const ilosc = produkty.split(', ').length;
 
-    if (stanKubkow < iloscWZamowieniu) {
-        return res.status(400).json({ error: "BRAK_KUBKOW" });
-    }
+    if (stanKubkow < ilosc) return res.status(400).json({ error: "BRAK_KUBKOW" });
 
     const godzina = new Date().toLocaleTimeString('pl-PL');
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
             const lastId = this.lastID;
-            stanKubkow -= iloscWZamowieniu;
-            console.log(`📦 Nowe zamówienie #${lastId}. Pozostało kubków: ${stanKubkow}`);
-
+            stanKubkow -= ilosc;
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
-            }).catch(e => console.log("Błąd Google Sheets"));
-
+            }).catch(e => console.log("Błąd Sheets"));
             res.json({ id: lastId });
         });
 });
 
 app.get('/list-zamowienia', (req, res) => {
-    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 20`, [], (err, rows) => res.json(rows || []));
+    db.all(`SELECT * FROM zamowienia ORDER BY id DESC LIMIT 30`, [], (err, rows) => res.json(rows || []));
 });
 
 app.post('/update-status', (req, res) => {
@@ -69,10 +57,8 @@ app.post('/update-status', (req, res) => {
 
 app.post('/reset-bazy', (req, res) => {
     db.run(`DELETE FROM zamowienia`, () => {
-        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => {
-            res.json({ success: true });
-        });
+        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true }));
     });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada działa na porcie 3000'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 LemonIada Engine Online'));
