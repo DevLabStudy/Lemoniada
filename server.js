@@ -7,10 +7,12 @@ const app = express();
 app.use(cors({ origin: '*' }));
 app.use(express.json());
 
-const GOOGLE_SHEET_URL = "TWOJ_LINK_Z_APPS_SCRIPT";
+// TWOJE DANE Z GOOGLE SHEETS
+const GOOGLE_SHEET_URL = "https://script.google.com/macros/s/AKfycbxoLDYGUHc5XTpryzBK9Tl7j_Xxa86_7Aodm0mLmtGZYu_u65ItPQdHXaJaIlpvpAu5/exec";
 
 let db = new sqlite3.Database('./lemoniada.db');
 
+// Tworzenie tabeli
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (
                                                   id INTEGER PRIMARY KEY AUTOINCREMENT,
                                                   produkty TEXT,
@@ -39,7 +41,7 @@ function sendToSheets(id, produkty, suma, platnosc, kod) {
             platnosc: platnosc,
             kod: kod || "BRAK"
         })
-    }).catch(e => console.log("Błąd Sheets"));
+    }).catch(e => console.log("Błąd wysyłki do Sheets"));
 }
 
 app.get('/stan-magazynu', (req, res) => {
@@ -58,6 +60,7 @@ app.post('/zamow', (req, res) => {
 
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
             const lastId = this.lastID;
             sendToSheets(lastId, produkty, suma, platnosc, kod);
             stanKubkow--;
@@ -74,4 +77,14 @@ app.post('/update-status', (req, res) => {
     db.run(`UPDATE zamowienia SET status = ? WHERE id = ?`, [nowyStatus, id], () => res.json({ success: true }));
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADA READY'));
+// TWARDY RESET BAZY I NUMERACJI
+app.post('/reset-bazy', (req, res) => {
+    db.serialize(() => {
+        db.run(`DELETE FROM zamowienia`);
+        db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => {
+            res.json({ success: true, message: "Baza i licznik zresetowane" });
+        });
+    });
+});
+
+app.listen(3000, '0.0.0.0', () => console.log('🚀 SYSTEM LEMONIADA READY NA PORCIE 3000'));

@@ -13,13 +13,12 @@
         .cart-item { display: flex; justify-content: space-between; align-items: center; background: #eee; padding: 8px 12px; border-radius: 10px; margin-bottom: 5px; }
         .remove-btn { background: #e74c3c; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; cursor: pointer; font-weight: bold; }
 
-        /* MODAL BLIK */
+        /* MODALE I STATUSY */
         .modal { display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; padding: 20px; border-radius: 20px; box-shadow: 0 0 30px rgba(0,0,0,0.4); z-index: 2000; width: 85%; max-width: 320px; }
         .modal-btn { background: #3498db; color: white; padding: 15px; margin: 8px 0; border: none; border-radius: 12px; width: 100%; cursor: pointer; font-weight: bold; font-size: 16px; }
         .overlay-bg { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1999; }
         .overlay-msg { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: white; display: none; flex-direction: column; justify-content: center; align-items: center; z-index: 1000; }
-
-        #order-number { font-size: 40px; color: #2ecc71; font-weight: bold; margin: 10px 0; }
+        #order-number { font-size: 48px; color: #2ecc71; font-weight: bold; margin: 10px 0; }
     </style>
 </head>
 <body>
@@ -64,7 +63,7 @@
         <p style="margin:0">TWÓJ NUMEREK:</p>
         <div id="order-number">#0</div>
         <p id="order-status" style="font-weight:bold; color:#3498db">Status: PRZYJĘTE</p>
-        <p style="font-size:11px;">Zapamiętaj ten numer lub zrób screena!</p>
+        <button class="btn" style="background:#34495e; margin-top:10px; font-size:12px;" onclick="location.reload()">NOWE ZAMÓWIENIE</button>
     </div>
 </div>
 
@@ -72,10 +71,12 @@
     const API = "https://bacterial-concept-scripting-expired.trycloudflare.com";
     let cart = [];
     let aktualnyRabat = 0;
+    let trackInterval;
 
     if(localStorage.getItem('promoCode')) {
         document.getElementById('promo-status').innerHTML = `Twój kod: <b>${localStorage.getItem('promoCode')}</b>`;
         document.getElementById('wheel-btn').disabled = true;
+        document.getElementById('wheel-btn').style.opacity = "0.5";
     }
 
     function add(n, p) { cart.push({n, p}); updateUI(); }
@@ -119,7 +120,7 @@
     }
     function copyBlik(numer) {
         navigator.clipboard.writeText(numer.replace(/\s/g, '')).then(() => {
-            alert("Numer skopiowany! Wklej go w banku.");
+            alert("Numer skopiowany: " + numer + "\nWklej go w aplikacji banku!");
             closeBlikModal();
             finalSend("BLIK (" + numer + ")");
         });
@@ -150,10 +151,17 @@
     }
 
     function track(id) {
-        setInterval(() => {
+        if(trackInterval) clearInterval(trackInterval);
+        trackInterval = setInterval(() => {
             fetch(`${API}/list-zamowienia`).then(r => r.json()).then(data => {
+                if(data.length === 0) { location.reload(); return; }
                 const z = data.find(o => o.id === id);
-                if(z) document.getElementById('order-status').innerText = "Status: " + z.status;
+                if(z) {
+                    document.getElementById('order-status').innerText = "Status: " + z.status;
+                    if(z.status === 'WYDANE') {
+                        document.getElementById('order-status').style.color = "#27ae60";
+                    }
+                }
             });
         }, 3000);
     }
@@ -163,7 +171,7 @@
             document.getElementById('c-left').innerText = d.kubki;
             document.getElementById('closed').style.display = (d.przerwa || d.kubki <= 0) ? 'flex' : 'none';
             document.getElementById('msg').innerText = d.powod;
-        });
+        }).catch(e => console.log("Offline"));
     }, 4000);
 </script>
 </body>
