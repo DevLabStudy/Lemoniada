@@ -12,12 +12,11 @@ let db = new sqlite3.Database('./lemoniada.db');
 
 db.run(`CREATE TABLE IF NOT EXISTS zamowienia (id INTEGER PRIMARY KEY AUTOINCREMENT, produkty TEXT, suma TEXT, platnosc TEXT, godzina TEXT, kod_rabatowy TEXT, status TEXT DEFAULT 'PRZYJĘTE')`);
 
-let stanKubkow = 0;
+let stanKubkow = 10;
 
 app.get('/stan-magazynu', (req, res) => res.json({ kubki: stanKubkow }));
 app.post('/ustaw-kubki', (req, res) => { stanKubkow = parseInt(req.body.ilosc) || 0; res.json({ success: true }); });
 
-// NOWE: Obliczanie zarobków
 app.get('/zarobki', (req, res) => {
     db.get(`SELECT SUM(CAST(suma AS REAL)) as total FROM zamowienia`, [], (err, row) => {
         res.json({ total: row ? row.total || 0 : 0 });
@@ -26,16 +25,26 @@ app.get('/zarobki', (req, res) => {
 
 app.post('/zamow', (req, res) => {
     const { produkty, suma, platnosc, kod } = req.body;
+
+    // Liczymy ile sztuk jest w zamówieniu (rozdzielone przecinkami)
+    const iloscWZamowieniu = produkty.split(',').length;
+
+    if (stanKubkow < iloscWZamowieniu) {
+        return res.status(400).json({ error: "BRAK_KUBKOW" });
+    }
+
     const godzina = new Date().toLocaleTimeString('pl-PL');
     db.run(`INSERT INTO zamowienia (produkty, suma, platnosc, godzina, kod_rabatowy) VALUES (?, ?, ?, ?, ?)`,
         [produkty, suma, platnosc, godzina, kod], function(err) {
             const lastId = this.lastID;
-            stanKubkow--;
+            stanKubkow -= iloscWZamowieniu; // Odejmujemy tyle ile faktycznie kupiono
+
             fetch(GOOGLE_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ data: new Date().toLocaleDateString(), godzina, produkty: `[#${lastId}] ${produkty}`, suma, platnosc, kod: kod || "BRAK" })
             }).catch(e => console.log("Błąd Sheets"));
+
             res.json({ id: lastId });
         });
 });
@@ -52,4 +61,4 @@ app.post('/reset-bazy', (req, res) => {
     db.run(`DELETE FROM zamowienia`, () => { db.run(`DELETE FROM sqlite_sequence WHERE name='zamowienia'`, () => res.json({ success: true })); });
 });
 
-app.listen(3000, '0.0.0.0', () => console.log('🚀 Serwer LemonIada ON'));
+app.listen(3000, '0.0.0.0', () => console.log('🚀 LemonIada Engine Online'));
