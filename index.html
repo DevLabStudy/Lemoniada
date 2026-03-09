@@ -5,128 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Lemoniada 🍋</title>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --primary: #FFD600;
-            --success: #10b981;
-            --accent: #38bdf8;
-        }
+        :root { --bg: #0f172a; --card: #1e293b; --primary: #FFD600; --success: #10b981; --accent: #38bdf8; }
         * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg);
-            color: white;
-            margin: 0;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        /* Menu */
+        body { font-family: 'Inter', sans-serif; background: var(--bg); color: white; margin: 0; padding: 15px; display: flex; flex-direction: column; align-items: center; }
         .container { width: 100%; max-width: 500px; }
-
-        .item {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 20px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: 1px solid #334155;
-        }
-
-        .btn-add {
-            background: var(--primary);
-            border: none;
-            padding: 15px 25px;
-            border-radius: 15px;
-            font-weight: 900;
-            font-size: 1rem;
-            color: #000;
-        }
-
-        /* Koszyk */
-        .cart-box {
-            background: var(--primary);
-            color: #000;
-            padding: 20px;
-            border-radius: 28px;
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        input#promo-code {
-            width: 100%;
-            padding: 15px;
-            border-radius: 12px;
-            border: 2px solid rgba(0,0,0,0.1);
-            margin: 10px 0;
-            text-align: center;
-            font-weight: 800;
-            font-size: 1.1rem;
-            background: white;
-        }
-
-        .btn-luck {
-            background: #000;
-            color: #fff;
-            border: none;
-            width: 100%;
-            padding: 10px;
-            border-radius: 10px;
-            font-weight: bold;
-            margin-bottom: 5px;
-        }
-
-        /* WIELKIE PRZYCISKI PŁATNOŚCI */
-        .payment-btns {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 12px;
-            margin-top: 15px;
-        }
-
-        .btn-pay {
-            height: 70px; /* Wysokie pod kciuk */
-            border: none;
-            border-radius: 18px;
-            font-weight: 900;
-            font-size: 1.2rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-        }
-
-        /* BLIK Modal */
-        .modal {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: rgba(0,0,0,0.95); display:none; flex-direction:column;
-            align-items:center; justify-content:center; z-index: 10000; padding: 20px;
-        }
-        .blik-card {
-            background: var(--card); padding: 30px; border-radius: 30px;
-            width: 100%; text-align: center; border: 2px solid var(--accent);
-        }
-        .blik-num {
-            background: #000; padding: 20px; border-radius: 15px;
-            margin: 15px 0; color: var(--primary); font-size: 1.5rem;
-            font-weight: 900; border: 1px solid #333;
-        }
-
-        /* EKRAM STATUSU (Overlay) */
-        .status-overlay {
-            position: fixed; top:0; left:0; width:100%; height:100%;
-            background: var(--bg); display:none; flex-direction:column;
-            align-items:center; justify-content:center; z-index:9999;
-        }
+        .item { background: var(--card); padding: 20px; border-radius: 20px; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #334155; }
+        .btn-add { background: var(--primary); border: none; padding: 15px 25px; border-radius: 15px; font-weight: 900; font-size: 1rem; color: #000; }
+        .cart-box { background: var(--primary); color: #000; padding: 20px; border-radius: 28px; width: 100%; margin-top: 10px; }
+        input#promo-code { width: 100%; padding: 15px; border-radius: 12px; border: 2px solid rgba(0,0,0,0.1); margin: 10px 0; text-align: center; font-weight: 800; font-size: 1.1rem; background: white; }
+        .btn-luck { background: #000; color: #fff; border: none; width: 100%; padding: 10px; border-radius: 10px; font-weight: bold; margin-bottom: 5px; }
+        .payment-btns { display: grid; grid-template-columns: 1fr; gap: 12px; margin-top: 15px; }
+        .btn-pay { height: 70px; border: none; border-radius: 18px; font-weight: 900; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.2); }
+        .modal { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.95); display:none; flex-direction:column; align-items:center; justify-content:center; z-index: 10000; padding: 20px; }
+        .blik-card { background: var(--card); padding: 30px; border-radius: 30px; width: 100%; text-align: center; border: 2px solid var(--accent); }
+        .blik-num { background: #000; padding: 20px; border-radius: 15px; margin: 15px 0; color: var(--primary); font-size: 1.5rem; font-weight: 900; border: 1px solid #333; }
+        .status-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: var(--bg); display:none; flex-direction:column; align-items:center; justify-content:center; z-index:9999; }
         .big-num { font-size: 6rem; font-weight: 900; color: var(--primary); margin: 0; }
         .ready { animation: pulse 1.5s infinite; border-color: var(--success) !important; }
-
         @keyframes pulse {
             0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); }
             70% { transform: scale(1.05); box-shadow: 0 0 0 40px rgba(16, 185, 129, 0); }
@@ -185,7 +80,8 @@
     </div>
 
     <script>
-        const API = "https://api.lemoniada.com.pl";
+        // UWAGA: Zmień na środowisko produkcyjne jeśli trzeba
+        const API = "http://localhost:8443";
         let cart = [];
         const discounts = { 'FB10': 0.10, 'CHAMPION': 0.15, 'LEMON20': 0.20 };
 
@@ -247,17 +143,22 @@
         }
 
         async function sendOrder(method) {
-            const res = await fetch(API + "/api/zamow", {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    koszyk: cart,
-                    kod: document.getElementById('promo-code').value || 'BRAK',
-                    platnosc: method
-                })
-            });
-            const data = await res.json();
-            if(data.success) { cart = []; render(); startTracking(data.id); }
+            try {
+                const res = await fetch(API + "/api/zamow", {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        koszyk: cart,
+                        kod: document.getElementById('promo-code').value || 'BRAK',
+                        platnosc: method
+                    })
+                });
+                const data = await res.json();
+                if(data.success) { cart = []; render(); startTracking(data.id); }
+                else if (data.error) { alert("Błąd: " + data.error); }
+            } catch (e) {
+                alert("Nie udało się połączyć z serwerem!");
+            }
         }
 
         function startTracking(id) {
@@ -266,6 +167,15 @@
             const check = setInterval(async () => {
                 try {
                     const r = await fetch(`${API}/api/status/${id}`);
+
+                    // Zabezpieczenie przed usuniętym zamówieniem (404)
+                    if (r.status === 404) {
+                        clearInterval(check);
+                        alert("Błąd: Zamówienie zostało anulowane lub usunięte z systemu!");
+                        location.reload();
+                        return;
+                    }
+
                     const d = await r.json();
                     const st = document.getElementById('status-text');
                     const card = document.getElementById('status-card');
@@ -284,7 +194,9 @@
                         clearInterval(check);
                         location.reload();
                     }
-                } catch(e) {}
+                } catch(e) {
+                    console.error("Problem ze sprawdzaniem statusu", e);
+                }
             }, 3000);
         }
 

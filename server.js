@@ -40,6 +40,7 @@ app.post('/api/zamow', (req, res) => {
         db.run("INSERT INTO zamowienia (produkty, cena_total, platnosc, data, kod, status) VALUES (?, ?, ?, ?, ?, 'nowe')",
             [produktyStr, cena, platnosc, dataStr, kod || "BRAK"], function(err) {
                 db.run("UPDATE zapas SET kubeczki = kubeczki - ? WHERE id = 1", [sztuk]);
+                // Wysłanie pojedynczego zamówienia do Google
                 axios.post(GOOGLE_URL, { id: this.lastID, data: dataStr, produkty: produktyStr, suma: cena, platnosc: platnosc, kod: kod || "BRAK" }).catch(() => {});
                 res.json({ success: true, id: this.lastID });
             });
@@ -61,12 +62,34 @@ app.post('/api/admin/status', (req, res) => {
 });
 
 app.post('/api/admin/set-kubeczki', (req, res) => {
-    db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [parseInt(req.body.ilosc)], () => res.json({success: true}));
+    // Zabezpieczenie przed wpisaniem pustego pola lub tekstu (NaN)
+    const ilosc = parseInt(req.body.ilosc);
+    if (isNaN(ilosc)) return res.status(400).json({success: false, error: "Błędna wartość!"});
+
+    db.run("UPDATE zapas SET kubeczki = ? WHERE id = 1", [ilosc], () => res.json({success: true}));
 });
 
 app.post('/api/admin/reset', (req, res) => {
-    db.run("DELETE FROM zamowienia", () => {
-        db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => res.json({ success: true }));
+    const workers = req.body.workers || 1;
+
+    // Zanim usuniemy, pobieramy utarg i wysyłamy do Google Raport Dzienny
+    db.get("SELECT SUM(cena_total) as total FROM zamowienia", (err, sumRow) => {
+        const utarg = (sumRow && sumRow.total) ? sumRow.total : 0;
+        const perPerson = (utarg / workers).toFixed(2);
+        const dataStr = new Date().toLocaleString('pl-PL');
+
+        axios.post(GOOGLE_URL, {
+            typ: "RAPORT_DZIENNY",
+            utarg: utarg,
+            pracownicy: workers,
+            na_glowe: perPerson,
+            data: dataStr
+        }).catch(() => {});
+
+        // Teraz bezpiecznie czyścimy bazę
+        db.run("DELETE FROM zamowienia", () => {
+            db.run("DELETE FROM sqlite_sequence WHERE name='zamowienia'", () => res.json({ success: true }));
+        });
     });
 });
 
